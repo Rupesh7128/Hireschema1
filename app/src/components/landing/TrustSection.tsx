@@ -1,0 +1,365 @@
+"use client";
+
+import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  MessageSquare,
+  Search,
+  Send,
+  ShieldCheck,
+  Zap,
+} from "@/components/brand/icons";
+import {
+  LANDING_AGENTS,
+  type LandingAudience,
+} from "@/components/landing/landing-audience";
+import { SectionHeader } from "@/components/landing/SectionHeader";
+import { Reveal, RevealStagger, StaggerItem } from "@/components/ui/motion";
+import { BTN_PRIMARY } from "@/lib/button-classes";
+import { cn } from "@/lib/utils";
+
+const TRUST_COPY: Record<LandingAudience, { action: string; data: string }> = {
+  candidate: {
+    action:
+      'Hireschema AI logs every search, score, and outreach. "Hireschema AI performed 7 actions on your profile" — always visible.',
+    data: "Recruiter discovery is off until you opt in. Public profile publishing is a separate choice, and you can turn either one off.",
+  },
+  recruiter: {
+    action:
+      'Hireschema logs every search, shortlist, and intro. "Hireschema performed 5 actions on this role" — always visible.',
+    data: "Search results include only candidates who opted into recruiter discovery. Introduction requests remain the candidate's choice.",
+  },
+};
+
+type TrustSectionProps = {
+  audience: LandingAudience;
+};
+
+export function TrustSection({ audience }: TrustSectionProps) {
+  const agent = LANDING_AGENTS[audience];
+  const copy = TRUST_COPY[audience];
+
+  const points = [
+    { Icon: Zap, title: "See every action", body: copy.action },
+    { Icon: ShieldCheck, title: "Consent-first", body: copy.data },
+  ] as const;
+
+  return (
+    <section id="trust" className="scroll-mt-20">
+      <div className="mx-auto max-w-page px-6 py-16 md:py-24">
+        <div className="grid gap-12 md:grid-cols-2 md:items-center">
+          <SectionHeader
+            label={`Trust ${agent.name}`}
+            title="Clear actions. Clear consent."
+            description={`${agent.name} shows the work and leaves the important decisions with you.`}
+          />
+
+          <RevealStagger key={audience} className="space-y-4">
+            {points.map(({ Icon, title, body }) => (
+              <StaggerItem key={title}>
+                <motion.div
+                  className="flex gap-4 rounded-xl border border-ink-100 bg-paper-1 p-5"
+                  whileHover={{ x: 4 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+                    <Icon className="h-5 w-5 text-accent" strokeWidth={1.5} />
+                  </span>
+                  <div className="space-y-1">
+                    <h3 className="text-h3 text-ink-900">{title}</h3>
+                    <p className="text-small leading-relaxed text-ink-600">
+                      {body}
+                    </p>
+                  </div>
+                </motion.div>
+              </StaggerItem>
+            ))}
+          </RevealStagger>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Shown when audience is candidate — cross-sell Hireschema for recruiters. */
+export function RecruitersSection() {
+  const cards = [
+    {
+      Icon: Search,
+      title: "Describe the role",
+      body: "Plain words — Hireschema builds the brief.",
+    },
+    {
+      Icon: Zap,
+      title: "Pre-scored matches",
+      body: "Hireschema ranks candidates, not résumé piles.",
+    },
+    {
+      Icon: Send,
+      title: "Warm intros",
+      body: "Candidates who opted in — not cold DMs.",
+    },
+    {
+      Icon: ShieldCheck,
+      title: "Consent-first",
+      body: "Hireschema shares profiles only with permission.",
+    },
+  ] as const;
+
+  return (
+    <section
+      id="recruiters"
+      className="scroll-mt-20 border-t border-ink-100 bg-paper-1"
+    >
+      <div className="mx-auto max-w-page px-6 py-16 md:py-24">
+        <div className="grid gap-12 md:grid-cols-2 md:items-center">
+          <Reveal>
+            <p className="text-micro font-semibold uppercase tracking-[0.14em] text-accent">
+              For recruiters · Hireschema
+            </p>
+            <h2 className="mt-3 text-h1 text-ink-900 md:text-[32px]">
+              Hiring? Meet Hireschema.
+            </h2>
+            <p className="mt-4 text-body leading-relaxed text-ink-600">
+              Hireschema is the recruiter agent — separate from Hireschema AI. Describe the
+              role in plain words and Hireschema surfaces pre-scored,
+              genuinely-interested candidates.
+            </p>
+            <Link
+              href="/invite"
+              className={cn(
+                BTN_PRIMARY,
+                "group mt-6 gap-2 px-6 py-3.5 text-body",
+              )}
+            >
+              Talk to Hireschema
+              <Send
+                className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                strokeWidth={1.5}
+              />
+            </Link>
+          </Reveal>
+
+          <RevealStagger className="grid gap-4 sm:grid-cols-2">
+            {cards.map(({ Icon, title, body }) => (
+              <StaggerItem key={title}>
+                <motion.div
+                  className="space-y-2 rounded-xl border border-ink-100 bg-paper-0 p-5"
+                  whileHover={{ y: -3 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                    <Icon className="h-4 w-4" strokeWidth={1.5} />
+                  </span>
+                  <h3 className="text-h3 text-ink-900">{title}</h3>
+                  <p className="text-small leading-relaxed text-ink-600">
+                    {body}
+                  </p>
+                </motion.div>
+              </StaggerItem>
+            ))}
+          </RevealStagger>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Shown when audience is recruiter — cross-sell Hireschema AI for candidates. */
+export function CandidatesCrossSell({ onSwitch }: { onSwitch: () => void }) {
+  const cards = [
+    {
+      Icon: MessageSquare,
+      title: "Tell Hireschema AI your goals",
+      body: "Role, location, pay — in plain words.",
+    },
+    {
+      Icon: Search,
+      title: "Hireschema AI finds live roles",
+      body: "Scored for fit in your market.",
+    },
+    {
+      Icon: Send,
+      title: "Warm intros",
+      body: "Hireschema AI requests intros — not cold applies.",
+    },
+    {
+      Icon: ShieldCheck,
+      title: "Your data stays yours",
+      body: "Shared only with your consent.",
+    },
+  ] as const;
+
+  return (
+    <section
+      id="candidates"
+      className="scroll-mt-20 border-t border-ink-100 bg-paper-1"
+    >
+      <div className="mx-auto max-w-page px-6 py-16 md:py-24">
+        <div className="grid gap-12 md:grid-cols-2 md:items-center">
+          <Reveal>
+            <p className="text-micro font-semibold uppercase tracking-[0.14em] text-accent">
+              For job seekers · Hireschema AI
+            </p>
+            <h2 className="mt-3 text-h1 text-ink-900 md:text-[32px]">
+              Job hunting? Meet Hireschema AI.
+            </h2>
+            <p className="mt-4 text-body leading-relaxed text-ink-600">
+              Hireschema AI is the candidate agent — separate from Hireschema. It finds live
+              roles in your region, scores your fit, and gets you warm intros in
+              one chat.
+            </p>
+            <button
+              type="button"
+              onClick={onSwitch}
+              className={cn(
+                BTN_PRIMARY,
+                "group mt-6 gap-2 px-6 py-3.5 text-body",
+              )}
+            >
+              Switch to Hireschema AI
+              <ArrowRight
+                className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                strokeWidth={1.5}
+              />
+            </button>
+          </Reveal>
+
+          <RevealStagger className="grid gap-4 sm:grid-cols-2">
+            {cards.map(({ Icon, title, body }) => (
+              <StaggerItem key={title}>
+                <motion.div
+                  className="space-y-2 rounded-xl border border-ink-100 bg-paper-0 p-5"
+                  whileHover={{ y: -3 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                    <Icon className="h-4 w-4" strokeWidth={1.5} />
+                  </span>
+                  <h3 className="text-h3 text-ink-900">{title}</h3>
+                  <p className="text-small leading-relaxed text-ink-600">
+                    {body}
+                  </p>
+                </motion.div>
+              </StaggerItem>
+            ))}
+          </RevealStagger>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const CTA_COPY: Record<
+  LandingAudience,
+  { title: string; sub: string; ctaLabel: string; ctaHref: string }
+> = {
+  candidate: {
+    title: "Try Hireschema with Hireschema AI.",
+    sub: "Hireschema is invite-only for candidates in India. Request access and help shape consent-first hiring.",
+    ctaLabel: "Request an invite",
+    ctaHref: "/invite",
+  },
+  recruiter: {
+    title: "Try Hireschema with Hireschema.",
+    sub: "Hireschema is invite-only for recruiters in India. Request access to create role briefs with opted-in talent.",
+    ctaLabel: "Request an invite",
+    ctaHref: "/invite",
+  },
+};
+
+type FinalCtaSectionProps = {
+  audience: LandingAudience;
+};
+
+export function FinalCtaSection({ audience }: FinalCtaSectionProps) {
+  const copy = CTA_COPY[audience];
+
+  return (
+    <section className="relative overflow-hidden border-t border-ink-100 bg-ink-900">
+      <motion.div
+        className="pointer-events-none absolute inset-0 opacity-30"
+        aria-hidden
+        animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          repeatType: "reverse",
+          ease: "linear",
+        }}
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 20% 50%, rgba(185,248,76,0.15), transparent 50%), radial-gradient(circle at 80% 50%, rgba(185,248,76,0.08), transparent 40%)",
+          backgroundSize: "200% 200%",
+        }}
+      />
+
+      <div className="relative mx-auto max-w-page px-6 py-20 text-center">
+        <Reveal key={audience}>
+          <h2 className="text-h1 text-paper-0 md:text-[32px]">{copy.title}</h2>
+          <p className="mx-auto mt-4 max-w-md text-body text-ink-500">
+            {copy.sub}
+          </p>
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <Link
+              href={copy.ctaHref}
+              className={cn(BTN_PRIMARY, "group gap-2 px-8 py-3.5 text-body")}
+            >
+              {copy.ctaLabel}
+              <ArrowRight
+                className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                strokeWidth={1.5}
+              />
+            </Link>
+            <span className="text-micro text-ink-400">
+              Beta · Free to start · No credit card
+            </span>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+export function LandingFooter() {
+  return (
+    <footer className="border-t border-ink-100">
+      <div className="mx-auto flex max-w-page flex-col items-center justify-between gap-4 px-6 py-8 text-micro text-ink-400 sm:flex-row">
+        <span>© {new Date().getFullYear()} Hireschema · Beta</span>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <a href="#process" className="transition-colors hover:text-ink-700">
+            How it works
+          </a>
+          <a href="#features" className="transition-colors hover:text-ink-700">
+            Features
+          </a>
+          <Link href="/reviewmycv" className="transition-colors hover:text-ink-700">
+            Review my CV
+          </Link>
+          <Link href="/invite" className="transition-colors hover:text-ink-700">
+            Request invite
+          </Link>
+          <Link href="/signup?mode=signin" className="transition-colors hover:text-ink-700">
+            Sign in
+          </Link>
+          <Link
+            href="/privacy"
+            className="transition-colors hover:text-ink-700"
+          >
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="transition-colors hover:text-ink-700">
+            Terms of Service
+          </Link>
+          <a
+            href="mailto:privacy@hireschema.com"
+            className="transition-colors hover:text-ink-700"
+          >
+            Privacy contact
+          </a>
+        </div>
+      </div>
+    </footer>
+  );
+}

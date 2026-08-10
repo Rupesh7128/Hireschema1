@@ -1,0 +1,9 @@
+{
+  "plugins": {
+    "railway": {
+      "enabled": true,
+      "projectId": "12e57bc0-382e-4743-8d49-3f764f166dc2",
+      "serviceId": "83b20792-09a5-4a7f-9a67-99374d2cf552"
+    }
+  }
+}

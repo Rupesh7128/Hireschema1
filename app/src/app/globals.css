@@ -1,0 +1,337 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Hireschema globals — DESIGN.md compliant.
+   3-token palette baked into the body. No HSL CSS variables anymore.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* -------------------------------------------------------------------------
+   Explicit safelist utilities for the 3-token palette.
+   Tailwind's JIT scanner can miss numeric-key custom colours (paper-0,
+   paper-1) and edge-case combos. These guarantee the most-used tokens
+   are always available regardless of scan quirks.
+   ------------------------------------------------------------------------- */
+@layer utilities {
+  /* paper (v2: dark charcoal) */
+  .bg-paper-0   { background-color: #141414; }
+  .bg-paper-1   { background-color: #1C1C1C; }
+  .text-paper-0 { color: #141414; }
+  .text-paper-1 { color: #1C1C1C; }
+
+  /* accent (brand green #9FE870) */
+  .bg-accent        { background-color: #9FE870; }
+  .bg-accent-hover  { background-color: #8CCC63; }
+  .text-accent      { color: #9FE870; }
+  .text-accent-fg   { color: #000000; }
+  .text-on-accent   { color: #000000; }
+  .hover\:text-on-accent:hover { color: #000000; }
+  .border-accent    { border-color: #9FE870; }
+  .ring-accent      { --tw-ring-color: #9FE870; }
+  .ring-accent-ring { --tw-ring-color: rgba(159, 232, 112, 0.30); }
+  .hover\:bg-accent-hover:hover { background-color: #8CCC63; }
+  .focus\:border-accent:focus   { border-color: #9FE870; }
+  .focus\:ring-accent-ring:focus { --tw-ring-color: rgba(159, 232, 112, 0.30); }
+
+  /* ink-50 is nearly page-colour — bump hover chips so controls read on charcoal */
+  .hover\:bg-ink-50:hover {
+    background-color: #2a2a2a;
+  }
+
+  .bg-ink-50 {
+    background-color: #2a2a2a;
+  }
+
+  /* Transparent bordered controls need a visible fill on dark canvas */
+  button.bg-transparent,
+  a.bg-transparent,
+  [role="button"].bg-transparent {
+    background-color: #1c1c1c;
+  }
+
+  button.bg-transparent:hover:not(:disabled),
+  a.bg-transparent:hover:not(:disabled),
+  [role="button"].bg-transparent:hover:not(:disabled) {
+    background-color: #2a2a2a;
+  }
+
+  /* destructive (v2: lighter red for dark) */
+  .bg-destructive-bg { background-color: rgba(247, 109, 109, 0.14); }
+  .text-destructive  { color: #F76D6D; }
+  .border-destructive { border-color: #F76D6D; }
+
+  /* Chat composer icons — stay transparent (override generic bg-transparent fill) */
+  button.hs-composer-icon,
+  button.hs-composer-icon:hover:not(:disabled) {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+  }
+}
+
+/* ── Brutalist CTA buttons: light/lime fill, black label always ─ */
+@layer components {
+  .hs-btn-frame {
+    border: 2px solid #000000;
+    color: #000000;
+    box-shadow: 0 0 0 2px #9fe870, 0 0 0 4px #000000;
+    transition:
+      background-color 160ms cubic-bezier(0.16, 1, 0.3, 1),
+      color 160ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 160ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .hs-btn-frame:hover:not(:disabled),
+  .hs-btn-frame:active:not(:disabled) {
+    color: #000000;
+  }
+
+  .hs-btn-frame:disabled,
+  .hs-btn-frame[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .hs-btn-primary {
+    background-color: #9fe870;
+    color: #000000;
+    border-color: #000000;
+    box-shadow: 0 0 0 2px #9fe870, 0 0 0 4px #000000;
+  }
+
+  .hs-btn-primary:hover:not(:disabled) {
+    background-color: #8ccc63;
+    color: #000000;
+    border-color: #000000;
+    box-shadow: 0 0 0 2px #8ccc63, 0 0 0 4px #000000;
+  }
+
+  .hs-btn-secondary {
+    background-color: #e0e0e0;
+    color: #000000;
+    border-color: #000000;
+    box-shadow: 0 0 0 2px #e0e0e0, 0 0 0 4px #000000;
+  }
+
+  .hs-btn-secondary:hover:not(:disabled) {
+    background-color: #9fe870;
+    color: #000000;
+    border-color: #000000;
+    box-shadow: 0 0 0 2px #9fe870, 0 0 0 4px #000000;
+  }
+
+  .hs-btn-ghost {
+    background-color: #e0e0e0;
+    color: #000000;
+    border-color: #000000;
+    box-shadow: 0 0 0 2px #e0e0e0, 0 0 0 4px #000000;
+  }
+
+  .hs-btn-ghost:hover:not(:disabled) {
+    background-color: #9fe870;
+    color: #000000;
+    border-color: #000000;
+    box-shadow: 0 0 0 2px #9fe870, 0 0 0 4px #000000;
+  }
+
+  .hs-btn-destructive {
+    background-color: rgba(247, 109, 109, 0.14);
+    color: #000000;
+    border-color: #000000;
+    box-shadow: 0 0 0 2px rgba(247, 109, 109, 0.14), 0 0 0 4px #000000;
+  }
+
+  .hs-btn-destructive:hover:not(:disabled) {
+    background-color: #f76d6d;
+    color: #000000;
+    border-color: #000000;
+    box-shadow: 0 0 0 2px #f76d6d, 0 0 0 4px #000000;
+  }
+}
+
+@layer base {
+  :root {
+    /* System stack — no build-time Google Fonts fetch (CI/offline safe). */
+    --font-geist-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+      system-ui, sans-serif;
+    --font-geist-mono: ui-monospace, SFMono-Regular, "Cascadia Code",
+      "Segoe UI Mono", Menlo, Monaco, Consolas, monospace;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  /*
+   * Body uses the system font stack via CSS variables (no next/font network fetch).
+   */
+  body {
+    background-color: #141414;
+    color: #FAFAFA;
+    font-family: var(--font-geist-sans), "Inter", -apple-system,
+                 BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    font-weight: 400;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Inherit body font everywhere — kill browser h1 serif default */
+  h1, h2, h3, h4, h5, h6,
+  p, span, label, input, textarea, select, a, li, td, th {
+    font-family: inherit;
+    color: inherit;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #FAFAFA;
+    letter-spacing: -0.01em;
+  }
+
+  /* Forms — strip default chrome so primitives stay consistent */
+  input, textarea, select {
+    font: inherit;
+    color: inherit;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  /* Buttons and framed links — black label in default + hover. */
+  :where(button, a, [role="button"]).hs-btn-frame,
+  :where(button, a, [role="button"]).hs-btn-primary,
+  :where(button, a, [role="button"]).hs-btn-secondary,
+  :where(button, a, [role="button"]).hs-btn-ghost,
+  :where(button, a, [role="button"]).hs-btn-destructive,
+  :where(button, a, [role="button"]).bg-accent {
+    color: #000000;
+  }
+
+  :where(button, a, [role="button"]).hs-btn-frame:hover:not(:disabled),
+  :where(button, a, [role="button"]).hs-btn-primary:hover:not(:disabled),
+  :where(button, a, [role="button"]).hs-btn-secondary:hover:not(:disabled),
+  :where(button, a, [role="button"]).hs-btn-ghost:hover:not(:disabled),
+  :where(button, a, [role="button"]).hs-btn-destructive:hover:not(:disabled),
+  :where(button, a, [role="button"]).bg-accent:hover:not(:disabled) {
+    color: #000000;
+  }
+
+  :where(button, a, [role="button"]).hs-btn-primary {
+    background-color: #9fe870;
+  }
+
+  :where(button, a, [role="button"]).hs-btn-primary:hover:not(:disabled) {
+    background-color: #8ccc63;
+  }
+
+  :where(button, a, [role="button"]).hs-btn-secondary,
+  :where(button, a, [role="button"]).hs-btn-ghost {
+    background-color: #e0e0e0;
+  }
+
+  :where(button, a, [role="button"]).hs-btn-secondary:hover:not(:disabled),
+  :where(button, a, [role="button"]).hs-btn-ghost:hover:not(:disabled) {
+    background-color: #9fe870;
+  }
+
+  /* icon / chip controls without hs-btn-frame */
+  :where(button, a, [role="button"]).bg-ink-700 {
+    background-color: #e0e0e0;
+    color: #000000;
+  }
+
+  :where(button, a, [role="button"]).bg-ink-700:hover:not(:disabled) {
+    background-color: #9fe870;
+    color: #000000;
+  }
+
+  :where(button, a, [role="button"]).bg-accent {
+    background-color: #9fe870;
+    color: #000000;
+  }
+
+  :where(button, a, [role="button"]).bg-accent:hover:not(:disabled) {
+    background-color: #8ccc63;
+    color: #000000;
+  }
+
+  /* Universal placeholder colour */
+  ::placeholder {
+    color: #6B6B6B;
+    opacity: 1; /* Firefox normalisation */
+  }
+
+  /* Strong focus ring — always visible, never removed */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #141414, 0 0 0 4px #9FE870;
+    border-radius: 0;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: rgba(159, 232, 112, 0.22);
+    color: #FAFAFA;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Scrollbars — one global rule (DESIGN.md §11)
+   ───────────────────────────────────────────────────────────────────────── */
+
+@layer base {
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background-color: #2A2A2A;       /* ink-100 */
+    border-radius: 0;
+    border: 2px solid #141414;       /* paper-0 inset */
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #4D4D4D;       /* ink-300 */
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Reduced motion — kill all animation
+   ───────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Chat typing dots (legacy class — keep until ChatInterface migrates)
+   ───────────────────────────────────────────────────────────────────────── */
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+.typing-dot:nth-child(3) { animation-delay: 0s; }
+
+/* Landing hero — CSS-only entrance (no Framer Motion on /) */
+@media (prefers-reduced-motion: no-preference) {
+  .landing-hero-in {
+    animation: fadeIn 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .landing-hero-in-delay {
+    animation-delay: 120ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero-in {
+    animation: none;
+  }
+}

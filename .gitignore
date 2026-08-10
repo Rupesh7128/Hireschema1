@@ -1,0 +1,94 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment files — NEVER commit real secrets
+.env
+.env.local
+.env.*.local
+.env.vercel.prod
+!.env.example
+scripts/supabase-credentials.env
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Editor / IDE
+.vscode/
+.idea/
+*.iml
+
+# Next.js
+.next/
+next-env.d.ts
+*.tsbuildinfo
+
+# Testing
+coverage/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Turbo
+.turbo/
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Infra state
+infra/.terraform/
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/*.tfvars
+!infra/*.tfvars.example
+
+# Local dev runtime artifacts
+.local-dev-*.pid
+
+# env backups (contain secrets)
+.env.bak*
+*.env.bak*
+.vercel
+
+# Railway importer scratch dirs (use api/railway.ts instead)
+api/.railway-config-pull-*/
+.railway/migration-*.json
+
+# Brainstorm companion sessions
+.superpowers/
+
+# Isolated Codex feature worktrees
+.worktrees/
+
+# Local env files (keep committed templates)
+.env
+.env.*
+!.env.example
+!**/.env.example
+docs/Hireschema-Technical-Audit.zip
+docs/docs/

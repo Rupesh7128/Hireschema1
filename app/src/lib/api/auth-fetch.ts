@@ -1,0 +1,206 @@
+/**
+ * Authenticated fetch to FastAPI — attaches Supabase access token (Bearer).
+ * Required because the API validates JWT via Supabase Auth, not browser
+ * cookies alone.
+ *
+ * Failure semantics:
+ *   - If there is no Supabase session, we still fire the request (lets the
+ *     API decide). The form layer can inspect `res.status === 401` and
+ *     redirect to /signup.
+ *   - If the Supabase SDK itself throws while fetching the session (e.g.
+ *     network blip, expired refresh token), we LOG the underlying cause
+ *     and proceed with no token. We never let a Supabase failure masquerade
+ *     as "API down" — that confuses the user.
+ *   - If the actual fetch to the API fails (network / client timeout), we
+ *     throw a tagged `ApiUnreachableError` with the request `path` and
+ *     boundary `reason`. Browser copy uses the same-origin proxy base
+ *     (`/hireloop-api`), never the raw Railway hostname.
+ *   - Caller-supplied `AbortSignal` cancellation is rethrown as-is and is
+ *     never rewritten as a server timeout.
+ */
+
+import { createClient } from "@/lib/supabase/client";
+import { getApiBaseUrl } from "@/lib/api/base-url";
+
+export type ApiUnreachableReason = "timeout" | "network";
+
+type ApiUnreachableErrorInit = {
+  path: string;
+  reason: ApiUnreachableReason;
+  timeoutMs?: number | null;
+  cause?: unknown;
+  /** Override request base (e.g. server-side direct API host). */
+  baseUrl?: string;
+};
+
+/**
+ * Tagged error class so callers can distinguish a true API connectivity
+ * failure from anything else (auth refresh failures, CORS, operation
+ * `error_code`s, caller aborts, etc.).
+ */
+export class ApiUnreachableError extends Error {
+  readonly path: string;
+  readonly reason: ApiUnreachableReason;
+  readonly timeoutMs: number | null;
+  /** Full request URL actually contacted (proxy path in the browser). */
+  readonly url: string;
+  readonly cause: unknown;
+
+  constructor(init: ApiUnreachableErrorInit) {
+    const path = init.path.startsWith("/") ? init.path : `/${init.path}`;
+    const baseUrl = (init.baseUrl ?? getApiBaseUrl()).replace(/\/$/, "");
+    const url = `${baseUrl}${path}`;
+    const causeMsg =
+      init.cause instanceof Error
+        ? init.cause.message
+        : init.cause != null
+          ? String(init.cause)
+          : "";
+    const detail =
+      causeMsg.trim() ||
+      (init.reason === "timeout"
+        ? "Request timed out — our servers may be busy. Try again."
+        : "Network request failed.");
+    super(`Can't reach API at ${url}: ${detail}`);
+    this.name = "ApiUnreachableError";
+    this.path = path;
+    this.reason = init.reason;
+    this.timeoutMs = init.timeoutMs ?? null;
+    this.url = url;
+    this.cause = init.cause;
+  }
+}
+
+const DEFAULT_API_FETCH_TIMEOUT_MS = 25_000;
+
+function isAbortError(err: unknown): boolean {
+  // Duck-type: jsdom/Node may throw DOMException that is not `instanceof Error`.
+  if (typeof err !== "object" || err === null) return false;
+  const name = (err as { name?: unknown }).name;
+  return name === "AbortError" || name === "TimeoutError";
+}
+
+export async function getAccessToken(): Promise<string | null> {
+  try {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? null;
+  } catch (err) {
+    // Supabase getSession threw — most likely a transient network issue
+    // reaching auth.supabase.co for a token refresh. Don't kill the request.
+    if (typeof window !== "undefined") {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "[auth-fetch] Supabase getSession() failed; continuing without token.",
+        err,
+      );
+    }
+    return null;
+  }
+}
+
+export async function apiAuthFetch(
+  path: string,
+  init: RequestInit = {},
+  options?: { timeoutMs?: number },
+): Promise<Response> {
+  const token = await getAccessToken();
+  const headers = new Headers(init.headers);
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  if (
+    init.body &&
+    !(init.body instanceof FormData) &&
+    !headers.has("Content-Type")
+  ) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const url = `${getApiBaseUrl()}${normalizedPath}`;
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_API_FETCH_TIMEOUT_MS;
+  const hasCallerSignal = init.signal !== undefined;
+  const timeoutSignal =
+    !hasCallerSignal &&
+    typeof AbortSignal !== "undefined" &&
+    "timeout" in AbortSignal
+      ? AbortSignal.timeout(timeoutMs)
+      : null;
+  const controller =
+    hasCallerSignal || timeoutSignal ? null : new AbortController();
+  let timedOutByClient = false;
+  const timeoutId =
+    controller === null
+      ? undefined
+      : globalThis.setTimeout(() => {
+          timedOutByClient = true;
+          controller.abort();
+        }, timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...init,
+      headers,
+      credentials: "same-origin",
+      signal: hasCallerSignal
+        ? init.signal
+        : (timeoutSignal ?? controller!.signal),
+    });
+  } catch (err) {
+    // Caller-owned cancellation must not look like "API unreachable / timed out".
+    if (hasCallerSignal && isAbortError(err)) {
+      throw err;
+    }
+    if (timedOutByClient || (!hasCallerSignal && isAbortError(err))) {
+      throw new ApiUnreachableError({
+        path: normalizedPath,
+        reason: "timeout",
+        timeoutMs,
+        cause: new Error(
+          "Request timed out — our servers may be busy. Try again.",
+        ),
+      });
+    }
+    // Browser fetch only throws on genuine network failures (CORS, DNS,
+    // connection refused). NOT on 4xx/5xx — those return a Response.
+    throw new ApiUnreachableError({
+      path: normalizedPath,
+      reason: "network",
+      timeoutMs,
+      cause: err,
+    });
+  } finally {
+    if (timeoutId !== undefined) globalThis.clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Lightweight probe used by error handlers to confirm whether the API is
+ * really down vs the issue being elsewhere (Supabase, browser extension,
+ * etc.). Cheap, no auth, no credentials.
+ */
+export async function probeApiHealth(): Promise<
+  | { ok: true }
+  | { ok: false; reason: "timeout" | "network" | "non_ok"; status?: number }
+> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 3000);
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/v1/health`, {
+      method: "GET",
+      signal: controller.signal,
+      // No credentials, no auth — simplest possible request, no preflight.
+    });
+    if (!res.ok) return { ok: false, reason: "non_ok", status: res.status };
+    return { ok: true };
+  } catch (err) {
+    if ((err as Error).name === "AbortError") {
+      return { ok: false, reason: "timeout" };
+    }
+    return { ok: false, reason: "network" };
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}

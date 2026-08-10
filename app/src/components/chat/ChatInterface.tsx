@@ -1,0 +1,2727 @@
+"use client";
+
+/**
+ * ChatInterface — Hireschema AI chat UI, Jack & Jill-style.
+ *
+ * Layout:
+ *   ┌─────────────────────────────────────────────────────┐
+ *   │                                                     │
+ *   │  [Hireschema AI] Message…                                   │
+ *   │                                                     │
+ *   │          ┌─────────────────────────────────────┐    │
+ *   │          │ Option A                          › │    │
+ *   │          │ Option B                          › │    │
+ *   │          └─────────────────────────────────────┘    │
+ *   │          Or, answer in your own words below         │
+ *   │                                                     │
+ *   │                                  [You] Message      │
+ *   │                                                     │
+ *   ├─────────────────────────────────────────────────────┤
+ *   │  ┌───────────────────────────────────────────────┐  │
+ *   │  │ Ask Hireschema AI anything…                           │  │
+ *   │  │                                               │  │
+ *   │  │ [📎]                              [📞]  [🎙] │  │
+ *   │  └───────────────────────────────────────────────┘  │
+ *   └─────────────────────────────────────────────────────┘
+ *
+ * Option cards: Hireschema AI can embed selectable choices using the protocol:
+ *   Normal text here.
+ *
+ *   ---OPTIONS---
+ *   Option A
+ *   Option B
+ *   ---END---
+ *
+ * "Performed X actions" is shown as a collapsible row in the message
+ * timeline whenever the action count increases.
+ *
+ * Voice (unified with text — same thread, same memory):
+ *   - Mic: record → STT → review/edit transcript → send (not auto-send)
+ *   - Voice turns appear as normal messages with a mic badge
+ *   - TTS plays the reply; "Switch to text" if playback sounds off
+ *   - Phone button: opens 15-min deep-dive modal (same thread, same pipeline)
+ */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Route,
+  Briefcase,
+  Check,
+  ChevronRight,
+  Mic,
+  Search,
+  Sparkles,
+  Volume2,
+} from "@/components/brand/icons";
+import { Button, useToast } from "@/components/ui";
+import { apiAuthFetch } from "@/lib/api/auth-fetch";
+import { firstNameFromDisplayName } from "@/lib/auth/display-name";
+import {
+  parseJobFiltersFromText,
+  type JobCardFilters,
+} from "@/lib/chat/jobFilters";
+import {
+  getChatWarmupSnapshot,
+  warmupChatContext,
+  type ChatWarmupSnapshot,
+} from "@/lib/chat/warmup";
+import { prepareApplicationKit, fetchReadyApplicationKit, type ApplicationKit } from "@/lib/api/applicationKit";
+import {
+  uploadResume,
+  applyResumeToProfile,
+  fetchResumeParseStatus,
+  waitForResumeParse,
+} from "@/lib/api/onboardingProfile";
+import { useAiOperations } from "@/components/providers/AiOperationsProvider";
+import { resolveReadyOrAccepted } from "@/lib/operations/resolve";
+import { AI_OPERATION_KINDS } from "@/lib/operations/kinds";
+import { ApplicationKitCards } from "./ApplicationKitCards";
+import { MessageText } from "./MessageText";
+import { dedupeJobs } from "@/lib/chat/dedupeJobs";
+import {
+  ensureAaryaSession,
+  fetchAaryaChatHistory,
+  fetchUserChatHistory,
+  readStoredAaryaSession,
+  resolvePrimaryAaryaSession,
+  readVoiceSendOnPause,
+  StaleSessionError,
+  sanitizeChatError,
+  storeAaryaSession,
+  streamAaryaMessage,
+  type AaryaStreamCallbacks,
+} from "@/lib/chat/aaryaStream";
+import { abortActiveTurn, shouldBargeIn } from "@/lib/chat/bargeIn";
+import {
+  MIN_VOICE_CAPTURE_MS,
+  shouldDiscardVoiceCapture,
+} from "@/lib/chat/voiceCapture";
+import {
+  readChatCoachSeen,
+  readChatReplyMode,
+  storeChatReplyMode,
+  type ChatReplyMode,
+} from "@/lib/chat/voicePreferences";
+import {
+  extractNewCompleteSentences,
+  remainingSpeechTail,
+} from "@/lib/chat/sentenceTts";
+import { formatStatusWithEta } from "@/lib/chat/voiceStatus";
+import { isJobApplicationIntent, isJobSearchIntent } from "@/lib/chat/messageIntent";
+import {
+  JOB_DISCOVERY_POLL_MS,
+  JOB_DISCOVERY_TIMEOUT_MS,
+  JOB_DISCOVERY_FALLBACK_LABELS,
+  ingestProgressLabel,
+  shouldWatchForJobDiscovery,
+} from "@/lib/chat/jobDiscovery";
+import { useAgentActionsRealtime } from "@/lib/hooks/useAgentActionsRealtime";
+import { useVoice } from "@/lib/hooks/useVoice";
+import { createClient } from "@/lib/supabase/client";
+import { emailDraftDisplayText } from "@/lib/security/email-content";
+import { BTN_CHIP, BTN_CHIP_ACTIVE } from "@/lib/button-classes";
+import { cn } from "@/lib/utils";
+import type { MatchedJob } from "@/lib/api/matches";
+import { invalidateMatchFeedCache } from "@/lib/api/matches";
+import { recordJobApplication } from "@/lib/api/job-applications";
+import { saveJob } from "@/lib/api/saved-jobs";
+import {
+  fetchMyProfile,
+  invalidateProfileCache,
+  type MyProfileData,
+  type RemotePreference,
+} from "@/lib/api/profile";
+import { AgentThinkingIndicator } from "./AgentThinkingIndicator";
+import { ActivityTimeline, type AgentAction } from "./ActivityTimeline";
+import { ProfileCompletionFlow } from "./ProfileCompletionFlow";
+import { ChatJobCards } from "./ChatJobCards";
+import {
+  JdFitAnalysisCard,
+  ResumeAnalysisCard,
+  type JdFitAnalysis,
+  type ResumeAnalysis,
+} from "./ChatAnalysisCards";
+import { ChatShell } from "@/components/chat/shell/ChatShell";
+import { ChatComposer } from "./ChatComposer";
+import { CareerCallConsent } from "./CareerCallConsent";
+import { InThreadCallBanner } from "./InThreadCallBanner";
+import { VoiceSession } from "@/app/voice/VoiceSession";
+import {
+  CareerPathOptionCards,
+  type CareerPathOption,
+} from "@/components/career/CareerPathOptionCards";
+import {
+  clearCareerKickoffProgress,
+  hasCareerKickoffDone,
+  markCareerKickoffDone,
+} from "@/lib/auth/career-kickoff";
+import { clearClientOnboardingComplete } from "@/lib/auth/onboarding-complete";
+import {
+  approveIntroSend,
+  fetchIntroDetail,
+  fetchIntros,
+  type IntroDetail,
+} from "@/lib/api/intros";
+import {
+  CareerKickoffFlow,
+  type KickoffResult,
+} from "./CareerKickoffFlow";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface Message {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  content_type: "text" | "voice";
+  created_at: string;
+  /** Job cards from a job_search tool call in this turn */
+  jobs?: MatchedJob[];
+  /** Apply assets from prepare_application_kit in this turn */
+  applicationKits?: ApplicationKit[];
+  /** Structured resume analysis card */
+  resumeAnalysis?: ResumeAnalysis;
+  /** Structured JD / role fit analysis card */
+  jdFitAnalysis?: JdFitAnalysis;
+  /** Assistant reply was read aloud after a voice turn */
+  spoken?: boolean;
+  /** When set, render an inline intro draft panel for this intro request. */
+  introId?: string;
+}
+
+type SendOptions = {
+  contentType?: "text" | "voice";
+  speakReply?: boolean;
+  jobId?: string;
+};
+
+type StreamRecovery = {
+  partial: string;
+  continuePrompt: string;
+};
+
+/** Parsed message: text + optional option list extracted from ---OPTIONS--- blocks */
+type ParsedMessage = {
+  text: string;
+  options: string[];
+};
+
+interface ChatInterfaceProps {
+  /**
+   * Pass a known conversation ID (returning user) or null / undefined
+   * (new user, or session-create failed server-side).
+   * When null/undefined the interface is shown immediately and the session
+   * is created lazily on the first message send — so we never block render.
+   */
+  conversationId?: string | null;
+  initialMessages?: Message[];
+  /** Pre-populate the input (e.g. from ?init= query param) */
+  initialInput?: string;
+  className?: string;
+  /** Called once when a new session is created lazily, so parents can cache the ID. */
+  onSessionCreated?: (id: string) => void;
+  candidateName?: string;
+  /** Open the in-thread 15-min career call consent on mount (e.g. ?voice=deep). */
+  initialVoiceDeepDive?: boolean;
+  /** Optional booked session to resume when opening an in-thread career call. */
+  scheduledVoiceSessionId?: string;
+  /** Start the guided career kickoff flow (post-onboarding, ?kickoff=career). */
+  initialKickoff?: boolean;
+  /**
+   * Programmatically inject + auto-send a message (e.g. a quick action or
+   * coaching prompt from a side panel). The `nonce` makes repeated identical
+   * prompts re-trigger; we only send when the nonce changes.
+   */
+  injectedMessage?: { text: string; nonce: number } | null;
+  /** Programmatically prepare an application kit and render the finished cards in chat. */
+  applicationKitRequest?: {
+    jobId: string;
+    title: string;
+    company: string;
+    nonce: number;
+  } | null;
+  /** When set, watch for the intro request for this job and show the draft inline in chat. */
+  introWatch?: { jobId: string; nonce: number; introId?: string } | null;
+  savedJobIds?: Set<string>;
+  onSavedChange?: (jobId: string, saved: boolean) => void;
+  onRequestIntro?: (job: MatchedJob) => void;
+  onCareerKickoffComplete?: (result: KickoffResult) => void;
+  /**
+   * Report jobs surfaced in chat (job_search results) so the parent can mirror
+   * them into the Matches sidebar without the user clicking "Find jobs".
+   */
+  /** Proactive Hireschema AI welcome on return visit (from GET /me/return-summary). */
+  returnWelcomeMessage?: string | null;
+  onJobsFound?: (jobs: MatchedJob[]) => void;
+}
+
+const CHAT_COLUMN_CLASS = "max-w-2xl mx-auto px-4";
+const COMPOSER_TEXT_MAX_H = 80;
+const VOICE_FEATURE_ENABLED = process.env.NEXT_PUBLIC_VOICE_ENABLED !== "false";
+
+// ── Option-block parser ───────────────────────────────────────────────────────
+
+const OPTIONS_RE = /\n*---OPTIONS---\n([\s\S]*?)\n---END---\n*/;
+
+function looksLikeJdPaste(text: string): boolean {
+  const t = text.trim();
+  if (t.length < 280) return false;
+  const low = t.toLowerCase();
+  const hints = [
+    "responsibilities",
+    "requirements",
+    "qualifications",
+    "about the role",
+    "job description",
+    "must have",
+    "nice to have",
+    "years of experience",
+    "we are hiring",
+    "we're hiring",
+  ];
+  const hits = hints.filter((h) => low.includes(h)).length;
+  return hits >= 2 || (hits >= 1 && t.length > 600);
+}
+
+function parseMessage(content: string): ParsedMessage {
+  const match = OPTIONS_RE.exec(content);
+  if (!match) return { text: content.trim(), options: [] };
+  const text = content.replace(OPTIONS_RE, "").trim();
+  const options = match[1]
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return { text, options };
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export function ChatInterface({
+  conversationId: conversationIdProp,
+  initialMessages = [],
+  initialInput,
+  className,
+  onSessionCreated,
+  candidateName,
+  initialVoiceDeepDive = false,
+  scheduledVoiceSessionId,
+  initialKickoff = false,
+  injectedMessage,
+  applicationKitRequest = null,
+  introWatch = null,
+  savedJobIds = new Set(),
+  onSavedChange,
+  onRequestIntro,
+  onCareerKickoffComplete,
+  onJobsFound,
+  returnWelcomeMessage,
+}: ChatInterfaceProps) {
+  const { trackAndWait } = useAiOperations();
+  const [messages, setMessages]       = useState<Message[]>(initialMessages);
+  const [kickoffActive, setKickoffActive] = useState(
+    () => initialKickoff && !hasCareerKickoffDone(),
+  );
+  const kickoffPromptQueuedRef = useRef(false);
+  const returnWelcomeShownRef = useRef(false);
+  const [input, setInput]             = useState(initialInput ?? "");
+  const [isStreaming, setIsStreaming]  = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [actionCount, setActionCount] = useState(0);
+  const [actions, setActions] = useState<AgentAction[]>([]);
+  const [turnActionBaseline, setTurnActionBaseline] = useState(0);
+  const [streamingContent, setStreamingContent] = useState("");
+  const [streamingApplicationKits, setStreamingApplicationKits] = useState<
+    ApplicationKit[]
+  >([]);
+  const [thinkingStatus, setThinkingStatus] = useState<string | null>(null);
+  const [jobDiscoveryActive, setJobDiscoveryActive] = useState(false);
+  const [jobDiscoveryLabel, setJobDiscoveryLabel] = useState<string | null>(null);
+  const [warmup, setWarmup] = useState<ChatWarmupSnapshot | null>(
+    () => getChatWarmupSnapshot()
+  );
+  // Tapping the "Profile X% complete" chip opens the in-chat completion flow
+  // (call Hireschema AI or fill the gamified form) instead of sending a plain message.
+  const [showProfileFlow, setShowProfileFlow] = useState(false);
+  const [pendingVoiceTranscript, setPendingVoiceTranscript] = useState<string | null>(
+    null
+  );
+  const [voiceProcessing, setVoiceProcessing] = useState(false);
+  const [replyMode, setReplyMode] = useState<ChatReplyMode>("voice");
+  const [sendImmediately, setSendImmediately] = useState(true);
+  const [careerCallPhase, setCareerCallPhase] = useState<
+    "off" | "consent" | "active"
+  >(initialVoiceDeepDive ? "consent" : "off");
+  const [showCoachMark, setShowCoachMark] = useState(false);
+  const [hinglishHint, setHinglishHint] = useState(false);
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const historyLoadedForRef = useRef<string | null>(null);
+  const [streamRecovery, setStreamRecovery] = useState<StreamRecovery | null>(null);
+  const recordingStartedAtRef = useRef<number | null>(null);
+  const streamingContentRef = useRef("");
+  const streamGenerationRef = useRef(0);
+  const wasStreamingRef = useRef(false);
+  const streamJobsRef = useRef<MatchedJob[]>([]);
+  const spokenStreamRef = useRef("");
+  const introWatchRef = useRef<{ jobId: string; nonce: number; introId?: string } | null>(null);
+  const streamingTtsQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const jobsAnnouncedRef = useRef(false);
+  const emptySttRetryRef = useRef(false);
+  const hinglishActiveRef = useRef(false);
+  /** Live reply-mode for stream TTS — updated synchronously on toggle. */
+  const voiceRepliesEnabledRef = useRef(true);
+  /** Sync lock — isStreaming state alone cannot block a second send in the same tick. */
+  const sendInFlightRef = useRef(false);
+  const isStreamingRef = useRef(false);
+  const jobDiscoveryStartedAtRef = useRef<number | null>(null);
+  const jobDiscoveryActiveRef = useRef(false);
+
+  // When the user requests an intro from a job card, surface the contact + drafted email
+  // inline in chat (polls /intros until the new row appears, then polls detail).
+  useEffect(() => {
+    if (!introWatch?.jobId || !introWatch?.nonce) return;
+    const sameRequest =
+      introWatchRef.current?.jobId === introWatch.jobId &&
+      introWatchRef.current?.nonce === introWatch.nonce;
+    if (sameRequest && introWatchRef.current?.introId === introWatch.introId) {
+      return;
+    }
+    introWatchRef.current = introWatch;
+
+    const placeholderId = `intro-watch-${introWatch.jobId}-${introWatch.nonce}`;
+    if (!sameRequest) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: placeholderId,
+          role: "assistant",
+          content:
+            "Intro requested — I’m now finding the hiring manager contact and drafting the email. I’ll show you the recipient and draft here in a moment.",
+          content_type: "text",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    }
+
+    let cancelled = false;
+    const start = Date.now();
+    const maxWaitMs = 90_000;
+
+    const attachIntro = (introId: string) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === placeholderId
+            ? {
+                ...m,
+                introId,
+                content:
+                  "Intro request created. Here’s the hiring manager contact (once found) and the drafted email. You can approve and send it from your Gmail.",
+              }
+            : m,
+        ),
+      );
+    };
+
+    const tick = async () => {
+      if (introWatch.introId) {
+        attachIntro(introWatch.introId);
+        return true;
+      }
+      const rows = await fetchIntros({ force: true });
+      if (cancelled) return false;
+      const match = rows.find((r) => r.job_id === introWatch.jobId);
+      if (!match?.id) return false;
+
+      attachIntro(match.id);
+      return true;
+    };
+
+    const interval = window.setInterval(() => {
+      void (async () => {
+        try {
+          if (cancelled) return;
+          const done = await tick();
+          if (done) window.clearInterval(interval);
+          else if (Date.now() - start > maxWaitMs) window.clearInterval(interval);
+        } catch {
+          if (Date.now() - start > maxWaitMs) window.clearInterval(interval);
+        }
+      })();
+    }, 2000);
+
+    void tick().catch(() => undefined);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [introWatch]);
+
+  // Session ID: resolved from prop or created lazily on first send.
+  // Use a ref so sendMessage always sees the latest value without needing
+  // it in the dependency array (avoids stale-closure bugs).
+  const sessionIdRef = useRef<string | null>(conversationIdProp ?? null);
+  const streamingApplicationKitsRef = useRef<ApplicationKit[]>([]);
+  const lastUserTurnRef = useRef<{
+    expectJobCards: boolean;
+    expectApplicationKits: boolean;
+  } | null>(null);
+  // Mirror into state only so the action-counter effect re-subscribes when
+  // a new session is created.
+  const [sessionId, setSessionId] = useState<string | null>(conversationIdProp ?? null);
+
+  // Sync if the parent resolves the prop later (e.g. after a Supabase round-trip).
+  useEffect(() => {
+    if (conversationIdProp && !sessionIdRef.current) {
+      sessionIdRef.current = conversationIdProp;
+      setSessionId(conversationIdProp);
+    }
+  }, [conversationIdProp]);
+
+  const {
+    isRecording,
+    isPlaying,
+    error: voiceError,
+    startRecording,
+    stopRecording,
+    speak,
+    speakFiller,
+    stopSpeaking,
+    interimTranscript,
+    audioLevel,
+  } = useVoice();
+
+  const messagesEndRef  = useRef<HTMLDivElement>(null);
+  const textareaRef     = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef    = useRef<HTMLInputElement>(null);
+  const abortRef        = useRef<AbortController | null>(null);
+
+  // ── Effects ────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    setSendImmediately(readVoiceSendOnPause());
+    setReplyMode(readChatReplyMode());
+    setShowCoachMark(!readChatCoachSeen());
+    void createClient()
+      .auth.getUser()
+      .then(({ data }) => {
+        const uid = data.user?.id ?? null;
+        setAuthUserId(uid);
+        return warmupChatContext().then((snap) => {
+          setWarmup(snap);
+          if (!sessionIdRef.current) {
+            const id =
+              conversationIdProp ?? snap.sessionId ?? readStoredAaryaSession(uid);
+            if (id) {
+              sessionIdRef.current = id;
+              setSessionId(id);
+              storeAaryaSession(id, uid);
+            }
+          }
+        });
+      })
+      .catch(() => {});
+  }, [conversationIdProp]);
+
+  // Restore full user chat history from Supabase (primary thread, day one).
+  useEffect(() => {
+    if (historyLoadedForRef.current === "user") return;
+
+    let cancelled = false;
+    setHistoryLoading(true);
+    void fetchUserChatHistory()
+      .then(({ conversationId, messages: rows }) => {
+        if (cancelled) return;
+        historyLoadedForRef.current = "user";
+        if (conversationId && !sessionIdRef.current) {
+          sessionIdRef.current = conversationId;
+          setSessionId(conversationId);
+          storeAaryaSession(conversationId, authUserId);
+        }
+        const visible = rows.filter((m) => m.role === "user" || m.role === "assistant");
+        if (visible.length > 0) {
+          setMessages((prev) =>
+            prev.length > 0
+              ? prev
+              : visible.map((m) => ({
+                  id: m.id,
+                  role: m.role as "user" | "assistant",
+                  content: m.content,
+                  content_type: (m.content_type === "voice" ? "voice" : "text") as
+                    | "text"
+                    | "voice",
+                  created_at: m.created_at,
+                }))
+          );
+        }
+      })
+      .catch(() => {
+        const sid = sessionId;
+        if (!sid || historyLoadedForRef.current) return;
+        void fetchAaryaChatHistory(sid)
+          .then((rows) => {
+            if (cancelled || !rows.length) return;
+            historyLoadedForRef.current = sid;
+            setMessages(
+              rows
+                .filter((m) => m.role === "user" || m.role === "assistant")
+                .map((m) => ({
+                  id: m.id,
+                  role: m.role as "user" | "assistant",
+                  content: m.content,
+                  content_type: (m.content_type === "voice" ? "voice" : "text") as
+                    | "text"
+                    | "voice",
+                  created_at: m.created_at,
+                }))
+            );
+          })
+          .catch(() => undefined);
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authUserId, sessionId]);
+
+  useEffect(() => {
+    if (initialVoiceDeepDive) setCareerCallPhase("consent");
+  }, [initialVoiceDeepDive]);
+
+  // Explicit ?kickoff=career only — career direction lives in Profile → Intelligence.
+  useEffect(() => {
+    if (!authUserId) return;
+    if (kickoffActive && hasCareerKickoffDone(authUserId)) {
+      setKickoffActive(false);
+    }
+  }, [authUserId, kickoffActive]);
+
+  useEffect(() => {
+    const msg = returnWelcomeMessage?.trim();
+    if (!msg || kickoffActive || returnWelcomeShownRef.current) return;
+    returnWelcomeShownRef.current = true;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `return-welcome-${Date.now()}`,
+        role: "assistant",
+        content: msg,
+        content_type: "text",
+        created_at: new Date().toISOString(),
+      },
+    ]);
+  }, [returnWelcomeMessage, kickoffActive]);
+
+  useEffect(() => {
+    voiceRepliesEnabledRef.current = replyMode === "voice";
+  }, [replyMode]);
+
+  const interruptSpeech = useCallback(() => {
+    stopSpeaking();
+    streamingTtsQueueRef.current = Promise.resolve();
+    spokenStreamRef.current = "";
+  }, [stopSpeaking]);
+
+  const cancelRecording = useCallback(async () => {
+    recordingStartedAtRef.current = null;
+    setPendingVoiceTranscript(null);
+    if (!isRecording) return;
+    try {
+      await stopRecording();
+    } catch {
+      /* ignore */
+    }
+    setVoiceProcessing(false);
+  }, [isRecording, stopRecording]);
+
+  const finalizeInterruptedPartial = useCallback(() => {
+    const partial = streamingContentRef.current.trim();
+    if (!partial) {
+      setStreamingContent("");
+      return;
+    }
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: partial,
+        content_type: "text",
+        created_at: new Date().toISOString(),
+      },
+    ]);
+    streamingContentRef.current = "";
+    setStreamingContent("");
+  }, []);
+
+  const stopGeneration = useCallback(() => {
+    streamGenerationRef.current += 1;
+    abortActiveTurn({ abortRef, interruptSpeech });
+    finalizeInterruptedPartial();
+    sendInFlightRef.current = false;
+    setIsStreaming(false);
+    setThinkingStatus(null);
+  }, [finalizeInterruptedPartial, interruptSpeech]);
+
+  useEffect(() => {
+    streamingContentRef.current = streamingContent;
+  }, [streamingContent]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (isStreamingRef.current || isPlaying || isRecording) {
+        e.preventDefault();
+        if (isRecording) {
+          void cancelRecording();
+        } else {
+          stopGeneration();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [cancelRecording, isPlaying, isRecording, stopGeneration]);
+
+  const setReplyModeAndPersist = useCallback(
+    (mode: ChatReplyMode) => {
+      voiceRepliesEnabledRef.current = mode === "voice";
+      setReplyMode(mode);
+      storeChatReplyMode(mode);
+      if (mode === "text") interruptSpeech();
+    },
+    [interruptSpeech]
+  );
+
+  const handleComposerFocus = useCallback(() => {
+    interruptSpeech();
+    if (isRecording) void cancelRecording();
+  }, [cancelRecording, interruptSpeech, isRecording]);
+
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, COMPOSER_TEXT_MAX_H) + "px";
+  }, [input]);
+
+  // Re-focus the composer as soon as Hireschema AI finishes drafting so the user can reply.
+  useEffect(() => {
+    if (wasStreamingRef.current && !isStreaming) {
+      window.requestAnimationFrame(() => textareaRef.current?.focus());
+    }
+    wasStreamingRef.current = isStreaming;
+  }, [isStreaming]);
+
+  useEffect(() => {
+    if (initialInput && textareaRef.current) {
+      const ta = textareaRef.current;
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    isStreamingRef.current = isStreaming;
+  }, [isStreaming]);
+
+  useEffect(() => {
+    jobDiscoveryActiveRef.current = jobDiscoveryActive;
+  }, [jobDiscoveryActive]);
+
+  // Every job surfaced in chat is accumulated here (deduped) and mirrored to the
+  // parent so the Matches sidebar reflects chat results without a "Find jobs" click.
+  const allChatJobsRef = useRef<MatchedJob[]>([]);
+  const reportChatJobs = useCallback(
+    (jobs: MatchedJob[]) => {
+      if (!onJobsFound || !jobs.length) return;
+      const merged = dedupeJobs([...jobs, ...allChatJobsRef.current]);
+      if (merged.length === allChatJobsRef.current.length) return;
+      allChatJobsRef.current = merged;
+      onJobsFound(merged);
+    },
+    [onJobsFound],
+  );
+
+  // If job cards are already on assistant messages (same session), keep Matches
+  // in sync even when finalize previously skipped reportChatJobs.
+  useEffect(() => {
+    const fromMessages: MatchedJob[] = [];
+    for (const message of messages) {
+      if (message.role === "assistant" && message.jobs?.length) {
+        fromMessages.push(...message.jobs);
+      }
+    }
+    if (fromMessages.length) reportChatJobs(fromMessages);
+  }, [messages, reportChatJobs]);
+
+  const attachJobsToCurrentTurnAssistant = useCallback((jobs: MatchedJob[]) => {
+    const unique = dedupeJobs(jobs);
+    if (!unique.length) return;
+    // Always mirror to Matches — do not gate on isStreamingRef (finalize + the
+    // post-stream pull can race that ref and drop the sidebar sync).
+    reportChatJobs(unique);
+    if (isStreamingRef.current) return;
+    setMessages((prev) => {
+      let lastUserIdx = -1;
+      for (let i = prev.length - 1; i >= 0; i -= 1) {
+        if (prev[i].role === "user") {
+          lastUserIdx = i;
+          break;
+        }
+      }
+      if (lastUserIdx === -1) return prev;
+
+      // Only the assistant for the latest user turn — never a prior bubble.
+      let targetIdx = -1;
+      for (let i = lastUserIdx + 1; i < prev.length; i += 1) {
+        if (prev[i].role === "assistant") {
+          targetIdx = i;
+          break;
+        }
+      }
+      // Still streaming: finalize() will attach streamJobsRef.
+      if (targetIdx === -1) return prev;
+
+      const target = prev[targetIdx];
+      if (target.jobs?.length) {
+        const mergedJobs = dedupeJobs([...unique, ...(target.jobs ?? [])]);
+        if (mergedJobs.length === target.jobs.length) return prev;
+        return prev.map((m, i) =>
+          i === targetIdx ? { ...m, jobs: mergedJobs } : m
+        );
+      }
+
+      return prev.map((m, i) =>
+        i === targetIdx ? { ...m, jobs: unique } : m
+      );
+    });
+  }, [reportChatJobs]);
+
+  const attachApplicationKitsToLastAssistant = useCallback(
+    (kits: ApplicationKit[]) => {
+    if (!lastUserTurnRef.current?.expectApplicationKits) return;
+    if (!kits.length) return;
+    for (const kit of kits) {
+      if (kit.saved && kit.job?.job_id) {
+        onSavedChange?.(kit.job.job_id, true);
+      }
+    }
+    setStreamingApplicationKits(kits);
+    streamingApplicationKitsRef.current = kits;
+    setMessages((prev) => {
+      let lastIdx = -1;
+      for (let i = prev.length - 1; i >= 0; i -= 1) {
+        if (prev[i].role === "assistant") {
+          lastIdx = i;
+          break;
+        }
+      }
+      if (lastIdx === -1) return prev;
+      const last = prev[lastIdx];
+      if (last.applicationKits?.length) return prev;
+      return prev.map((m, i) =>
+        i === lastIdx ? { ...m, applicationKits: kits } : m
+      );
+    });
+  },
+    [onSavedChange]
+  );
+
+  const finishJobDiscovery = useCallback(
+    (jobs: MatchedJob[]) => {
+      if (!jobs.length) return;
+      attachJobsToCurrentTurnAssistant(jobs);
+      setJobDiscoveryActive(false);
+      setJobDiscoveryLabel(null);
+      jobDiscoveryStartedAtRef.current = null;
+      invalidateMatchFeedCache();
+    },
+    [attachJobsToCurrentTurnAssistant],
+  );
+
+  const applyIngestProgress = useCallback((progress: Record<string, unknown>) => {
+    const live = ingestProgressLabel(progress);
+    if (live) setJobDiscoveryLabel(live);
+  }, []);
+
+  // Realtime agent_actions (R7) — instant timeline during streaming.
+  useAgentActionsRealtime(sessionId, authUserId, {
+    enabled: Boolean(sessionId && authUserId),
+    onActions: (live) => setActions(live),
+    onTurnCount: (count) => setActionCount(count),
+    onJobs: (jobs) => {
+      if (jobDiscoveryActiveRef.current) {
+        finishJobDiscovery(jobs);
+        return;
+      }
+      attachJobsToCurrentTurnAssistant(jobs);
+    },
+    onIngestProgress: applyIngestProgress,
+    onApplicationKits: (kits) => attachApplicationKitsToLastAssistant(kits),
+  });
+
+  // Fallback poll only while a turn is actively streaming. Keeping this alive
+  // forever across idle tabs creates a DB-acquire herd and can starve auth
+  // bootstrap/profile setup on small production pools.
+  useEffect(() => {
+    if (!sessionId || !isStreaming) return;
+    let inFlight = false;
+    const poll = async () => {
+      if (document.visibilityState !== "visible" || inFlight) return;
+      inFlight = true;
+      try {
+        const res = await apiAuthFetch(
+          `/api/v1/chat/sessions/${sessionId}/actions`
+        );
+        if (!res.ok) return;
+        const data: {
+          count: number;
+          turn_count?: number;
+          actions?: AgentAction[];
+          jobs?: MatchedJob[];
+          application_kits?: ApplicationKit[];
+        } = await res.json();
+        const turnCount = data.turn_count ?? data.count;
+        setActionCount(turnCount);
+        if (Array.isArray(data.actions)) {
+          setActions(data.actions);
+          const ingest = data.actions.find((a) => a.type === "job_ingest_progress");
+          const live = ingestProgressLabel(ingest?.progress);
+          if (live) setJobDiscoveryLabel(live);
+        }
+        if (Array.isArray(data.jobs) && data.jobs.length > 0) {
+          attachJobsToCurrentTurnAssistant(data.jobs);
+        }
+        if (Array.isArray(data.application_kits) && data.application_kits.length > 0) {
+          attachApplicationKitsToLastAssistant(data.application_kits);
+        }
+      } catch { /* silent */ }
+      finally {
+        inFlight = false;
+      }
+    };
+    const id = window.setInterval(poll, 5000);
+    void poll();
+    return () => window.clearInterval(id);
+  }, [
+    sessionId,
+    attachJobsToCurrentTurnAssistant,
+    attachApplicationKitsToLastAssistant,
+    isStreaming,
+  ]);
+
+  // Pull job cards onto the latest assistant turn as soon as streaming ends.
+  useEffect(() => {
+    if (isStreaming || !sessionId) return;
+    const pull = async () => {
+      try {
+        const res = await apiAuthFetch(
+          `/api/v1/chat/sessions/${sessionId}/actions`
+        );
+        if (!res.ok) return;
+        const data: {
+          jobs?: MatchedJob[];
+          application_kits?: ApplicationKit[];
+        } = await res.json();
+        if (Array.isArray(data.jobs) && data.jobs.length > 0) {
+          attachJobsToCurrentTurnAssistant(data.jobs);
+        }
+        if (Array.isArray(data.application_kits) && data.application_kits.length > 0) {
+          attachApplicationKitsToLastAssistant(data.application_kits);
+        }
+      } catch { /* silent */ }
+    };
+    void pull();
+  }, [
+    isStreaming,
+    sessionId,
+    attachJobsToCurrentTurnAssistant,
+    attachApplicationKitsToLastAssistant,
+  ]);
+
+  // After a job search with no cards yet, poll until Apify ingest + scoring land.
+  useEffect(() => {
+    if (!jobDiscoveryActive || !sessionId) return;
+    if (jobDiscoveryStartedAtRef.current === null) {
+      jobDiscoveryStartedAtRef.current = Date.now();
+    }
+
+    let cancelled = false;
+    let inFlight = false;
+
+    const poll = async () => {
+      if (cancelled || inFlight || document.visibilityState !== "visible") return;
+      const started = jobDiscoveryStartedAtRef.current ?? Date.now();
+      if (Date.now() - started > JOB_DISCOVERY_TIMEOUT_MS) {
+        setJobDiscoveryActive(false);
+        setJobDiscoveryLabel(null);
+        jobDiscoveryStartedAtRef.current = null;
+        return;
+      }
+
+      inFlight = true;
+      try {
+        const res = await apiAuthFetch(
+          `/api/v1/chat/sessions/${sessionId}/actions`
+        );
+        if (!res.ok) return;
+        const data: {
+          turn_count?: number;
+          count?: number;
+          actions?: AgentAction[];
+          jobs?: MatchedJob[];
+        } = await res.json();
+        const turnCount = data.turn_count ?? data.count;
+        if (typeof turnCount === "number") setActionCount(turnCount);
+        if (Array.isArray(data.actions)) {
+          setActions(data.actions);
+          const ingest = data.actions.find((a) => a.type === "job_ingest_progress");
+          const live = ingestProgressLabel(ingest?.progress);
+          if (live) setJobDiscoveryLabel(live);
+        }
+        if (Array.isArray(data.jobs) && data.jobs.length > 0) {
+          finishJobDiscovery(data.jobs);
+        }
+      } catch {
+        /* silent */
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    const id = window.setInterval(poll, JOB_DISCOVERY_POLL_MS);
+    void poll();
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [jobDiscoveryActive, sessionId, finishJobDiscovery]);
+
+  const appendSystemNote = useCallback((content: string) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: "system",
+        content,
+        content_type: "text",
+        created_at: new Date().toISOString(),
+      },
+    ]);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("hireloop_voice_session_summary");
+      if (!raw) return;
+      sessionStorage.removeItem("hireloop_voice_session_summary");
+      const summary = JSON.parse(raw) as { jobCount?: number };
+      if (summary.jobCount && summary.jobCount > 0) {
+        appendSystemNote(
+          `Your voice call is saved. I dropped ${summary.jobCount} matching roles in this chat — scroll up after my reply.`
+        );
+      } else {
+        appendSystemNote(
+          "Your voice call is saved in this thread. Ask me to show your top matches anytime."
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [appendSystemNote]);
+
+  const handleJobSaved = useCallback(
+    (jobId: string, saved: boolean, jobs: MatchedJob[]) => {
+      onSavedChange?.(jobId, saved);
+      if (!saved) return;
+      const job = jobs.find((j) => j.job_id === jobId);
+      if (job) {
+        appendSystemNote(
+          `Saved **${job.title}** at ${job.company_name ?? "this company"}.`
+        );
+      }
+    },
+    [onSavedChange, appendSystemNote]
+  );
+
+  const handleRequestIntroWithConfirm = useCallback(
+    (job: MatchedJob) => {
+      onSavedChange?.(job.job_id, true);
+      void saveJob(job.job_id).catch(() => undefined);
+      onRequestIntro?.(job);
+      appendSystemNote(
+        `Intro requested for **${job.title}** at ${job.company_name ?? "this company"}. Saved to your jobs.`
+      );
+    },
+    [onRequestIntro, onSavedChange, appendSystemNote]
+  );
+
+  // ── Send message ────────────────────────────────────────────────────────
+
+  const sendMessage = useCallback(
+    async (text: string, options: SendOptions = {}) => {
+      if (!text.trim()) return;
+
+      if (
+        shouldBargeIn({
+          isStreaming: isStreamingRef.current,
+          sendInFlight: sendInFlightRef.current,
+        })
+      ) {
+        streamGenerationRef.current += 1;
+        abortActiveTurn({ abortRef, interruptSpeech });
+        finalizeInterruptedPartial();
+        sendInFlightRef.current = false;
+        setIsStreaming(false);
+        setThinkingStatus(null);
+      }
+
+      if (sendInFlightRef.current) return;
+      sendInFlightRef.current = true;
+      const myGeneration = ++streamGenerationRef.current;
+
+      interruptSpeech();
+      if (isRecording) await cancelRecording();
+
+      const contentType = options.contentType ?? "text";
+      const shouldSpeakReply =
+        options.speakReply ??
+        (contentType === "voice" && voiceRepliesEnabledRef.current);
+
+      setPendingVoiceTranscript(null);
+      setStreamRecovery(null);
+      setHinglishHint(false);
+      hinglishActiveRef.current = false;
+      spokenStreamRef.current = "";
+      streamingTtsQueueRef.current = Promise.resolve();
+      jobsAnnouncedRef.current = false;
+      setStreamingApplicationKits([]);
+      streamingApplicationKitsRef.current = [];
+      streamJobsRef.current = [];
+      setJobDiscoveryActive(false);
+      setJobDiscoveryLabel(null);
+      jobDiscoveryStartedAtRef.current = null;
+      setThinkingStatus("Thinking…");
+      const trimmedIntent = text.trim();
+      const isJobSearchTurn = !options.jobId && isJobSearchIntent(trimmedIntent);
+      if (isJobSearchTurn) {
+        markCareerKickoffDone(authUserId ?? undefined);
+        clearClientOnboardingComplete();
+        setKickoffActive(false);
+      }
+      lastUserTurnRef.current = {
+        expectJobCards: isJobSearchTurn,
+        expectApplicationKits: isJobApplicationIntent(trimmedIntent),
+      };
+
+      const userMsg: Message = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: text.trim(),
+        content_type: contentType,
+        created_at: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, userMsg]);
+      setInput("");
+
+      // Pasted JD → immediate fit analysis card (then continue normal Hireschema AI turn)
+      let jdFit: JdFitAnalysis | undefined;
+      if (looksLikeJdPaste(trimmedIntent)) {
+        try {
+          const jdRes = await apiAuthFetch("/api/v1/me/chat/analyze-jd", {
+            method: "POST",
+            body: JSON.stringify({ jd_text: trimmedIntent }),
+          });
+          if (jdRes.ok) {
+            jdFit = (await jdRes.json()) as JdFitAnalysis;
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content:
+                  "I've scored this JD against your profile. Review the fit card — then ask me to find similar roles or prepare an application kit.",
+                content_type: "text",
+                created_at: new Date().toISOString(),
+                jdFitAnalysis: jdFit,
+              },
+            ]);
+          }
+        } catch {
+          /* continue to Hireschema AI */
+        }
+      }
+
+      setStreamingContent("");
+      setTurnActionBaseline(actionCount);
+      setIsStreaming(true);
+      // Sending is an explicit "take me to the reply" intent — re-pin to bottom
+      // even if the user had scrolled up to read earlier job cards.
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      });
+
+      abortRef.current = new AbortController();
+      let finalReply = "";
+      let accumulated = "";
+      let streamFinalized = false;
+      const trimmed = text.trim();
+
+      const finalize = (jobsForMessage?: MatchedJob[]) => {
+        if (streamFinalized || !accumulated) return;
+        streamFinalized = true;
+        finalReply = accumulated;
+        const kitsForMessage =
+          streamingApplicationKitsRef.current.length > 0
+            ? streamingApplicationKitsRef.current
+            : undefined;
+        const jobs =
+          jobsForMessage && jobsForMessage.length > 0
+            ? dedupeJobs(jobsForMessage)
+            : streamJobsRef.current.length > 0
+              ? dedupeJobs(streamJobsRef.current)
+              : undefined;
+        if (jobs?.length) {
+          reportChatJobs(jobs);
+        }
+        setMessages((prev) => {
+          let lastUserIdx = -1;
+          for (let i = prev.length - 1; i >= 0; i -= 1) {
+            if (prev[i].role === "user") {
+              lastUserIdx = i;
+              break;
+            }
+          }
+          const existingTurnAssistant =
+            lastUserIdx >= 0
+              ? prev
+                  .slice(lastUserIdx + 1)
+                  .find(
+                    (m) =>
+                      m.role === "assistant" &&
+                      m.content.trim() === accumulated.trim()
+                  )
+              : undefined;
+          if (existingTurnAssistant) {
+            if (jobs && jobs.length > 0 && !existingTurnAssistant.jobs?.length) {
+              return prev.map((m) =>
+                m.id === existingTurnAssistant.id
+                  ? {
+                      ...m,
+                      jobs,
+                      applicationKits:
+                        kitsForMessage ?? m.applicationKits,
+                    }
+                  : m
+              );
+            }
+            return prev;
+          }
+          return [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: accumulated,
+              content_type: "text",
+              created_at: new Date().toISOString(),
+              applicationKits: kitsForMessage,
+              jobs,
+            },
+          ];
+        });
+        setStreamingContent("");
+        setStreamingApplicationKits([]);
+        streamingApplicationKitsRef.current = [];
+      };
+
+      try {
+        let currentSessionId = await ensureAaryaSession(
+          sessionIdRef.current ?? readStoredAaryaSession(authUserId),
+          (id) => {
+            sessionIdRef.current = id;
+            setSessionId(id);
+            storeAaryaSession(id, authUserId);
+            onSessionCreated?.(id);
+          }
+        );
+
+        const streamCallbacks: AaryaStreamCallbacks = {
+            onStatus: (status, meta) => {
+              setThinkingStatus(formatStatusWithEta(status, meta?.etaSec));
+              if (
+                contentType === "voice" &&
+                voiceRepliesEnabledRef.current &&
+                meta?.spokenFiller
+              ) {
+                speakFiller(meta.spokenFiller);
+              }
+              if (meta?.hinglishHint) {
+                setHinglishHint(true);
+                hinglishActiveRef.current = true;
+              }
+            },
+            onJobs: (jobs) => {
+              streamJobsRef.current = dedupeJobs([
+                ...streamJobsRef.current,
+                ...jobs,
+              ]);
+              // Job cards render on finalize for this turn — attaching during
+              // SSE/realtime used to pin cards on the previous assistant bubble.
+              if (
+                shouldSpeakReply &&
+                !jobsAnnouncedRef.current &&
+                jobs.length > 0
+              ) {
+                jobsAnnouncedRef.current = true;
+                const n = streamJobsRef.current.length;
+                speakFiller(
+                  `I found ${n} strong match${n !== 1 ? "es" : ""} — scroll up to see them.`
+                );
+              }
+            },
+            onText: (_chunk, full) => {
+              accumulated = full;
+              setThinkingStatus(null);
+              setStreamingContent(full);
+              if (shouldSpeakReply && voiceRepliesEnabledRef.current) {
+                const newSentences = extractNewCompleteSentences(
+                  spokenStreamRef.current,
+                  full
+                );
+                for (const sentence of newSentences) {
+                  spokenStreamRef.current = spokenStreamRef.current
+                    ? `${spokenStreamRef.current} ${sentence}`
+                    : sentence;
+                  streamingTtsQueueRef.current = streamingTtsQueueRef.current.then(
+                    () =>
+                      speak(sentence, "aarya", {
+                        hinglish: hinglishActiveRef.current,
+                      })
+                  );
+                }
+              }
+            },
+        };
+
+        const abortSignal = abortRef.current?.signal;
+        const runStream = (sid: string) =>
+          streamAaryaMessage(
+            sid,
+            trimmed,
+            contentType,
+            streamCallbacks,
+            abortSignal,
+            { jobId: options.jobId }
+          );
+
+        let streamResult;
+        try {
+          streamResult = await runStream(currentSessionId);
+        } catch (streamErr) {
+          // Stored conversation was deleted server-side (e.g. data reset). The
+          // stale id is already cleared; create a fresh session and retry once
+          // so the user (text or voice) isn't stuck on "Conversation not found".
+          if (streamErr instanceof StaleSessionError) {
+            currentSessionId = await resolvePrimaryAaryaSession();
+            sessionIdRef.current = currentSessionId;
+            setSessionId(currentSessionId);
+            storeAaryaSession(currentSessionId, authUserId);
+            onSessionCreated?.(currentSessionId);
+            streamResult = await runStream(currentSessionId);
+          } else {
+            throw streamErr;
+          }
+        }
+
+        if (streamResult.hinglishHint) {
+          setHinglishHint(true);
+          hinglishActiveRef.current = true;
+        }
+        if (streamResult.jobs.length > 0) {
+          streamJobsRef.current = dedupeJobs(streamResult.jobs);
+        }
+
+        if (!accumulated.trim() && streamResult.text.trim()) {
+          accumulated = streamResult.text;
+        }
+        if (!streamFinalized && accumulated.trim()) {
+          finalize(streamResult.jobs);
+        }
+      } catch (err) {
+        const aborted =
+          (err as Error).name === "AbortError" ||
+          Boolean(abortRef.current?.signal.aborted) ||
+          myGeneration !== streamGenerationRef.current;
+        if (aborted) {
+          if (accumulated.trim() && !streamFinalized) {
+            finalize();
+          }
+        } else if ((err as Error).name !== "AbortError") {
+          const message =
+            err instanceof Error && err.message
+              ? sanitizeChatError(err.message)
+              : "Failed.";
+
+          if (accumulated.trim() && !streamFinalized) {
+            finalize();
+            setStreamRecovery({
+              partial: accumulated,
+              continuePrompt: "Please continue from where you left off.",
+            });
+          } else if (!streamFinalized) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: message === "Failed." ? "Failed." : `Sorry, I ran into an issue. ${message}`,
+                content_type: "text",
+                created_at: new Date().toISOString(),
+              },
+            ]);
+            setStreamingContent("");
+          }
+        }
+      } finally {
+        if (myGeneration !== streamGenerationRef.current) {
+          return;
+        }
+        sendInFlightRef.current = false;
+        setIsStreaming(false);
+        setThinkingStatus(null);
+        abortRef.current = null;
+        void warmupChatContext({ force: true }).then(setWarmup).catch(() => {});
+        textareaRef.current?.focus();
+        const shouldSpeak =
+          shouldSpeakReply &&
+          voiceRepliesEnabledRef.current &&
+          finalReply.length > 0;
+        if (shouldSpeak) {
+          setMessages((prev) => {
+            if (!prev.length) return prev;
+            const last = prev[prev.length - 1];
+            if (last.role !== "assistant") return prev;
+            return prev.map((m, i) =>
+              i === prev.length - 1 ? { ...m, spoken: true } : m
+            );
+          });
+          const tail = remainingSpeechTail(spokenStreamRef.current, finalReply);
+          if (tail.trim()) {
+            void streamingTtsQueueRef.current.then(() =>
+              speak(tail.slice(0, 2000), "aarya", {
+                hinglish: hinglishActiveRef.current,
+              })
+            );
+          } else if (!spokenStreamRef.current.trim()) {
+            void speak(finalReply.slice(0, 2000), "aarya", {
+              hinglish: hinglishActiveRef.current,
+            });
+          }
+        }
+
+        if (
+          lastUserTurnRef.current?.expectJobCards &&
+          shouldWatchForJobDiscovery(streamJobsRef.current.length, true)
+        ) {
+          setJobDiscoveryActive(true);
+          setJobDiscoveryLabel(JOB_DISCOVERY_FALLBACK_LABELS[0]);
+          jobDiscoveryStartedAtRef.current = Date.now();
+        }
+      }
+    },
+    [
+      isRecording,
+      speak,
+      speakFiller,
+      onSessionCreated,
+      actionCount,
+      reportChatJobs,
+      interruptSpeech,
+      cancelRecording,
+      finalizeInterruptedPartial,
+      authUserId,
+    ]
+  );
+
+  const handleJobApply = useCallback(
+    (job: MatchedJob) => {
+      onSavedChange?.(job.job_id, true);
+      void recordJobApplication(job.job_id).catch(() => undefined);
+      appendSystemNote(
+        `Marked **${job.title}** at ${job.company_name ?? "this company"} as applied — see Matches → Applied.`
+      );
+    },
+    [onSavedChange, appendSystemNote]
+  );
+
+  const handleWhyFit = useCallback(
+    (job: MatchedJob) => {
+      const company = job.company_name ?? "this company";
+      void sendMessage(`Why is ${job.title} at ${company} a fit for me?`, {
+        jobId: job.job_id,
+      });
+    },
+    [sendMessage]
+  );
+
+  // ── Voice ───────────────────────────────────────────────────────────────
+
+  const finishVoiceCapture = useCallback(
+    async (autoSend: boolean) => {
+      setVoiceProcessing(true);
+      try {
+        const transcript = await stopRecording().catch(() => "");
+        if (transcript.trim()) {
+          emptySttRetryRef.current = false;
+          if (autoSend || sendImmediately) {
+            void sendMessage(transcript.trim(), { contentType: "voice" });
+          } else {
+            setPendingVoiceTranscript(transcript.trim());
+          }
+        } else if (!emptySttRetryRef.current) {
+          emptySttRetryRef.current = true;
+          appendSystemNote("I didn't catch that — listening again…");
+          recordingStartedAtRef.current = Date.now();
+          await startRecording();
+        } else {
+          emptySttRetryRef.current = false;
+          appendSystemNote(
+            "I didn't catch that. Tap the mic to try again, or type instead."
+          );
+        }
+      } finally {
+        setVoiceProcessing(false);
+      }
+    },
+    [appendSystemNote, sendMessage, sendImmediately, startRecording, stopRecording]
+  );
+
+  const handleMicClick = useCallback(async () => {
+    if (!VOICE_FEATURE_ENABLED || voiceProcessing || pendingVoiceTranscript) return;
+
+    if (isRecording) {
+      const started = recordingStartedAtRef.current;
+      recordingStartedAtRef.current = null;
+      const elapsed = started ? Date.now() - started : MIN_VOICE_CAPTURE_MS;
+      if (shouldDiscardVoiceCapture(elapsed)) {
+        await cancelRecording();
+        appendSystemNote("Tap again and speak a little longer.");
+        return;
+      }
+      await finishVoiceCapture(sendImmediately);
+      return;
+    }
+
+    if (
+      shouldBargeIn({
+        isStreaming: isStreamingRef.current,
+        sendInFlight: sendInFlightRef.current,
+      })
+    ) {
+      stopGeneration();
+    }
+
+    setReplyModeAndPersist("voice");
+    interruptSpeech();
+    setPendingVoiceTranscript(null);
+    recordingStartedAtRef.current = Date.now();
+    await startRecording();
+  }, [
+    appendSystemNote,
+    cancelRecording,
+    finishVoiceCapture,
+    interruptSpeech,
+    isRecording,
+    pendingVoiceTranscript,
+    sendImmediately,
+    setReplyModeAndPersist,
+    startRecording,
+    stopGeneration,
+    voiceProcessing,
+  ]);
+
+  const cancelMic = useCallback(async () => {
+    if (!VOICE_FEATURE_ENABLED || !isRecording) return;
+    interruptSpeech();
+    await cancelRecording();
+  }, [cancelRecording, interruptSpeech, isRecording]);
+
+  const sendVoiceTranscript = useCallback(() => {
+    if (!pendingVoiceTranscript?.trim()) return;
+    void sendMessage(pendingVoiceTranscript, { contentType: "voice" });
+  }, [pendingVoiceTranscript, sendMessage]);
+
+  // ── Injected messages (from side panels: quick actions / coaching) ────────
+  const lastInjectedNonce = useRef<number | null>(null);
+  useEffect(() => {
+    if (!injectedMessage) return;
+    if (injectedMessage.nonce === lastInjectedNonce.current) return;
+    // Survive React Strict Mode remounts (ref resets; sessionStorage does not).
+    const nonceKey = authUserId
+      ? `hireloop_chat_injected_nonce_${authUserId}`
+      : "hireloop_chat_injected_nonce";
+    try {
+      const stored = sessionStorage.getItem(nonceKey);
+      if (stored === String(injectedMessage.nonce)) return;
+      sessionStorage.setItem(nonceKey, String(injectedMessage.nonce));
+    } catch {
+      /* private mode */
+    }
+    lastInjectedNonce.current = injectedMessage.nonce;
+    void sendMessage(injectedMessage.text);
+  }, [injectedMessage, sendMessage, authUserId]);
+
+  // ── Deterministic application-kit requests from dashboard/job deep links ───
+  // Stabilize onSavedChange via ref. Depend only on the request nonce so parent
+  // re-renders cannot cancel an in-flight poll. Apply results when this nonce is
+  // still the latest kit request (survives React Strict Mode remounts).
+  const onSavedChangeRef = useRef(onSavedChange);
+  onSavedChangeRef.current = onSavedChange;
+  const kitRequestRef = useRef(applicationKitRequest);
+  kitRequestRef.current = applicationKitRequest;
+  const kitPrepareNonceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!applicationKitRequest?.jobId || !applicationKitRequest.nonce) return;
+    const { jobId, title, company, nonce } = applicationKitRequest;
+
+    // Same nonce already preparing (Strict Mode remount) — restore loading UI only.
+    if (kitPrepareNonceRef.current === nonce) {
+      setIsStreaming(true);
+      setThinkingStatus("Preparing your resume, cover letter, and interview prep…");
+      return;
+    }
+    kitPrepareNonceRef.current = nonce;
+
+    const userMessageId = `kit-request-user-${jobId}-${nonce}`;
+    const assistantMessageId = `kit-request-assistant-${jobId}-${nonce}`;
+
+    setIsStreaming(true);
+    setThinkingStatus("Preparing your resume, cover letter, and interview prep…");
+    setStreamingContent("");
+    setStreamingApplicationKits([]);
+
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === userMessageId || m.id === assistantMessageId)) {
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          id: userMessageId,
+          role: "user",
+          content: `Prepare my application kit for the "${title}" role at ${company}.`,
+          content_type: "text",
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: assistantMessageId,
+          role: "assistant",
+          content:
+            "I’m preparing your application kit now — tailored resume, cover letter, and interview prep. Hang tight while I finish this — you’ll see preview and download options here when it’s ready.",
+          content_type: "text",
+          created_at: new Date().toISOString(),
+        },
+      ];
+    });
+
+    void prepareApplicationKit(jobId)
+      .then((outcome) =>
+        resolveReadyOrAccepted(
+          outcome,
+          trackAndWait,
+          () => fetchReadyApplicationKit(jobId),
+          { kind: AI_OPERATION_KINDS.applicationKit },
+        ),
+      )
+      .then((kit) => {
+        if (kitRequestRef.current?.nonce !== nonce) return;
+        if (kit.saved && kit.job?.job_id) {
+          onSavedChangeRef.current?.(kit.job.job_id, true);
+        }
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMessageId
+              ? {
+                  ...m,
+                  content:
+                    "Your application kit is ready — preview or download the tailored resume, cover letter, and interview prep below.",
+                  applicationKits: [kit],
+                }
+              : m,
+          ),
+        );
+      })
+      .catch((e) => {
+        if (kitRequestRef.current?.nonce !== nonce) return;
+        const message = e instanceof Error ? e.message : "Please try again.";
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMessageId
+              ? {
+                  ...m,
+                  content: `I couldn’t finish the application kit yet. ${message}`,
+                }
+              : m,
+          ),
+        );
+      })
+      .finally(() => {
+        if (kitRequestRef.current?.nonce !== nonce) return;
+        setIsStreaming(false);
+        setThinkingStatus(null);
+      });
+  }, [applicationKitRequest, trackAndWait]);
+
+  // ── Resume upload ────────────────────────────────────────────────────────
+
+  const handleResumeUpload = useCallback(
+    async (file: File) => {
+      if (isUploading || isStreaming) return;
+
+      const ALLOWED = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ];
+      if (!ALLOWED.includes(file.type)) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant" as const,
+            content: "Please upload a PDF or DOCX file.",
+            content_type: "text" as const,
+            created_at: new Date().toISOString(),
+          },
+        ]);
+        return;
+      }
+
+      setIsUploading(true);
+
+      // Show file card in the thread immediately
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "user" as const,
+          content: `📎 ${file.name}`,
+          content_type: "text" as const,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      try {
+        // ── Upload (may return 202 + durable parse operation) ──────────────
+        const outcome = await uploadResume(file);
+        let resumeId: string;
+        if (outcome.status === "ready") {
+          resumeId = outcome.data.resume_id;
+          if (outcome.data.parse_status === "failed") {
+            throw new Error(
+              outcome.data.message ?? "Couldn't parse that CV.",
+            );
+          }
+          if (outcome.data.parse_status !== "ready") {
+            await waitForResumeParse(resumeId);
+          }
+        } else {
+          const terminal = await trackAndWait(outcome.operation, {
+            kind: AI_OPERATION_KINDS.resumeParse,
+          });
+          if (terminal.status !== "succeeded" || !terminal.result_id) {
+            throw new Error(
+              terminal.error_message?.trim() ||
+                terminal.message.trim() ||
+                "Couldn't parse that CV.",
+            );
+          }
+          resumeId = terminal.result_id;
+          const status = await fetchResumeParseStatus(resumeId);
+          if (status.parse_status === "failed") {
+            throw new Error(status.message ?? "Couldn't parse that CV.");
+          }
+          if (status.parse_status !== "ready") {
+            await waitForResumeParse(resumeId);
+          }
+        }
+
+        // ── Auto-apply to profile (non-fatal) ──────────────────────────────
+        // replace: a CV uploaded in chat is deliberate — the profile follows it.
+        try {
+          await applyResumeToProfile(resumeId);
+          invalidateProfileCache();
+          invalidateMatchFeedCache();
+        } catch {
+          // best-effort — don't block the chat message
+        }
+
+        setIsUploading(false);
+        let analysis: ResumeAnalysis | null = null;
+        try {
+          const analysisRes = await apiAuthFetch("/api/v1/me/chat/analyze-resume", {
+            method: "POST",
+            body: JSON.stringify({}),
+          });
+          if (analysisRes.ok) {
+            analysis = (await analysisRes.json()) as ResumeAnalysis;
+          }
+        } catch {
+          analysis = null;
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant" as const,
+            content: analysis
+              ? "I've analysed your CV. Review the card below — then pick an action or ask me anything."
+              : "Resume received. Open **Profile → Intelligence** to confirm your target role, then ask me to find matching jobs.",
+            content_type: "text" as const,
+            created_at: new Date().toISOString(),
+            resumeAnalysis: analysis ?? undefined,
+          },
+        ]);
+        return;
+      } catch (err) {
+        setIsUploading(false);
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant" as const,
+            content: `I wasn't able to process that file. ${msg}. Please try again with a PDF or DOCX under 10 MB.`,
+            content_type: "text" as const,
+            created_at: new Date().toISOString(),
+          },
+        ]);
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    },
+    [isUploading, isStreaming, trackAndWait]
+  );
+
+  // ── Career kickoff (post-onboarding guided flow) ────────────────────────
+
+  const handleKickoffStepArchived = useCallback(
+    (payload: { step: 1 | 2 | 3; content: string }) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `kickoff-step-${payload.step}-${Date.now()}`,
+          role: "assistant",
+          content: payload.content,
+          content_type: "text",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    },
+    [],
+  );
+
+  const handleKickoffComplete = useCallback((result: KickoffResult) => {
+    if (kickoffPromptQueuedRef.current) return;
+    kickoffPromptQueuedRef.current = true;
+    markCareerKickoffDone(authUserId ?? undefined);
+    clearClientOnboardingComplete();
+    setKickoffActive(false);
+    onCareerKickoffComplete?.(result);
+    void sendMessage(result.prompt);
+  }, [authUserId, onCareerKickoffComplete, sendMessage]);
+
+  const handleKickoffSkip = useCallback(() => {
+    markCareerKickoffDone(authUserId ?? undefined);
+    clearCareerKickoffProgress();
+    clearClientOnboardingComplete();
+    setKickoffActive(false);
+    void fetchMyProfile()
+      .then((profile) => {
+        const title =
+          profile?.candidate?.looking_for?.trim() ||
+          profile?.candidate?.current_title?.trim();
+        if (title) {
+          void sendMessage(`Find ${title} roles in my market.`);
+        }
+      })
+      .catch(() => undefined);
+  }, [authUserId, sendMessage]);
+
+  // ── Render ──────────────────────────────────────────────────────────────
+
+  const isEmpty = messages.length === 0 && !streamingContent && !historyLoading;
+  const showKickoff = kickoffActive;
+  const lastAssistantContent =
+    messages.length > 0 && messages[messages.length - 1].role === "assistant"
+      ? messages[messages.length - 1].content
+      : null;
+  /** Hide the streaming bubble once finalize has committed the same text. */
+  const showStreamingBubble =
+    Boolean(streamingContent) && streamingContent !== lastAssistantContent;
+  /** True while Hireschema AI is thinking / running tools before any visible draft text. */
+  const isAwaitingDraft = isStreaming && !streamingContent.trim();
+  const composerInputDisabled =
+    isAwaitingDraft || voiceProcessing || Boolean(pendingVoiceTranscript);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (composerInputDisabled) return;
+      void sendMessage(input);
+    }
+  };
+
+  const scrollDeps = useMemo(
+    () => [
+      messages.length,
+      streamingContent,
+      pendingVoiceTranscript,
+      actionCount,
+      isStreaming,
+      isUploading,
+      streamRecovery,
+      showProfileFlow,
+      jobDiscoveryActive,
+      jobDiscoveryLabel,
+    ],
+    [
+      messages.length,
+      streamingContent,
+      pendingVoiceTranscript,
+      actionCount,
+      isStreaming,
+      isUploading,
+      streamRecovery,
+      showProfileFlow,
+      jobDiscoveryActive,
+      jobDiscoveryLabel,
+    ],
+  );
+
+  const messagesSlot = (
+    <div className={cn(CHAT_COLUMN_CLASS, "py-8 space-y-6")}>
+      {showKickoff || !isEmpty ? (
+        <>
+          {messages.map((msg, i) => {
+            const prevUser =
+              msg.role === "assistant"
+                ? [...messages]
+                    .slice(0, i)
+                    .reverse()
+                    .find((m) => m.role === "user")
+                : null;
+            const jobFilters = prevUser
+              ? parseJobFiltersFromText(prevUser.content)
+              : {};
+            const msgJobs = msg.role === "assistant" ? (msg.jobs ?? []) : [];
+            const msgKits =
+              msg.role === "assistant" ? (msg.applicationKits ?? []) : [];
+
+            return (
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                onOptionSelect={(opt) => void sendMessage(opt)}
+                actionCount={
+                  msg.role === "assistant" &&
+                  i === messages.length - 1 &&
+                  actionCount > 0
+                    ? actionCount
+                    : 0
+                }
+                actions={
+                  msg.role === "assistant" && i === messages.length - 1
+                    ? actions
+                    : []
+                }
+                jobs={msgJobs}
+                applicationKits={msgKits}
+                resumeAnalysis={msg.resumeAnalysis}
+                jdFitAnalysis={msg.jdFitAnalysis}
+                jobFilters={jobFilters}
+                conversationId={sessionId ?? undefined}
+                savedJobIds={savedJobIds}
+                onSavedChange={(jobId, saved) =>
+                  handleJobSaved(jobId, saved, msgJobs)
+                }
+                onRequestIntro={handleRequestIntroWithConfirm}
+                onApply={handleJobApply}
+                onWhyFit={handleWhyFit}
+                onAnalysisAction={(actionId) => {
+                  if (actionId === "find_jobs" || actionId === "find_similar") {
+                    void sendMessage("Find matching jobs for my profile in India");
+                  } else if (actionId === "fill_gaps") {
+                    void sendMessage(
+                      "Help me fill the missing profile gaps from my CV analysis",
+                    );
+                  } else if (actionId === "career_path") {
+                    void sendMessage("Build a career path for me");
+                  } else if (actionId === "mock_interview") {
+                    void sendMessage(
+                      "Give me a mock interview based on the JD we just analysed",
+                    );
+                  } else if (actionId === "prepare_kit" && msg.jdFitAnalysis?.job_id) {
+                    void sendMessage(
+                      `Prepare an application kit for job ${msg.jdFitAnalysis.job_id}`,
+                    );
+                  } else if (actionId === "request_intro" && msg.jdFitAnalysis?.job_id) {
+                    void sendMessage(
+                      `Request an intro for job ${msg.jdFitAnalysis.job_id}`,
+                    );
+                  } else {
+                    void sendMessage(`Let's do: ${actionId.replaceAll("_", " ")}`);
+                  }
+                }}
+              />
+            );
+          })}
+
+          {showStreamingBubble && (
+            <MessageBubble
+              message={{
+                id: "streaming",
+                role: "assistant",
+                content: streamingContent,
+                content_type: "text",
+                created_at: new Date().toISOString(),
+              }}
+              onOptionSelect={() => undefined}
+              isStreaming
+              actionCount={0}
+              actions={[]}
+              jobs={[]}
+              conversationId={sessionId ?? undefined}
+              savedJobIds={savedJobIds}
+              onSavedChange={(jobId, saved) => handleJobSaved(jobId, saved, [])}
+              onRequestIntro={handleRequestIntroWithConfirm}
+              onApply={handleJobApply}
+            />
+          )}
+
+          {streamRecovery && !isStreaming && (
+            <div className="rounded-xl border border-ink-200 bg-paper-1 px-4 py-3 space-y-2 w-full">
+              <p className="text-small text-ink-600">
+                Connection dropped — your partial reply is saved above.
+              </p>
+              <button
+                type="button"
+                onClick={() => void sendMessage(streamRecovery.continuePrompt)}
+                className="text-small font-medium text-ink-900 underline underline-offset-2 hover:text-accent"
+              >
+                Continue
+              </button>
+            </div>
+          )}
+
+          {isUploading && !showKickoff && <AgentThinkingIndicator variant="processing" />}
+
+          {isStreaming && !streamingContent && !isUploading && !showKickoff && (
+            <AgentThinkingIndicator
+              actions={actions}
+              actionBaseline={turnActionBaseline}
+              actionCount={actionCount}
+              label={thinkingStatus ?? undefined}
+            />
+          )}
+
+          {jobDiscoveryActive && !isStreaming && !showKickoff && (
+            <AgentThinkingIndicator
+              variant="jobDiscovery"
+              actions={actions}
+              actionBaseline={turnActionBaseline}
+              actionCount={actionCount}
+              label={jobDiscoveryLabel ?? undefined}
+            />
+          )}
+
+          {isStreaming && streamingApplicationKits.length > 0 && (
+            <ApplicationKitCards kits={streamingApplicationKits} />
+          )}
+
+          {showKickoff && (
+            <CareerKickoffFlow
+              userId={authUserId}
+              onComplete={handleKickoffComplete}
+              onSkip={handleKickoffSkip}
+              onStepArchived={handleKickoffStepArchived}
+            />
+          )}
+        </>
+      ) : (
+        <EmptyState
+          onPick={(p) => void sendMessage(p)}
+          onUploadResume={() => fileInputRef.current?.click()}
+        />
+      )}
+
+      {showProfileFlow && (
+        <ProfileCompletionFlow
+          profile={warmup?.profile ?? null}
+          completeness={warmup?.profileCompleteness ?? null}
+          onClose={() => setShowProfileFlow(false)}
+          onSaved={() => {
+            void warmupChatContext({ force: true })
+              .then(setWarmup)
+              .catch(() => {});
+          }}
+        />
+      )}
+    </div>
+  );
+
+  const composerSlot = (
+    <div className="space-y-2">
+      {careerCallPhase === "consent" && (
+        <div className="max-w-2xl mx-auto px-4">
+          <CareerCallConsent
+            onConfirm={() => setCareerCallPhase("active")}
+            onCancel={() => setCareerCallPhase("off")}
+          />
+        </div>
+      )}
+      {careerCallPhase === "active" && (
+        <div className="max-w-2xl mx-auto px-4 space-y-2">
+          <InThreadCallBanner secondsLeft={15 * 60} />
+          <div className="rounded-lg border border-accent/25 bg-accent/5">
+            <VoiceSession
+              candidateName={candidateName}
+              embedded
+              consent
+              scheduledSessionId={scheduledVoiceSessionId}
+              onComplete={() => setCareerCallPhase("off")}
+            />
+          </div>
+        </div>
+      )}
+      {careerCallPhase !== "active" && (
+        <ChatComposer
+          input={input}
+          onInputChange={(value) => {
+            if (isPlaying) interruptSpeech();
+            if (isRecording) void cancelRecording();
+            setInput(value);
+          }}
+          onSend={() => {
+            if (isStreaming && !input.trim()) {
+              stopGeneration();
+              return;
+            }
+            void sendMessage(input);
+          }}
+          onMicClick={handleMicClick}
+          onCancelMic={cancelMic}
+          onStopGeneration={stopGeneration}
+          onStartCareerCall={() => setCareerCallPhase("consent")}
+          onResumeFile={(file) => void handleResumeUpload(file)}
+          textareaRef={textareaRef}
+          fileInputRef={fileInputRef}
+          isStreaming={isStreaming}
+          isRecording={isRecording}
+          isPlaying={isPlaying}
+          voiceProcessing={voiceProcessing}
+          audioLevel={audioLevel}
+          interimTranscript={interimTranscript}
+          pendingVoiceTranscript={pendingVoiceTranscript}
+          onPendingTranscriptChange={setPendingVoiceTranscript}
+          onSendVoiceTranscript={sendVoiceTranscript}
+          sendImmediately={sendImmediately}
+          onSendImmediatelyChange={setSendImmediately}
+          replyMode={replyMode}
+          onReplyModeChange={setReplyModeAndPersist}
+          hinglishHint={hinglishHint}
+          voiceError={voiceError}
+          showCoachMark={showCoachMark}
+          onDismissCoach={() => setShowCoachMark(false)}
+          isUploading={isUploading}
+          composerInputDisabled={composerInputDisabled}
+          isAwaitingDraft={isAwaitingDraft}
+          voiceEnabled={VOICE_FEATURE_ENABLED}
+          onComposerFocus={handleComposerFocus}
+          onKeyDown={handleKeyDown}
+          interruptSpeech={interruptSpeech}
+        />
+      )}
+    </div>
+  );
+
+  return (
+    <ChatShell
+      className={className}
+      messagesSlot={messagesSlot}
+      composerSlot={composerSlot}
+      messagesEndRef={messagesEndRef}
+      scrollDeps={scrollDeps}
+    />
+  );
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+//
+// Compact line-wise option rows (checkbox-style) — locked vs unlocked sets differ.
+
+type ActionCardDef = {
+  Icon: React.ElementType;
+  title: string;
+  description: string;
+  primary?: boolean;
+  /** upload → resume flow; career_paths → path picker; message → sends text */
+  kind: "upload" | "message" | "career_paths";
+  message?: string;
+};
+
+const REMOTE_PREF_PHRASE: Record<RemotePreference, string> = {
+  any: "",
+  remote_only: " Only show remote roles.",
+  onsite_only: " Only show on-site roles.",
+};
+
+/**
+ * Build a concrete, profile-grounded "Find jobs" prompt so Hireschema AI's semantic
+ * search embeds the candidate's *actual* target — role, seniority, location,
+ * top skills, and remote preference — instead of a generic phrase. A specific
+ * query produces a far better pgvector match than "find me jobs".
+ *
+ * Returns a sensible generic fallback when the profile hasn't loaded yet or is
+ * too sparse to personalise.
+ */
+function buildFindJobsMessage(profile: MyProfileData | null): string {
+  const c = profile?.candidate;
+  const generic =
+    "Find the best job matches for me based on my profile, skills, and salary expectations";
+  if (!c) return generic;
+
+  const role = c.current_title?.trim();
+  const city = c.location_city?.trim();
+  const skills = (c.skills ?? [])
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+  const years = c.years_experience;
+  const lookingFor = c.looking_for?.trim();
+  const remote = REMOTE_PREF_PHRASE[c.remote_preference ?? "any"];
+
+  // Need at least a role or some skills to personalise meaningfully.
+  if (!role && skills.length === 0 && !lookingFor) return generic;
+
+  const target = lookingFor || role || "roles that fit my background";
+  const parts: string[] = [`Find ${target}`];
+  if (city) parts.push(`in ${city}`);
+  if (typeof years === "number" && years > 0) {
+    parts.push(`for someone with ${years}+ years of experience`);
+  }
+  if (skills.length > 0) parts.push(`matching my skills in ${skills.join(", ")}`);
+
+  return `${parts.join(" ")}.${remote}`.trim();
+}
+
+/**
+ * Opening options shown first in the chat — "what brings you here?". These are
+ * the candidate goals that used to live in onboarding; surfacing them here makes
+ * the goal the first thing Hireschema AI asks, and each chip seeds the right prompt.
+ */
+function buildSmartStarterCards(findJobsMessage: string): ActionCardDef[] {
+  const cards: ActionCardDef[] = [
+    {
+      Icon: Search,
+      title: "Get my top matches",
+      description: "Best-fit roles first, ranked for you",
+      kind: "message",
+      message: findJobsMessage,
+      primary: true,
+    },
+    {
+      Icon: Route,
+      title: "Set my career direction",
+      description: "Pick a target role from Intelligence",
+      kind: "message",
+      message:
+        "Help me choose my top target role from my career intelligence, prioritize it, and find matching jobs.",
+    },
+    {
+      Icon: Briefcase,
+      title: "Score a job I found",
+      description: "Paste the JD link/text — I’ll score your fit",
+      kind: "message",
+      message:
+        "I saw a job I'm interested in. Help me evaluate how well it fits my profile.",
+    },
+  ];
+  return cards;
+}
+
+function EmptyState({
+  onPick,
+  onUploadResume,
+}: {
+  onPick: (text: string) => void;
+  onUploadResume: () => void;
+}) {
+  const [profile, setProfile] = useState<MyProfileData | null>(null);
+  const [showPathPicker, setShowPathPicker] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetchMyProfile()
+      .then((p) => {
+        if (!cancelled) setProfile(p);
+      })
+      .catch(() => {
+        /* fall back to the generic prompt */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const firstName = firstNameFromDisplayName(profile?.user?.full_name ?? undefined) ?? "there";
+  const c = profile?.candidate;
+  const lookingFor = c?.looking_for?.trim();
+  const city = c?.location_city?.trim();
+  const intentGreeting =
+    lookingFor && city
+      ? `You're looking for ${lookingFor} in ${city}. Want me to pull your top matches?`
+      : lookingFor
+        ? `You're looking for ${lookingFor}. Want me to pull your top matches?`
+        : null;
+  const greeting =
+    intentGreeting ??
+    `Hi ${firstName}, I'm Hireschema AI — your AI recruiter. What brings you here today?`;
+
+  const findJobsMessage = buildFindJobsMessage(profile);
+
+  const cards: ActionCardDef[] = buildSmartStarterCards(findJobsMessage);
+  if (intentGreeting && cards[0]?.kind === "message") {
+    cards[0] = {
+      ...cards[0],
+      title: "Get my top matches",
+      description: "Ranked by fit to your profile",
+      primary: true,
+    };
+  }
+
+  const handlePathSelect = (opt: CareerPathOption) => {
+    onPick(
+      `I want to prioritize the "${opt.title}" career path. Show me matching jobs for this direction.`
+    );
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center text-center pt-6 pb-4 space-y-4 animate-fade-in w-full max-w-md mx-auto">
+      <div className="flex flex-col items-center gap-1.5">
+        <div className="w-12 h-12 rounded-full bg-ink-900 flex items-center justify-center">
+          <Sparkles className="h-5 w-5 text-paper-0" strokeWidth={1.5} />
+        </div>
+        <p className="text-small font-semibold text-ink-900">
+          Hireschema AI <span className="font-normal text-ink-500">· your AI recruiter</span>
+        </p>
+      </div>
+
+      <div className="space-y-1">
+        <p className="text-body text-ink-800 leading-relaxed">{greeting}</p>
+        <p className="text-small text-ink-400 leading-relaxed">
+          Tap a suggestion, or just tell me what you&apos;re looking for.
+        </p>
+      </div>
+
+      {!showPathPicker ? (
+        <div
+          className="w-full space-y-1.5 text-left"
+          role="group"
+          aria-label="Quick actions"
+        >
+          {cards.map((card) => (
+            <button
+              key={card.title}
+              type="button"
+              onClick={() => {
+                if (card.kind === "upload") {
+                  onUploadResume();
+                } else if (card.kind === "career_paths") {
+                  setShowPathPicker(true);
+                } else if (card.message) {
+                  onPick(card.message);
+                }
+              }}
+            className={cn(
+              "w-full flex items-center gap-2.5 px-3 py-2 text-left",
+              card.primary ? BTN_CHIP_ACTIVE : BTN_CHIP,
+            )}
+          >
+            <span
+              className={cn(
+                "flex h-4 w-4 shrink-0 items-center justify-center rounded border-2",
+                card.primary
+                  ? "border-ink-900 bg-ink-900 text-paper-0"
+                  : "border-ink-300 bg-paper-0"
+              )}
+              aria-hidden
+            >
+              {card.primary && <Check className="h-3 w-3" strokeWidth={3} />}
+            </span>
+            <card.Icon
+              className="h-4 w-4 shrink-0 text-ink-500"
+              strokeWidth={1.5}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5">
+                <span className="text-small font-medium text-ink-900 leading-snug">
+                  {card.title}
+                </span>
+                {card.primary && (
+                  <span className="text-micro font-medium uppercase tracking-wide text-accent">
+                    Recommended
+                  </span>
+                )}
+              </span>
+              <span className="block text-micro text-ink-500 leading-snug truncate">
+                {card.description}
+              </span>
+            </span>
+          </button>
+        ))}
+        </div>
+      ) : (
+        <div className="w-full text-left space-y-2">
+          <CareerPathOptionCards
+            compact
+            onSelectPath={handlePathSelect}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPathPicker(false)}
+            className="text-micro text-ink-500 hover:text-ink-900 transition-colors"
+          >
+            ← Back to suggestions
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Message bubble ────────────────────────────────────────────────────────────
+
+function stripMarkdownTables(text: string): string {
+  const lines = text.split("\n");
+  const filtered = lines.filter((line) => {
+    const t = line.trim();
+    if (t.startsWith("|") && t.endsWith("|")) return false;
+    if (/^\|?[\s:-]+\|/.test(t)) return false;
+    return true;
+  });
+  return filtered.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+/** Drop numbered job blurbs once we render structured JobCards beneath. */
+function stripJobListFromText(text: string): string {
+  const looksLikeJobLine = (t: string): boolean => {
+    if (!/^\d+\.\s+/i.test(t)) return false;
+    return (
+      /\*\*/.test(t) ||
+      /\(\d{1,3}%/.test(t) ||
+      /%?\s*match/i.test(t) ||
+      /\bLPA\b/i.test(t) ||
+      /₹/.test(t) ||
+      /\bat\s+[A-Z]/.test(t) ||
+      /[—–-]\s*\d/.test(t)
+    );
+  };
+
+  const lines = text.split("\n");
+  const filtered = lines.filter((line) => {
+    const t = line.trim();
+    if (looksLikeJobLine(t)) return false;
+    if (/^[-*•]\s+\*\*/.test(t) && /match|LPA|₹/i.test(t)) return false;
+    return true;
+  });
+  return filtered.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function prepareAssistantText(text: string, hasJobs: boolean): string {
+  if (!hasJobs) return text;
+  return stripJobListFromText(stripMarkdownTables(text));
+}
+
+function MessageBubble({
+  message,
+  isStreaming = false,
+  onOptionSelect,
+  actionCount,
+  actions,
+  jobs = [],
+  applicationKits = [],
+  resumeAnalysis,
+  jdFitAnalysis,
+  jobFilters = {},
+  conversationId,
+  savedJobIds,
+  onSavedChange,
+  onRequestIntro,
+  onApply,
+  onWhyFit,
+  onAnalysisAction,
+}: {
+  message: Message;
+  isStreaming?: boolean;
+  onOptionSelect: (opt: string) => void;
+  actionCount: number;
+  actions: AgentAction[];
+  jobs?: MatchedJob[];
+  applicationKits?: ApplicationKit[];
+  resumeAnalysis?: ResumeAnalysis;
+  jdFitAnalysis?: JdFitAnalysis;
+  jobFilters?: JobCardFilters;
+  conversationId?: string;
+  savedJobIds?: Set<string>;
+  onSavedChange?: (jobId: string, saved: boolean) => void;
+  onRequestIntro?: (job: MatchedJob) => void;
+  onApply?: (job: MatchedJob) => void;
+  onWhyFit?: (job: MatchedJob) => void;
+  onAnalysisAction?: (actionId: string) => void;
+}) {
+  const isUser = message.role === "user";
+  const isSystem = message.role === "system";
+  const parsed = parseMessage(message.content);
+  const text = prepareAssistantText(parsed.text, jobs.length > 0);
+  const { options } = parsed;
+
+  if (isSystem) {
+    return (
+      <div className="flex justify-center animate-fade-in">
+        <div className="text-micro text-ink-500 bg-ink-50 border border-ink-100 rounded-full px-3 py-1.5 max-w-[90%]">
+          <MessageText content={text} isUser={false} />
+        </div>
+      </div>
+    );
+  }
+
+  if (isUser) {
+    return (
+      <div className="flex justify-end animate-fade-in">
+        <div className="max-w-[80%] bg-paper-1 border border-ink-200 rounded-lg rounded-br-sm px-5 py-3.5 shadow-1 space-y-1 text-ink-900">
+          {message.content_type === "voice" && (
+            <div className="flex items-center gap-1.5 text-micro text-ink-500">
+              <Mic className="h-3 w-3" strokeWidth={1.5} />
+              <span>Voice</span>
+            </div>
+          )}
+          <MessageText content={text} isUser />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 animate-fade-in">
+      {/* Action timeline — shown above the reply that followed the actions */}
+      {actionCount > 0 && !isStreaming && (
+        <ActivityTimeline
+          count={actionCount}
+          actions={actions}
+          agentName="Hireschema AI"
+        />
+      )}
+
+      {/* Message text — full column width to align with the composer */}
+      <div className="w-full space-y-1 rounded-lg border border-ink-100 bg-paper-1 px-4 py-3 shadow-sm">
+        <MessageText content={text} isUser={false} isStreaming={isStreaming} />
+        {message.spoken && !isStreaming && (
+          <p className="text-micro text-ink-400 flex items-center gap-1">
+            <Volume2 className="h-3 w-3" strokeWidth={1.5} />
+            Played aloud
+          </p>
+        )}
+      </div>
+
+      {message.introId && !isStreaming && <InlineIntroDraft introId={message.introId} />}
+
+      {jobs.length > 0 && !isStreaming && (
+        <ChatJobCards
+          jobs={jobs}
+          filters={jobFilters}
+          conversationId={conversationId}
+          savedJobIds={savedJobIds ?? new Set()}
+          onSavedChange={onSavedChange ?? (() => undefined)}
+          onRequestIntro={onRequestIntro}
+          onApply={onApply}
+          onWhyFit={onWhyFit}
+        />
+      )}
+
+      {applicationKits.length > 0 && !isStreaming && (
+        <ApplicationKitCards kits={applicationKits} />
+      )}
+
+      {resumeAnalysis && !isStreaming && (
+        <ResumeAnalysisCard analysis={resumeAnalysis} onAction={onAnalysisAction} />
+      )}
+
+      {jdFitAnalysis && !isStreaming && (
+        <JdFitAnalysisCard analysis={jdFitAnalysis} onAction={onAnalysisAction} />
+      )}
+
+      {/* Option cards */}
+      {options.length > 0 && !isStreaming && (
+        <div className="w-full space-y-2">
+          <div className="rounded-xl border border-ink-200 overflow-hidden">
+            {options.map((opt, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onOptionSelect(opt)}
+                className={cn(
+                  "w-full flex items-center justify-between px-4 py-3.5 text-left",
+                  "text-body text-ink-900 hover:bg-ink-50 transition-colors duration-fast",
+                  i !== 0 && "border-t border-ink-100"
+                )}
+              >
+                <span>{opt}</span>
+                <ChevronRight className="h-4 w-4 text-ink-400 shrink-0" strokeWidth={1.5} />
+              </button>
+            ))}
+          </div>
+          <p className="text-small text-ink-500 ml-1">
+            Or, answer in your own words below
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type DraftPayload = {
+  subject?: string;
+  body_html?: string;
+  body_text?: string;
+};
+
+function parseDraft(raw: string | null | undefined): DraftPayload | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as DraftPayload;
+  } catch {
+    return null;
+  }
+}
+
+function InlineIntroDraft({ introId }: { introId: string }) {
+  const { toast } = useToast();
+  const [detail, setDetail] = useState<IntroDetail | null>(null);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const d = await fetchIntroDetail(introId);
+        if (!cancelled) setDetail(d);
+      } catch {
+        /* ignore */
+      }
+    };
+
+    void load();
+    const interval = window.setInterval(() => {
+      void load();
+    }, 2500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [introId]);
+
+  const inProgress = ["pending", "enriching", "drafting"].includes(detail?.status ?? "");
+  const draft = parseDraft(detail?.draft_email);
+
+  async function handleSend() {
+    if (!detail?.gmail_connected) {
+      toast.error("Connect Google first so we can send from your Gmail.");
+      return;
+    }
+    setSending(true);
+    try {
+      await approveIntroSend(introId);
+      toast.success("Intro email sent from your Gmail");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="w-full rounded-lg border border-ink-100 bg-paper-0 shadow-sm overflow-hidden">
+      <div className="px-4 py-3 bg-paper-1 border-b border-ink-100 space-y-1">
+        <p className="text-micro font-medium uppercase tracking-wide text-ink-500">
+          Intro email draft
+        </p>
+        <p className="text-small text-ink-700">
+          {detail?.hm_name ? (
+            <>
+              To <span className="font-medium text-ink-900">{detail.hm_name}</span>
+              {detail.hm_email ? (
+                <span className="text-ink-500"> · {detail.hm_email}</span>
+              ) : null}
+            </>
+          ) : (
+            "Finding the hiring manager contact…"
+          )}
+        </p>
+        {inProgress && (
+          <p className="text-micro text-ink-500">
+            {detail?.status === "enriching"
+              ? "Finding the hiring manager email via Apify, then verifying it…"
+              : detail?.status === "drafting"
+                ? "Drafting the intro email from your profile…"
+                : "Starting the intro…"}
+          </p>
+        )}
+      </div>
+
+      {draft ? (
+        <>
+          <div className="px-4 py-2 border-b border-ink-100 bg-ink-50/50">
+            <p className="text-micro text-ink-500">Subject</p>
+            <p className="text-small font-medium text-ink-900">
+              {draft.subject ?? "(no subject)"}
+            </p>
+          </div>
+          <div className="px-4 py-3 text-small text-ink-800 leading-relaxed whitespace-pre-wrap">
+            {emailDraftDisplayText(draft.body_html, draft.body_text)}
+          </div>
+          <div className="px-4 py-3 border-t border-ink-100 flex items-center gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              loading={sending}
+              disabled={!detail?.gmail_connected}
+              onClick={() => void handleSend()}
+            >
+              Send from my Gmail
+            </Button>
+            {!detail?.gmail_connected && (
+              <span className="text-micro text-ink-500">
+                Connect Google in Settings to send
+              </span>
+            )}
+          </div>
+        </>
+      ) : (
+        !inProgress && (
+          <div className="px-4 py-3">
+            <p className="text-small text-ink-600">
+              {detail?.error_message ?? "Draft not available yet — check back in a moment."}
+            </p>
+          </div>
+        )
+      )}
+    </div>
+  );
+}

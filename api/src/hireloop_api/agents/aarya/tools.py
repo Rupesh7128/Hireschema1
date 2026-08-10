@@ -1,0 +1,1879 @@
+"""
+Aarya agent tools — deterministic Python functions called by the LLM.
+
+Each tool:
+  1. Performs a concrete action (DB read, API call, etc.)
+  2. Returns a structured result
+  3. Writes a row to agent_actions table (R7 "performed X actions" UI)
+
+Tool catalogue:
+  - profile_read       : read candidate profile from DB
+  - job_search         : semantic search for matching jobs
+  - match_score_explain: explain why a job matches this candidate
+  - request_intro      : insert into intro_requests (triggers Nitya via NOTIFY)
+  - direct_apply       : record a direct application
+  - save_job           : save job for later
+  - prepare_application_kit : save job + tailored resume, cover letter, interview prep
+  - analyze_resume     : CV analysis card (gaps, strengths, version compare)
+  - analyze_pasted_jd  : freeform JD ↔ CV fit analysis
+  - update_job_preferences : remote vs on-site job filter
+  - book_voice_call    : get available voice-call slots (in-house Google Calendar)
+  - voice_response     : signal that Deepgram TTS should be used for response
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import re
+import uuid
+from typing import Any
+
+import asyncpg
+import structlog
+
+from hireloop_api.config import Settings
+from hireloop_api.market_db import fetch_candidate_market, fetch_user_market
+from hireloop_api.markets import MARKET_LABELS, job_visible_for_market_sql
+from hireloop_api.services.career_path import CareerPathService
+from hireloop_api.services.career_path_jobs import (
+    job_matches_path_titles,
+    normalize_path_search_titles,
+    rank_path_job_rows,
+    should_enforce_path_title_gate,
+)
+from hireloop_api.services.career_path_selection import career_path_options
+from hireloop_api.services.job_preferences import (
+    VALID_REMOTE_PREFERENCES,
+    normalize_remote_preference,
+    preference_label,
+    remote_filter_sql,
+    resolve_remote_preference,
+)
+from hireloop_api.services.job_visibility import LIVE_JOB_VISIBLE_SQL
+from hireloop_api.services.match_quality import should_persist_match
+from hireloop_api.services.matching import _assemble_score
+from hireloop_api.services.test_jobs import (
+    TEST_MATCH_EXPLANATION,
+    TEST_MATCH_SCORE,
+    ensure_test_match_scores,
+    fetch_test_jobs,
+    is_test_job,
+    prepend_test_jobs,
+    test_jobs_company_sql_exclude,
+    test_jobs_enabled,
+)
+
+logger = structlog.get_logger()
+
+# Generic words that shouldn't drive a keyword search on their own — they match
+# thousands of unrelated postings. Kept small on purpose; role nouns like
+# "manager", "engineer", "analyst" are deliberately NOT here.
+_SEARCH_STOPWORDS = frozenset(
+    {
+        "and",
+        "the",
+        "for",
+        "of",
+        "in",
+        "with",
+        "to",
+        "at",
+        "on",
+        "a",
+        "an",
+        "jobs",
+        "job",
+        "role",
+        "roles",
+        "position",
+        "positions",
+        "opening",
+        "openings",
+        "vacancy",
+        "vacancies",
+        "hiring",
+        "career",
+        "careers",
+    }
+)
+
+
+def _search_tokens(query_text: str | None) -> list[str]:
+    """Break a decorated role title into significant search tokens.
+
+    Career-path titles arrive decorated, e.g. "Category Manager - Fashion &
+    Apparel". A single full-string ILIKE almost never matches a real posting,
+    so we tokenise and match/rank on the individual words instead. Stopwords
+    and <3-char fragments are dropped; order is preserved (deduped).
+    """
+    if not query_text:
+        return []
+    seen: set[str] = set()
+    tokens: list[str] = []
+    for raw in re.split(r"[^0-9a-zA-Z]+", query_text.lower()):
+        if len(raw) < 3 or raw in _SEARCH_STOPWORDS or raw in seen:
+            continue
+        seen.add(raw)
+        tokens.append(raw)
+    return tokens
+
+
+def _candidate_quality_row(
+    candidate: dict[str, Any],
+    target_titles: list[str],
+    *,
+    prioritized_title: str | None = None,
+    looking_for: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "current_title": candidate.get("current_title"),
+        "current_company": candidate.get("current_company"),
+        "full_name": candidate.get("full_name") or "there",
+        "headline": candidate.get("headline"),
+        "summary": candidate.get("summary"),
+        "years_experience": candidate.get("years_experience"),
+        "skills": list(candidate.get("skills") or []),
+        "expected_ctc_min": candidate.get("expected_ctc_min"),
+        "expected_ctc_max": candidate.get("expected_ctc_max"),
+        "location_city": candidate.get("location_city"),
+        "location_state": candidate.get("location_state"),
+        "remote_preference": candidate.get("remote_preference"),
+        "open_to_relocation": bool(candidate.get("open_to_relocation")),
+        "location_scope": candidate.get("location_scope"),
+        "looking_for": looking_for or candidate.get("looking_for"),
+        "prioritized_title": prioritized_title or candidate.get("prioritized_title"),
+        "target_titles": target_titles,
+    }
+
+
+def _job_quality_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "title": row.get("title"),
+        "company_name": row.get("company_name"),
+        "description": row.get("description"),
+        "seniority": row.get("seniority"),
+        "skills_required": list(row.get("skills_required") or []),
+        "is_remote": bool(row.get("is_remote")),
+        "location_city": row.get("location_city"),
+        "location_state": row.get("location_state"),
+        "ctc_min": row.get("ctc_min"),
+        "ctc_max": row.get("ctc_max"),
+    }
+
+
+def _quality_filter_job_rows(
+    rows: list[Any] | None,
+    *,
+    candidate: dict[str, Any] | None,
+    target_titles: list[str],
+    path_search_titles: list[str] | None = None,
+    prioritized_title: str | None = None,
+    looking_for: str | None = None,
+    lenient: bool = False,
+) -> list[dict[str, Any]]:
+    if not rows:
+        return []
+    if candidate is None:
+        return [dict(r) for r in rows]
+
+    cand_row = _candidate_quality_row(
+        candidate,
+        target_titles,
+        prioritized_title=prioritized_title,
+        looking_for=looking_for,
+    )
+    filtered: list[dict[str, Any]] = []
+    for row in rows:
+        row_dict = dict(row)
+        job_row = _job_quality_row(row_dict)
+        if path_search_titles and not job_matches_path_titles(
+            job_row.get("title"), path_search_titles
+        ):
+            continue
+        if is_test_job(row_dict):
+            if not test_jobs_enabled():
+                continue
+            if row_dict.get("overall_score") is None:
+                row_dict["overall_score"] = TEST_MATCH_SCORE
+            row_dict["explanation"] = row_dict.get("explanation") or TEST_MATCH_EXPLANATION
+            filtered.append(row_dict)
+            continue
+        score = _assemble_score(cand_row, job_row, embed_skills_sim=None, embed_profile_sim=None)
+        if not should_persist_match(cand_row, job_row, score):
+            continue
+        # The recompute above is embedding-free (lexical only) and is used ONLY
+        # for the quality gate. If match_scores already holds a stored score
+        # (computed WITH embeddings by the matching engine — the same value the
+        # saved-jobs / feed surfaces show), keep it for display so the same job
+        # never shows two different percentages across screens. Only fall back
+        # to the lexical recompute when there's no stored score yet.
+        if row_dict.get("overall_score") is None:
+            row_dict["overall_score"] = score["overall"]
+            row_dict["skills_score"] = round(score["skills_sim"], 4)
+            row_dict["experience_score"] = round(score["exp_score"], 4)
+            row_dict["location_score"] = round(score["loc_score"], 4)
+            row_dict["ctc_score"] = round(score["ctc_score"], 4)
+        row_dict["explanation"] = row_dict.get("explanation") or score["explanation"]
+        filtered.append(row_dict)
+    if filtered or not lenient or path_search_titles:
+        return filtered
+    fallback: list[dict[str, Any]] = []
+    for row in rows:
+        row_dict = dict(row)
+        if path_search_titles and not job_matches_path_titles(
+            row_dict.get("title"), path_search_titles
+        ):
+            continue
+        if row_dict.get("overall_score") is None:
+            job_row = _job_quality_row(row_dict)
+            score = _assemble_score(
+                cand_row, job_row, embed_skills_sim=None, embed_profile_sim=None
+            )
+            row_dict["overall_score"] = score["overall"]
+            row_dict["explanation"] = row_dict.get("explanation") or score["explanation"]
+        fallback.append(row_dict)
+    return fallback
+
+
+async def _write_action(
+    db: asyncpg.Connection,
+    agent: str,
+    user_id: str,
+    session_id: str,
+    action_type: str,
+    payload: dict,
+    result: dict,
+    duration_ms: int | None = None,
+) -> None:
+    """Write an agent_action row — drives the "Aarya performed N actions" counter."""
+    await db.execute(
+        """
+        INSERT INTO public.agent_actions
+          (agent, user_id, session_id, action_type, payload, result, duration_ms)
+        VALUES ($1, $2::uuid, $3::uuid, $4, $5::jsonb, $6::jsonb, $7)
+        """,
+        agent,
+        user_id,
+        session_id,
+        action_type,
+        json.dumps(payload),
+        json.dumps(result),
+        duration_ms,
+    )
+
+
+async def _persist_chat_match_scores(
+    db: asyncpg.Connection,
+    *,
+    candidate_id: uuid.UUID,
+    rows: list[dict[str, Any]],
+) -> None:
+    """Upsert match_scores for jobs Aarya just showed in chat.
+
+    Job history / Matches panel read from match_scores. Chat previously only
+    wrote impressions, so refresh wiped jobs that never went through the batch
+    scorer.
+    """
+    records: list[tuple[Any, ...]] = []
+    for row in rows:
+        raw_id = row.get("job_id") or row.get("id")
+        if not raw_id:
+            continue
+        try:
+            job_id = uuid.UUID(str(raw_id))
+        except (TypeError, ValueError):
+            continue
+        overall = row.get("overall_score")
+        if overall is None:
+            overall = 0.55
+        explanation = row.get("explanation")
+        records.append(
+            (
+                uuid.uuid4(),
+                candidate_id,
+                job_id,
+                float(overall),
+                float(row["skills_score"]) if row.get("skills_score") is not None else None,
+                float(row["experience_score"]) if row.get("experience_score") is not None else None,
+                float(row["location_score"]) if row.get("location_score") is not None else None,
+                float(row["ctc_score"]) if row.get("ctc_score") is not None else None,
+                explanation,
+                json.dumps({"source": "aarya_chat"}),
+            )
+        )
+    if not records:
+        return
+    sql = """
+        INSERT INTO public.match_scores
+            (id, candidate_id, job_id,
+             overall_score, skills_score, experience_score, location_score, ctc_score,
+             explanation, bias_audit, computed_at)
+        VALUES
+            ($1, $2::uuid, $3::uuid, $4, $5, $6, $7, $8, $9, $10::jsonb, NOW())
+        ON CONFLICT (candidate_id, job_id) DO UPDATE SET
+            overall_score = GREATEST(match_scores.overall_score, EXCLUDED.overall_score),
+            skills_score = COALESCE(EXCLUDED.skills_score, match_scores.skills_score),
+            experience_score = COALESCE(EXCLUDED.experience_score, match_scores.experience_score),
+            location_score = COALESCE(EXCLUDED.location_score, match_scores.location_score),
+            ctc_score = COALESCE(EXCLUDED.ctc_score, match_scores.ctc_score),
+            explanation = COALESCE(EXCLUDED.explanation, match_scores.explanation),
+            computed_at = NOW()
+        """
+    # Prefer executemany; fall back to per-row execute for pool wrappers that
+    # don't implement it (otherwise chat jobs never reach Job history).
+    if hasattr(db, "executemany"):
+        try:
+            await db.executemany(sql, records)
+            return
+        except Exception as exc:
+            logger.warning("chat_match_scores_executemany_failed", error=str(exc)[:200])
+    for record in records:
+        await db.execute(sql, *record)
+
+
+async def profile_read(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+) -> dict[str, Any]:
+    """Read the candidate's full profile."""
+    import time
+
+    t0 = time.monotonic()
+
+    row = await db.fetchrow(
+        """
+        SELECT c.id, c.headline, c.summary, c.current_title, c.current_company,
+               c.location_city, c.location_state, c.years_experience,
+               c.notice_period_days, c.expected_ctc_min, c.expected_ctc_max,
+               c.current_ctc, c.skills, c.linkedin_url, c.profile_complete,
+               c.remote_preference, c.looking_for,
+               u.full_name, u.email
+        FROM public.candidates c
+        JOIN public.users u ON u.id = c.user_id
+        WHERE c.user_id = $1 AND c.deleted_at IS NULL
+        """,
+        uuid.UUID(user_id),
+    )
+
+    if not row:
+        result = {"error": "Candidate profile not found"}
+    else:
+        from hireloop_api.services.candidate_display_name import resolve_candidate_display_name
+
+        result = dict(row)
+        result["id"] = str(result["id"])
+        resolved_name = await resolve_candidate_display_name(
+            db,
+            user_id=user_id,
+            candidate_id=str(result["id"]),
+        )
+        if resolved_name:
+            result["full_name"] = resolved_name
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(db, "aarya", user_id, session_id, "profile_read", {}, result, duration_ms)
+    return result
+
+
+VALID_LOCATION_SCOPES = ("city", "state", "country", "global")
+
+
+def location_scope_labels(market: str = "IN") -> dict[str, str]:
+    country = MARKET_LABELS.get(market, "your country")
+    return {
+        "city": "roles in your city",
+        "state": "roles across your state/region",
+        "country": f"roles anywhere in {country}",
+        "global": "roles anywhere (global)",
+    }
+
+
+async def update_job_preferences(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    remote_preference: str | None = None,
+    open_to_relocation: bool | None = None,
+    location_scope: str | None = None,
+) -> dict[str, Any]:
+    """Persist the candidate's job-search preferences.
+
+    Levers (set any combination):
+      - ``remote_preference``: remote vs on-site filter (any | remote_only | onsite_only).
+      - ``location_scope``: how wide a geography to surface — city | state | country | global.
+        Drives the location sub-score; kept in sync with open_to_relocation.
+      - ``open_to_relocation``: legacy boolean (True ≈ country). Prefer location_scope.
+    """
+    import time
+
+    t0 = time.monotonic()
+
+    set_clauses: list[str] = []
+    values: list[object] = [uuid.UUID(user_id)]
+    summary: dict[str, Any] = {}
+
+    async def _fail(msg: str) -> dict[str, Any]:
+        res = {"error": msg}
+        await _write_action(
+            db,
+            "aarya",
+            user_id,
+            session_id,
+            "update_job_preferences",
+            {"remote_preference": remote_preference, "location_scope": location_scope},
+            res,
+            int((time.monotonic() - t0) * 1000),
+        )
+        return res
+
+    pref: str | None = None
+    if remote_preference is not None:
+        pref = normalize_remote_preference(remote_preference)
+        if pref not in VALID_REMOTE_PREFERENCES:
+            return await _fail(
+                "Invalid remote_preference. Use one of: "
+                + ", ".join(sorted(VALID_REMOTE_PREFERENCES))
+            )
+        set_clauses.append(f"remote_preference = ${len(values) + 1}")
+        values.append(pref)
+        summary["remote_preference"] = pref
+
+    # location_scope is the source of truth; mirror open_to_relocation off it.
+    scope: str | None = None
+    if location_scope is not None:
+        scope = location_scope.lower().strip()
+        if scope not in VALID_LOCATION_SCOPES:
+            return await _fail(
+                "Invalid location_scope. Use one of: " + ", ".join(VALID_LOCATION_SCOPES)
+            )
+        set_clauses.append(f"location_scope = ${len(values) + 1}")
+        values.append(scope)
+        summary["location_scope"] = scope
+        derived_relocation = scope in ("country", "global")
+        set_clauses.append(f"open_to_relocation = ${len(values) + 1}")
+        values.append(derived_relocation)
+        summary["open_to_relocation"] = derived_relocation
+    elif open_to_relocation is not None:
+        set_clauses.append(f"open_to_relocation = ${len(values) + 1}")
+        values.append(bool(open_to_relocation))
+        summary["open_to_relocation"] = bool(open_to_relocation)
+        # Keep scope coherent with the legacy flag.
+        set_clauses.append(f"location_scope = ${len(values) + 1}")
+        values.append("country" if open_to_relocation else "city")
+        summary["location_scope"] = (summary["open_to_relocation"] and "country") or "city"
+
+    if not set_clauses:
+        result = {
+            "error": "Nothing to update — provide remote_preference, location_scope, "
+            "and/or open_to_relocation."
+        }
+    else:
+        updated = await db.execute(
+            f"""
+            UPDATE public.candidates
+            SET {", ".join(set_clauses)}, updated_at = NOW()
+            WHERE user_id = $1::uuid AND deleted_at IS NULL
+            """,
+            *values,
+        )
+        if updated == "UPDATE 0":
+            result = {"error": "Candidate profile not found"}
+        else:
+            bits: list[str] = []
+            if pref is not None:
+                bits.append(preference_label(pref))
+            effective_scope = summary.get("location_scope")
+            if effective_scope:
+                market = await fetch_user_market(db, uuid.UUID(user_id))
+                bits.append(location_scope_labels(market)[effective_scope])
+            result = {
+                **summary,
+                "message": "Job search preferences updated: " + "; ".join(bits) + ".",
+            }
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "update_job_preferences",
+        {
+            "remote_preference": remote_preference,
+            "open_to_relocation": open_to_relocation,
+            "location_scope": location_scope,
+        },
+        result,
+        duration_ms,
+    )
+    return result
+
+
+async def update_profile(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    current_title: str | None = None,
+    current_company: str | None = None,
+    years_experience: int | None = None,
+    skills: list[str] | None = None,
+    expected_ctc_min_lpa: float | None = None,
+    expected_ctc_max_lpa: float | None = None,
+    current_ctc_lpa: float | None = None,
+    notice_period_days: int | None = None,
+    location_city: str | None = None,
+    location_state: str | None = None,
+    looking_for: str | None = None,
+) -> dict[str, Any]:
+    """Persist profile details Aarya gathered (e.g. on a recruiter-style call).
+
+    CTC args are in LPA and stored as INR per annum. Pass only the fields you
+    learned this turn; everything is optional.
+    """
+    import time
+
+    t0 = time.monotonic()
+
+    set_clauses: list[str] = []
+    values: list[object] = [uuid.UUID(user_id)]
+    saved: dict[str, Any] = {}
+
+    def _add(column: str, value: object) -> None:
+        set_clauses.append(f"{column} = ${len(values) + 1}")
+        values.append(value)
+        saved[column] = value
+
+    text_inputs = {
+        "current_title": current_title,
+        "current_company": current_company,
+        "location_city": location_city,
+        "location_state": location_state,
+        "looking_for": looking_for,
+    }
+    for column, raw in text_inputs.items():
+        if raw is not None and str(raw).strip():
+            _add(column, str(raw).strip())
+
+    if years_experience is not None:
+        _add("years_experience", int(years_experience))
+    if notice_period_days is not None:
+        _add("notice_period_days", int(notice_period_days))
+    if skills:
+        cleaned = [s.strip() for s in skills if s and s.strip()]
+        if cleaned:
+            set_clauses.append(f"skills = ${len(values) + 1}::text[]")
+            values.append(cleaned)
+            saved["skills"] = cleaned
+
+    def _lpa(v: float | None) -> int | None:
+        return round(v * 100_000) if v is not None and v > 0 else None
+
+    for column, lpa in (
+        ("expected_ctc_min", _lpa(expected_ctc_min_lpa)),
+        ("expected_ctc_max", _lpa(expected_ctc_max_lpa)),
+        ("current_ctc", _lpa(current_ctc_lpa)),
+    ):
+        if lpa is not None:
+            _add(column, lpa)
+
+    if not set_clauses:
+        result: dict[str, Any] = {"error": "No profile fields provided to update."}
+    else:
+        updated = await db.execute(
+            f"""
+            UPDATE public.candidates
+            SET {", ".join(set_clauses)}, updated_at = NOW()
+            WHERE user_id = $1::uuid AND deleted_at IS NULL
+            """,
+            *values,
+        )
+        result = (
+            {"error": "Candidate profile not found"}
+            if updated == "UPDATE 0"
+            else {"updated_fields": sorted(saved.keys()), "message": "Profile updated."}
+        )
+        if updated != "UPDATE 0":
+            if hasattr(db, "fetchrow"):
+                cand = await db.fetchrow(
+                    "SELECT id FROM public.candidates "
+                    "WHERE user_id = $1::uuid AND deleted_at IS NULL",
+                    uuid.UUID(user_id),
+                )
+                if cand:
+                    from hireloop_api.services.background_jobs import (
+                        MATCH_EMBED_CANDIDATE,
+                        RESUME_EMBED_SCORE,
+                        enqueue_job,
+                    )
+
+                    cid = str(cand["id"])
+                    await enqueue_job(
+                        db,
+                        kind=RESUME_EMBED_SCORE,
+                        payload={"candidate_id": cid},
+                        idempotency_key=f"resume_embed_score:{cid}",
+                    )
+                    await enqueue_job(
+                        db,
+                        kind=MATCH_EMBED_CANDIDATE,
+                        payload={"candidate_id": cid},
+                        idempotency_key=f"match_embed_candidate:{cid}",
+                    )
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db, "aarya", user_id, session_id, "update_profile", saved, result, duration_ms
+    )
+    return result
+
+
+# Holds references to fire-and-forget tasks so they aren't GC'd (legacy; prefer background_jobs).
+_BG_TASKS: set[asyncio.Task] = set()
+
+
+async def _write_auto_ingest_progress(
+    db: asyncpg.Connection,
+    *,
+    user_id: str | None,
+    session_id: str | None,
+    phase: str,
+    result: dict[str, Any],
+) -> None:
+    if not user_id or not session_id:
+        return
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "job_ingest_progress",
+        {"phase": phase},
+        result,
+    )
+
+
+async def _auto_ingest_for_candidate(
+    settings: Settings,
+    candidate_id: str,
+    *,
+    user_id: str | None = None,
+    session_id: str | None = None,
+    force_refresh: bool = False,
+) -> None:
+    """Background: career-path scrape → embed new jobs → score for this candidate."""
+    from hireloop_api.deps import get_db_pool
+    from hireloop_api.services.apify.job_ingester import JobIngester
+    from hireloop_api.services.embeddings import embed_pending_and_score_candidate
+
+    try:
+        pool = await get_db_pool(settings)
+        async with pool.acquire() as conn:
+            ingester = JobIngester(
+                settings.apify_token,
+                conn,
+                settings=settings,
+                jobs_actor=settings.apify_jobs_actor,
+            )
+
+            async def _progress(event: dict[str, Any]) -> None:
+                await _write_auto_ingest_progress(
+                    conn,
+                    user_id=user_id,
+                    session_id=session_id,
+                    phase=str(event.get("phase") or "progress"),
+                    result=event,
+                )
+
+            stats = await ingester.ingest_for_candidate(
+                candidate_id,
+                progress_callback=_progress,
+                force_refresh=force_refresh,
+            )
+            embedded, scored = await embed_pending_and_score_candidate(
+                conn, settings, candidate_id, limit=500
+            )
+            await _write_auto_ingest_progress(
+                conn,
+                user_id=user_id,
+                session_id=session_id,
+                phase="scored",
+                result={
+                    "phase": "scored",
+                    "embedded": embedded,
+                    "scored": scored,
+                    "inserted": int(stats.get("inserted") or 0),
+                    "updated": int(stats.get("updated") or 0),
+                },
+            )
+            if user_id and session_id and scored > 0:
+                try:
+                    await job_search(
+                        conn,
+                        user_id,
+                        session_id,
+                        query_text="",
+                        settings=settings,
+                        limit=10,
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "aarya_auto_ingest_job_search_failed",
+                        candidate_id=candidate_id,
+                        error=str(exc)[:200],
+                    )
+        logger.info(
+            "aarya_auto_ingest_done",
+            candidate_id=candidate_id,
+            embedded=embedded,
+            scored=scored,
+        )
+    except Exception as exc:  # background best-effort; never surfaces to the user
+        logger.warning("aarya_auto_ingest_failed", error=str(exc)[:200])
+
+
+async def job_search(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    query_text: str,
+    skills_filter: list[str] | None = None,
+    location_city: str | None = None,
+    ctc_min: int | None = None,
+    remote_preference: str | None = None,
+    limit: int = 10,
+    exclude_job_ids: list[str] | None = None,
+    settings: Settings | None = None,
+) -> dict[str, Any]:
+    """
+    Hybrid job search: multi-pool recall (precomputed, FTS, trigram, vector, role)
+    fused with RRF, then feature-based rerank and behavior adjustments.
+    """
+    import time
+
+    from hireloop_api.services.behavior_ranking import (
+        apply_behavior_multiplier,
+        fetch_job_behavior_signals,
+    )
+    from hireloop_api.services.job_lexical_search import (
+        fetch_fts_job_pool,
+        fetch_role_family_pool,
+        fetch_trigram_title_pool,
+    )
+    from hireloop_api.services.job_recall_pipeline import union_and_rank_recall_pools
+    from hireloop_api.services.job_relevance_pipeline import filter_and_rerank_jobs
+    from hireloop_api.services.job_search_refresh import (
+        compute_job_search_fetch_limit,
+        exclude_job_rows,
+    )
+    from hireloop_api.services.job_vector_search import (
+        fetch_responsibility_vector_pool,
+        fetch_title_vector_pool,
+    )
+    from hireloop_api.services.occupation_taxonomy import resolve_role_id
+
+    t0 = time.monotonic()
+
+    exclude_ids = list(exclude_job_ids or [])
+    fetch_limit = compute_job_search_fetch_limit(limit=limit, exclude_count=len(exclude_ids))
+
+    candidate = await db.fetchrow(
+        """
+        SELECT c.id, c.remote_preference, c.market,
+               c.current_title, c.current_company, c.headline, c.summary,
+               c.years_experience, c.skills, c.location_city, c.location_state,
+               c.expected_ctc_min, c.expected_ctc_max,
+               c.open_to_relocation, c.location_scope, c.looking_for,
+               u.full_name
+        FROM public.candidates c
+        JOIN public.users u ON u.id = c.user_id AND u.deleted_at IS NULL
+        WHERE c.user_id = $1::uuid AND c.deleted_at IS NULL
+        """,
+        uuid.UUID(user_id),
+    )
+
+    market = "IN"
+    if candidate:
+        market = await fetch_candidate_market(db, candidate["id"])
+        if test_jobs_enabled(settings):
+            await ensure_test_match_scores(
+                db,
+                str(candidate["id"]),
+                market=market,
+                remote_preference="any",
+                settings=settings,
+            )
+
+    vis = job_visible_for_market_sql(market_param="$7")
+
+    pref = resolve_remote_preference(
+        stored=candidate["remote_preference"] if candidate else None,
+        override=remote_preference,
+    )
+    remote_clause = remote_filter_sql(pref)
+    company_exclude = test_jobs_company_sql_exclude(company_alias="co")
+
+    target_titles: list[str] = []
+    path_search_titles: list[str] = []
+    prioritized_title: str | None = None
+    intelligence_skills: list[str] = []
+    if candidate:
+        path = await CareerPathService.get_latest(db, str(candidate["id"]))
+        path_row_titles = list((path or {}).get("target_titles") or [])
+        prioritized_title = (path or {}).get("prioritized_title") or None
+        target_titles = path_row_titles
+        if prioritized_title:
+            path_search_titles = normalize_path_search_titles(
+                path_row_titles,
+                prioritized_title=str(prioritized_title),
+            )
+        try:
+            from hireloop_api.services.candidate_intelligence import load_candidate_intelligence
+
+            snapshot = await load_candidate_intelligence(db, candidate["id"])
+            if snapshot is not None:
+                job_context = snapshot.for_job_search()
+                target_titles = job_context.primary_titles or target_titles
+                intelligence_skills = job_context.skills
+        except Exception as exc:
+            logger.warning("candidate_intelligence_snapshot_unavailable", error=str(exc)[:200])
+    candidate_profile = dict(candidate) if candidate else None
+    if candidate_profile:
+        if prioritized_title:
+            candidate_profile["prioritized_title"] = prioritized_title
+        if path_search_titles:
+            candidate_profile["target_titles"] = path_search_titles
+        if intelligence_skills:
+            candidate_profile["skills"] = intelligence_skills
+
+    path_locked = should_enforce_path_title_gate(path_search_titles)
+    path_filter_kwargs = {
+        "path_search_titles": path_search_titles if path_locked else None,
+        "prioritized_title": prioritized_title,
+        "looking_for": str(candidate["looking_for"])
+        if candidate and candidate.get("looking_for")
+        else None,
+    }
+
+    recall_pools: list[tuple[str, list[dict[str, Any]]]] = []
+    if candidate:
+        step1_raw = await db.fetch(
+            f"""
+            SELECT j.id, j.title, j.location_city, j.location_state,
+                   j.is_remote, j.ctc_min, j.ctc_max, j.skills_required,
+                   j.employment_type, j.seniority, j.apply_url, j.description,
+                   co.name AS company_name, co.logo_url,
+                   ms.overall_score, ms.explanation
+            FROM public.match_scores ms
+            JOIN public.jobs j ON j.id = ms.job_id
+            LEFT JOIN public.companies co ON co.id = j.company_id
+            WHERE ms.candidate_id = $1::uuid
+              AND j.is_active = TRUE
+              AND {vis}
+              AND j.deleted_at IS NULL
+              AND {LIVE_JOB_VISIBLE_SQL}
+              {remote_clause}
+              {company_exclude}
+              AND (
+                $2::text = '' OR
+                j.title ILIKE '%' || $2::text || '%' OR
+                j.skills_required::text ILIKE '%' || $2::text || '%'
+              )
+              AND ($3::text[] IS NULL OR j.skills_required && $3::text[])
+              AND ($4::text IS NULL OR j.location_city ILIKE '%' || $4::text || '%')
+              AND ($5::integer IS NULL OR j.ctc_max IS NULL OR j.ctc_max >= $5::integer)
+            ORDER BY ms.overall_score DESC
+            LIMIT $6::integer
+            """,
+            candidate["id"],
+            query_text,
+            skills_filter,
+            location_city,
+            ctc_min,
+            fetch_limit,
+            market,
+        )
+        step1_filtered = _quality_filter_job_rows(
+            step1_raw,
+            candidate=candidate_profile,
+            target_titles=target_titles,
+            **path_filter_kwargs,
+        )
+        # Lenient re-fetch is only safe when step 1 had nothing REAL to offer
+        # (empty, or demo rows only). If real rows existed and strict quality
+        # filtering dropped them (e.g. domain mismatch — dental sales for a
+        # SaaS GTM profile), an honest empty beats leniently re-admitting them.
+        had_real_raw = any(not is_test_job(dict(r)) for r in step1_raw)
+        if step1_filtered:
+            recall_pools.append(("precomputed_query", step1_filtered))
+        elif not had_real_raw and not path_locked:
+            # Step 1b: narrow query missed, or only demo rows were filtered out.
+            vis_fallback = job_visible_for_market_sql(market_param="$3")
+            step1b_raw = await db.fetch(
+                f"""
+                SELECT j.id, j.title, j.location_city, j.location_state,
+                       j.is_remote, j.ctc_min, j.ctc_max, j.skills_required,
+                       j.employment_type, j.seniority, j.apply_url, j.description,
+                       co.name AS company_name, co.logo_url,
+                       ms.overall_score, ms.explanation
+                FROM public.match_scores ms
+                JOIN public.jobs j ON j.id = ms.job_id
+                LEFT JOIN public.companies co ON co.id = j.company_id
+                WHERE ms.candidate_id = $1::uuid
+                  AND j.is_active = TRUE
+                  AND {vis_fallback}
+                  AND j.deleted_at IS NULL
+                  AND {LIVE_JOB_VISIBLE_SQL}
+                  {remote_clause}
+                  {company_exclude}
+                ORDER BY ms.overall_score DESC
+                LIMIT $2::integer
+                """,
+                candidate["id"],
+                fetch_limit,
+                market,
+            )
+            step1b_filtered = _quality_filter_job_rows(
+                step1b_raw,
+                candidate=candidate_profile,
+                target_titles=target_titles,
+                lenient=True,
+                **path_filter_kwargs,
+            )
+            if step1b_filtered:
+                recall_pools.append(("precomputed_broad", step1b_filtered))
+
+    # Step 2: fallback — unranked keyword search (no match scores yet at all)
+    vis_kw = job_visible_for_market_sql(market_param="$6")
+    keyword_rows = await db.fetch(
+        f"""
+        SELECT j.id, j.title, j.location_city, j.location_state,
+               j.is_remote, j.ctc_min, j.ctc_max, j.skills_required,
+               j.employment_type, j.seniority, j.apply_url, j.description,
+               co.name AS company_name, co.logo_url,
+               NULL::real AS overall_score
+        FROM public.jobs j
+        LEFT JOIN public.companies co ON co.id = j.company_id
+        WHERE j.is_active = TRUE
+          AND {vis_kw}
+          AND j.deleted_at IS NULL
+          AND {LIVE_JOB_VISIBLE_SQL}
+          {remote_clause}
+          {company_exclude}
+          AND (
+            $1::text = '' OR
+            j.title ILIKE '%' || $1::text || '%' OR
+            j.description ILIKE '%' || $1::text || '%'
+          )
+          AND ($2::text[] IS NULL OR j.skills_required && $2::text[])
+          AND ($3::text IS NULL OR j.location_city ILIKE '%' || $3::text || '%')
+          AND ($4::integer IS NULL OR j.ctc_max IS NULL OR j.ctc_max >= $4::integer)
+        ORDER BY j.scraped_at DESC
+        LIMIT $5::integer
+        """,
+        query_text,
+        skills_filter,
+        location_city,
+        ctc_min,
+        fetch_limit,
+        market,
+    )
+    keyword_filtered = _quality_filter_job_rows(
+        keyword_rows,
+        candidate=candidate_profile,
+        target_titles=target_titles,
+        **path_filter_kwargs,
+    )
+    if keyword_filtered:
+        recall_pools.append(("keyword", keyword_filtered))
+
+    # Step 2b: the exact phrase missed. Relax to token-level matching so a
+    # decorated title ("Category Manager - Fashion & Apparel") degrades to the
+    # closest live roles instead of a dead end. Rank by how many query tokens
+    # appear in the title, then recency. Quality filter still gates fit.
+    tokens = _search_tokens(query_text)
+    if tokens:
+        vis_tok = job_visible_for_market_sql(market_param="$6")
+        tok_rows = await db.fetch(
+            f"""
+            SELECT j.id, j.title, j.location_city, j.location_state,
+                   j.is_remote, j.ctc_min, j.ctc_max, j.skills_required,
+                   j.employment_type, j.seniority, j.apply_url, j.description,
+                   co.name AS company_name, co.logo_url,
+                   NULL::real AS overall_score
+            FROM public.jobs j
+            LEFT JOIN public.companies co ON co.id = j.company_id
+            WHERE j.is_active = TRUE
+              AND {vis_tok}
+              AND j.deleted_at IS NULL
+              AND {LIVE_JOB_VISIBLE_SQL}
+              {remote_clause}
+              {company_exclude}
+              AND ($2::text[] IS NULL OR j.skills_required && $2::text[])
+              AND ($3::text IS NULL OR j.location_city ILIKE '%' || $3::text || '%')
+              AND ($4::integer IS NULL OR j.ctc_max IS NULL OR j.ctc_max >= $4::integer)
+              AND EXISTS (
+                SELECT 1 FROM unnest($1::text[]) AS t
+                WHERE j.title ILIKE '%' || t || '%'
+              )
+            ORDER BY (
+                SELECT count(*) FROM unnest($1::text[]) AS t
+                WHERE j.title ILIKE '%' || t || '%'
+              ) DESC,
+              j.scraped_at DESC
+            LIMIT $5::integer
+            """,
+            tokens,
+            skills_filter,
+            location_city,
+            ctc_min,
+            fetch_limit,
+            market,
+        )
+        token_filtered = _quality_filter_job_rows(
+            tok_rows,
+            candidate=candidate_profile,
+            target_titles=target_titles,
+            lenient=not path_locked,
+            **path_filter_kwargs,
+        )
+        if token_filtered:
+            recall_pools.append(("token", token_filtered))
+
+    # Hybrid retrieval pools (P1): FTS, trigram, role-family, live vectors
+    search_query = (
+        query_text.strip()
+        or (prioritized_title or "")
+        or (target_titles[0] if target_titles else "")
+    )
+    if search_query:
+        fts_rows = await fetch_fts_job_pool(
+            db,
+            query=search_query,
+            market=market,
+            remote_clause=remote_clause,
+            fetch_limit=150,
+            skills_filter=skills_filter,
+            location_city=location_city,
+        )
+        fts_filtered = _quality_filter_job_rows(
+            fts_rows,
+            candidate=candidate_profile,
+            target_titles=target_titles,
+            **path_filter_kwargs,
+        )
+        if fts_filtered:
+            recall_pools.append(("fts", fts_filtered))
+
+        tri_rows = await fetch_trigram_title_pool(
+            db,
+            query=search_query,
+            market=market,
+            remote_clause=remote_clause,
+            fetch_limit=50,
+            skills_filter=skills_filter,
+            location_city=location_city,
+        )
+        tri_filtered = _quality_filter_job_rows(
+            tri_rows,
+            candidate=candidate_profile,
+            target_titles=target_titles,
+            **path_filter_kwargs,
+        )
+        if tri_filtered:
+            recall_pools.append(("trigram", tri_filtered))
+
+    if candidate:
+        role_id = resolve_role_id(
+            prioritized_title or (target_titles[0] if target_titles else None)
+        )
+        if role_id:
+            role_rows = await fetch_role_family_pool(
+                db,
+                role_id=role_id,
+                market=market,
+                remote_clause=remote_clause,
+                fetch_limit=150,
+                location_city=location_city,
+            )
+            role_filtered = _quality_filter_job_rows(
+                role_rows,
+                candidate=candidate_profile,
+                target_titles=target_titles,
+                **path_filter_kwargs,
+            )
+            if role_filtered:
+                recall_pools.append(("role_family", role_filtered))
+
+        vec_title_rows = await fetch_title_vector_pool(
+            db,
+            candidate_id=uuid.UUID(str(candidate["id"])),
+            market=market,
+            remote_clause=remote_clause,
+            fetch_limit=150,
+            location_city=location_city,
+        )
+        vec_title_filtered = _quality_filter_job_rows(
+            vec_title_rows,
+            candidate=candidate_profile,
+            target_titles=target_titles,
+            **path_filter_kwargs,
+        )
+        if vec_title_filtered:
+            recall_pools.append(("vector_title", vec_title_filtered))
+
+        vec_resp_rows = await fetch_responsibility_vector_pool(
+            db,
+            candidate_id=uuid.UUID(str(candidate["id"])),
+            market=market,
+            remote_clause=remote_clause,
+            fetch_limit=150,
+            location_city=location_city,
+        )
+        vec_resp_filtered = _quality_filter_job_rows(
+            vec_resp_rows,
+            candidate=candidate_profile,
+            target_titles=target_titles,
+            **path_filter_kwargs,
+        )
+        if vec_resp_filtered:
+            recall_pools.append(("vector_responsibility", vec_resp_filtered))
+
+    # Step 3: broader market pool only when hybrid pools are thin
+    # ("Assistant Manager", "Senior Executive") or sparse city feeds. Pull a
+    # broader visible market pool, score it against the CV, and keep the best
+    # profile-fit roles so Aarya always has cards before narrating a dry feed.
+    vis_profile = job_visible_for_market_sql(market_param="$4")
+    broad_limit = max(fetch_limit * 5, 50)
+    profile_rows = await db.fetch(
+        f"""
+        SELECT j.id, j.title, j.location_city, j.location_state,
+               j.is_remote, j.ctc_min, j.ctc_max, j.skills_required,
+               j.employment_type, j.seniority, j.apply_url, j.description,
+               co.name AS company_name, co.logo_url,
+               NULL::real AS overall_score
+        FROM public.jobs j
+        LEFT JOIN public.companies co ON co.id = j.company_id
+        WHERE j.is_active = TRUE
+          AND {vis_profile}
+          AND j.deleted_at IS NULL
+          AND {LIVE_JOB_VISIBLE_SQL}
+          {remote_clause}
+          {company_exclude}
+          AND ($2::integer IS NULL OR j.ctc_max IS NULL OR j.ctc_max >= $2::integer)
+        ORDER BY
+          CASE
+            WHEN $1::text IS NOT NULL
+             AND j.location_city ILIKE '%' || $1::text || '%'
+            THEN 0
+            ELSE 1
+          END,
+          j.scraped_at DESC
+        LIMIT $3::integer
+        """,
+        location_city,
+        ctc_min,
+        broad_limit,
+        market,
+    )
+    profile_filtered = _quality_filter_job_rows(
+        profile_rows,
+        candidate=candidate_profile,
+        target_titles=target_titles,
+        **path_filter_kwargs,
+    )
+    if not profile_filtered and not path_locked:
+        profile_filtered = _quality_filter_job_rows(
+            profile_rows,
+            candidate=candidate_profile,
+            target_titles=target_titles,
+            lenient=True,
+            **path_filter_kwargs,
+        )
+    if profile_filtered:
+        recall_pools.append(("profile_broad", profile_filtered))
+
+    rows = union_and_rank_recall_pools(recall_pools, limit=fetch_limit)
+    if path_locked and path_search_titles and rows:
+        rows = rank_path_job_rows([dict(r) for r in rows], path_search_titles, limit=fetch_limit)
+
+    if rows:
+        rows = exclude_job_rows(
+            [dict(r) for r in rows],
+            exclude_job_ids=exclude_ids,
+            limit=fetch_limit,
+        )
+
+    # Feature rerank + behavior signals (P0/P2)
+    if candidate and rows:
+        cand_dict = dict(candidate)
+        cand_dict["prioritized_title"] = prioritized_title
+        cand_dict["target_titles"] = target_titles
+        rows = filter_and_rerank_jobs(cand_dict, [dict(r) for r in rows], limit=fetch_limit)
+        job_ids = [str(r.get("id") or r.get("job_id") or "") for r in rows]
+        behavior = await fetch_job_behavior_signals(
+            db, candidate_id=uuid.UUID(str(candidate["id"])), job_ids=job_ids
+        )
+        rows = apply_behavior_multiplier([dict(r) for r in rows], behavior)
+        rows.sort(
+            key=lambda item: (
+                -float(item.get("_behavior_adjusted_score") or item.get("_retrieval_score") or 0.0)
+            )
+        )
+        rows = rows[:limit]
+
+    if rows:
+        rows = exclude_job_rows(
+            [dict(r) for r in rows],
+            exclude_job_ids=exclude_ids,
+            limit=limit,
+        )
+
+    if candidate and test_jobs_enabled(settings):
+        test_rows = await fetch_test_jobs(db, market=market, remote_preference="any")
+        test_dicts = []
+        for row in test_rows:
+            row_dict = dict(row)
+            row_dict["id"] = row_dict["job_id"]
+            row_dict["overall_score"] = TEST_MATCH_SCORE
+            row_dict["explanation"] = TEST_MATCH_EXPLANATION
+            test_dicts.append(row_dict)
+        rows = prepend_test_jobs(
+            [dict(r) for r in rows],
+            test_dicts,
+            limit=limit,
+        )
+
+    from hireloop_api.services.job_present import serialize_job_card
+    from hireloop_api.services.ranking import dedupe_jobs
+
+    results = [
+        {
+            **dict(r),
+            "id": str(r["id"]),
+            "skills_required": r["skills_required"] or [],
+            "overall_score": float(r["overall_score"]) if r["overall_score"] is not None else None,
+        }
+        for r in rows
+    ]
+    job_cards = dedupe_jobs([serialize_job_card(r) for r in rows])
+    duration_ms = int((time.monotonic() - t0) * 1000)
+
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "job_search",
+        {
+            "query": query_text,
+            "location": location_city,
+            "limit": limit,
+            "remote_preference": pref,
+        },
+        {"count": len(job_cards), "jobs": job_cards, "remote_preference": pref},
+        duration_ms,
+    )
+
+    # Retention: mark jobs surfaced via chat as "seen" AND persist scores so
+    # Matches → Job history survives a refresh (history reads match_scores).
+    if candidate is not None and job_cards:
+        try:
+            job_uuids = [
+                uuid.UUID(str(j.get("job_id") or j.get("id")))
+                for j in job_cards
+                if (j.get("job_id") or j.get("id"))
+            ]
+            if job_uuids:
+                await db.execute(
+                    """
+                    INSERT INTO public.candidate_job_impressions (candidate_id, job_id, source)
+                    SELECT $1::uuid, jid, 'chat'
+                    FROM unnest($2::uuid[]) AS jid
+                    ON CONFLICT (candidate_id, job_id) DO UPDATE
+                    SET last_seen_at = NOW(),
+                        seen_count = public.candidate_job_impressions.seen_count + 1,
+                        source = EXCLUDED.source,
+                        updated_at = NOW()
+                    """,
+                    candidate["id"],
+                    job_uuids,
+                )
+        except Exception as exc:
+            logger.debug("chat_job_impressions_upsert_failed", error=str(exc)[:200])
+
+        try:
+            await _persist_chat_match_scores(
+                db,
+                candidate_id=uuid.UUID(str(candidate["id"])),
+                rows=results,
+            )
+        except Exception as exc:
+            logger.warning("chat_match_scores_upsert_failed", error=str(exc)[:200])
+
+    # When nothing matched, warm the index so the candidate's NEXT search has
+    # live openings. Career-path users get a path-scoped ingest regardless of
+    # the old generic auto-ingest flag; generic fallbacks still respect the flag
+    # to avoid broad Apify spend.
+    if not job_cards and settings is not None and settings.apify_token and candidate is not None:
+        from hireloop_api.services.background_jobs import (
+            AARYA_AUTO_INGEST,
+            CAREER_PATH_INGEST,
+            enqueue_job,
+        )
+
+        candidate_id = str(candidate["id"])
+        if path_search_titles or target_titles:
+            await enqueue_job(
+                db,
+                kind=CAREER_PATH_INGEST,
+                payload={
+                    "candidate_id": candidate_id,
+                    "derive_from_candidate": True,
+                    "force_refresh": bool(settings.auto_ingest_on_empty_search),
+                    "user_id": user_id,
+                    "session_id": session_id,
+                },
+                idempotency_key=f"career_path_ingest:empty_search:{candidate_id}",
+            )
+            logger.info(
+                "aarya_path_ingest_enqueued",
+                candidate_id=candidate_id,
+                queries=path_search_titles or target_titles,
+            )
+        elif settings.auto_ingest_on_empty_search:
+            # Always pull live openings on an empty personalized search so
+            # "find job" / "find new job" do not dead-end when the shelf is cold.
+            await enqueue_job(
+                db,
+                kind=AARYA_AUTO_INGEST,
+                payload={
+                    "candidate_id": candidate_id,
+                    "user_id": user_id,
+                    "session_id": session_id,
+                    "force_refresh": True,
+                },
+                idempotency_key=f"aarya_auto_ingest:empty_search:{candidate_id}",
+            )
+            logger.info("aarya_auto_ingest_enqueued", candidate_id=candidate_id)
+
+    return {
+        "count": len(job_cards),
+        "job_cards": job_cards,
+        "matches": results,
+    }
+
+
+async def prepare_application_kit(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    settings: Settings,
+    job_ids: list[str] | None = None,
+    job_id: str | None = None,
+) -> dict[str, Any]:
+    """
+    Save role(s) and generate apply assets: tailored resume, cover letter,
+    interview prep, and a mock-interview session link per job.
+    """
+    import time
+
+    from hireloop_api.services.application_kit import prepare_application_kits
+
+    t0 = time.monotonic()
+    ids = list(job_ids or [])
+    if job_id and job_id not in ids:
+        ids.insert(0, job_id)
+    if not ids:
+        return {"error": "Provide at least one job_id"}
+
+    result = await prepare_application_kits(db, user_id, ids, settings)
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "prepare_application_kit",
+        {"job_ids": ids},
+        result,
+        duration_ms,
+    )
+    return result
+
+
+async def save_job(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    job_id: str,
+) -> dict[str, Any]:
+    """Bookmark a job for the candidate's Saved jobs list."""
+    import time
+
+    t0 = time.monotonic()
+    candidate = await db.fetchrow(
+        "SELECT id FROM public.candidates WHERE user_id = $1 AND deleted_at IS NULL",
+        uuid.UUID(user_id),
+    )
+    if not candidate:
+        return {"error": "Candidate not found"}
+
+    try:
+        await db.execute(
+            """
+            INSERT INTO public.saved_jobs (candidate_id, job_id)
+            VALUES ($1::uuid, $2::uuid)
+            ON CONFLICT (candidate_id, job_id) DO NOTHING
+            """,
+            candidate["id"],
+            uuid.UUID(job_id),
+        )
+        result = {"saved": True, "job_id": job_id}
+    except Exception as exc:
+        logger.error("save_job_failed", error=str(exc))
+        result = {"error": str(exc)}
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "save_job",
+        {"job_id": job_id},
+        result,
+        duration_ms,
+    )
+    return result
+
+
+async def request_intro(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    job_id: str,
+    hiring_manager_id: str | None = None,
+) -> dict[str, Any]:
+    """
+    Request an intro for the candidate on a job. Delegates to the two-sided
+    intro service, which routes to a registered recruiter (in-app), an email
+    invite for an unregistered recruiter, or the legacy HM enrichment path.
+    The intro_requests INSERT fires the Postgres NOTIFY trigger (R5) — the only
+    mechanism for Aarya → Nitya / recruiter communication.
+    """
+    import time
+
+    from hireloop_api.services.intro_service import create_candidate_intro
+
+    t0 = time.monotonic()
+    try:
+        result = await create_candidate_intro(
+            db,
+            user_id=user_id,
+            job_id=job_id,
+            hiring_manager_id=hiring_manager_id,
+        )
+    except Exception as exc:
+        logger.error("intro_request_failed", error=str(exc))
+        result = {"error": str(exc)}
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "request_intro",
+        {"job_id": job_id, "hm_id": hiring_manager_id},
+        result,
+        duration_ms,
+    )
+    if result.get("hm_enrich_queued"):
+        await _write_action(
+            db,
+            "aarya",
+            user_id,
+            session_id,
+            "hm_enrich_queued",
+            {"job_id": job_id, "hm_id": hiring_manager_id},
+            {
+                "intro_id": result.get("intro_id"),
+                "provider": "apify",
+                "status": "queued",
+            },
+            duration_ms,
+        )
+    return result
+
+
+async def direct_apply(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    job_id: str,
+    apply_url: str,
+) -> dict[str, Any]:
+    """Record a direct application (candidate clicks the job's native apply link)."""
+    import time
+
+    from hireloop_api.config import get_settings
+    from hireloop_api.services.job_pipeline import record_direct_application
+
+    t0 = time.monotonic()
+    result = await record_direct_application(
+        db,
+        user_id=user_id,
+        job_id=job_id,
+        settings=get_settings(),
+    )
+    if "error" not in result:
+        result["apply_url"] = apply_url
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "direct_apply",
+        {"job_id": job_id},
+        result,
+        duration_ms,
+    )
+    return result
+
+
+async def prioritize_career_path(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    title: str,
+) -> dict[str, Any]:
+    """Lock in the candidate's chosen target role before job_search."""
+    import time
+
+    from hireloop_api.services.career_path import CareerPathService
+
+    t0 = time.monotonic()
+    candidate = await db.fetchrow(
+        "SELECT id FROM public.candidates WHERE user_id = $1 AND deleted_at IS NULL",
+        uuid.UUID(user_id),
+    )
+    if not candidate:
+        result: dict[str, Any] = {"error": "Candidate profile not found"}
+    else:
+        path = await CareerPathService.get_latest(db, str(candidate["id"]))
+        if not path:
+            result = {"error": "Generate a career path first (build_career_path)."}
+        else:
+            pick = (title or "").strip()
+            options = career_path_options(path)
+            if options and pick.isdigit() and 1 <= int(pick) <= len(options):
+                pick = options[int(pick) - 1]
+            elif options:
+                from hireloop_api.services.career_path_selection import (
+                    parse_career_path_selection,
+                )
+
+                resolved = parse_career_path_selection(pick, options)
+                if resolved:
+                    pick = resolved
+            try:
+                updated = await CareerPathService.prioritize(db, str(candidate["id"]), pick)
+            except ValueError as exc:
+                result = {"error": str(exc)}
+            else:
+                if not updated:
+                    result = {"error": "Could not save career path choice."}
+                else:
+                    result = {
+                        "prioritized_title": updated.get("prioritized_title"),
+                        "path_options": options,
+                        "message": (
+                            f"Locked in {updated.get('prioritized_title')}. "
+                            "You can call job_search now."
+                        ),
+                    }
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "prioritize_career_path",
+        {"title": title},
+        result,
+        duration_ms,
+    )
+    return result
+
+
+async def build_career_path(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    settings: Settings,
+) -> dict[str, Any]:
+    """
+    Generate (and persist) a career path for the candidate from their profile.
+    Returns the path's current role, summary, steps, and the target role titles
+    to search for. Use the target_titles to drive job_search.
+    """
+    import time
+
+    from hireloop_api.services.career_path import CareerPathService
+
+    t0 = time.monotonic()
+
+    candidate = await db.fetchrow(
+        "SELECT id FROM public.candidates WHERE user_id = $1 AND deleted_at IS NULL",
+        uuid.UUID(user_id),
+    )
+    if not candidate:
+        result: dict[str, Any] = {"error": "Candidate profile not found"}
+    else:
+        try:
+            from hireloop_api.deps import get_db_pool
+
+            pool = await get_db_pool(settings)
+            result = await CareerPathService.generate(pool, str(candidate["id"]), settings)
+        except Exception as exc:  # surface a clean error to the LLM
+            logger.error("build_career_path_failed", error=str(exc))
+            result = {"error": str(exc)}
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "build_career_path",
+        {},
+        {"target_titles": result.get("target_titles")},
+        duration_ms,
+    )
+    return result
+
+
+async def get_match_score(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    job_id: str,
+) -> dict[str, Any]:
+    """
+    Fetch (or compute on-the-fly) the match score for a candidate-job pair.
+    Uses pre-computed score if available; falls back to MatchingEngine.score_pair().
+    """
+    import time
+
+    from hireloop_api.services.matching import MatchingEngine
+
+    t0 = time.monotonic()
+
+    # Try cached score first
+    row = await db.fetchrow(
+        """
+        SELECT ms.overall_score, ms.skills_score, ms.experience_score,
+               ms.location_score, ms.ctc_score, ms.explanation
+        FROM public.match_scores ms
+        JOIN public.candidates c ON c.id = ms.candidate_id
+        WHERE c.user_id = $1 AND ms.job_id = $2::uuid AND c.deleted_at IS NULL
+        """,
+        uuid.UUID(user_id),
+        uuid.UUID(job_id),
+    )
+
+    if row:
+        result: dict[str, Any] = {
+            "overall_score": round(float(row["overall_score"]) * 100, 1),  # as % for LLM
+            "skills_score": round(float(row["skills_score"] or 0) * 100, 1),
+            "experience_score": round(float(row["experience_score"] or 0) * 100, 1),
+            "location_score": round(float(row["location_score"] or 0) * 100, 1),
+            "ctc_score": round(float(row["ctc_score"] or 0) * 100, 1),
+            "explanation": row["explanation"],
+            "source": "precomputed",
+        }
+    else:
+        # On-the-fly computation (slower, used when nightly hasn't run yet)
+        candidate = await db.fetchrow(
+            "SELECT id FROM public.candidates WHERE user_id = $1 AND deleted_at IS NULL",
+            uuid.UUID(user_id),
+        )
+        if not candidate:
+            result = {"error": "Candidate profile not found"}
+        else:
+            engine = MatchingEngine(db)
+            score = await engine.score_pair(str(candidate["id"]), job_id)
+            if score is None:
+                result = {"error": "Job not found or scoring unavailable"}
+            else:
+                # Re-fetch the explanation that was just written
+                fresh = await db.fetchrow(
+                    "SELECT overall_score, explanation FROM public.match_scores "
+                    "WHERE candidate_id = $1::uuid AND job_id = $2::uuid",
+                    candidate["id"],
+                    uuid.UUID(job_id),
+                )
+                result = {
+                    "overall_score": round(float(score) * 100, 1),
+                    "explanation": fresh["explanation"] if fresh else None,
+                    "source": "computed_live",
+                }
+
+    job = await db.fetchrow(
+        """
+        SELECT j.title AS job_title, co.name AS company_name
+        FROM public.jobs j
+        LEFT JOIN public.companies co ON co.id = j.company_id
+        WHERE j.id = $1::uuid AND j.deleted_at IS NULL
+        """,
+        uuid.UUID(job_id),
+    )
+    if job:
+        result["job_title"] = job["job_title"]
+        result["company_name"] = job["company_name"]
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "get_match_score",
+        {"job_id": job_id},
+        {"overall_score": result.get("overall_score")},
+        duration_ms,
+    )
+    return result
+
+
+async def analyze_resume(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+) -> dict[str, Any]:
+    """Analyse latest CV for chat — gaps, strengths, version compare."""
+    import time
+
+    from hireloop_api.services.chat_analysis import analyze_resume_parsed
+
+    t0 = time.monotonic()
+    uid = uuid.UUID(user_id)
+    rows = await db.fetch(
+        """
+        SELECT r.id, r.parsed_data
+        FROM public.resumes r
+        JOIN public.candidates c ON c.id = r.candidate_id AND c.deleted_at IS NULL
+        WHERE c.user_id = $1::uuid
+        ORDER BY r.created_at DESC
+        LIMIT 2
+        """,
+        uid,
+    )
+    cand = await db.fetchrow(
+        """
+        SELECT c.current_title, c.current_company, c.years_experience, c.skills,
+               c.notice_period_days, c.expected_ctc_min, c.expected_ctc_max, c.current_ctc,
+               c.location_city, c.location_state, c.headline, c.looking_for,
+               u.full_name
+        FROM public.candidates c
+        JOIN public.users u ON u.id = c.user_id
+        WHERE c.user_id = $1::uuid AND c.deleted_at IS NULL
+        """,
+        uid,
+    )
+    if not cand and not rows:
+        result: dict[str, Any] = {"error": "No resume or profile found"}
+    else:
+        latest: dict[str, Any] = {}
+        previous: dict[str, Any] | None = None
+        if rows:
+            raw = rows[0]["parsed_data"]
+            if isinstance(raw, str):
+                try:
+                    raw = json.loads(raw)
+                except json.JSONDecodeError:
+                    raw = {}
+            if isinstance(raw, dict):
+                latest = dict(raw)
+            if len(rows) > 1:
+                prev = rows[1]["parsed_data"]
+                if isinstance(prev, str):
+                    try:
+                        prev = json.loads(prev)
+                    except json.JSONDecodeError:
+                        prev = {}
+                if isinstance(prev, dict):
+                    previous = dict(prev)
+        if cand:
+            for key, val in dict(cand).items():
+                if latest.get(key) in (None, "", [], {}):
+                    latest[key] = val
+        result = analyze_resume_parsed(latest, previous=previous)
+        if rows:
+            result["resume_id"] = str(rows[0]["id"])
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "analyze_resume",
+        {},
+        {"gaps": result.get("gaps"), "resume_id": result.get("resume_id")},
+        duration_ms,
+    )
+    return result
+
+
+async def analyze_pasted_jd(
+    db: asyncpg.Connection,
+    user_id: str,
+    session_id: str,
+    jd_text: str,
+    job_id: str | None = None,
+) -> dict[str, Any]:
+    """Score a pasted JD against the candidate profile."""
+    import time
+
+    from hireloop_api.services.chat_analysis import analyze_jd_vs_profile
+
+    t0 = time.monotonic()
+    uid = uuid.UUID(user_id)
+    cand = await db.fetchrow(
+        """
+        SELECT c.current_title, c.current_company, c.years_experience, c.skills,
+               c.notice_period_days, c.expected_ctc_min, c.expected_ctc_max, c.current_ctc,
+               c.location_city, c.location_state, c.headline, c.looking_for,
+               u.full_name
+        FROM public.candidates c
+        JOIN public.users u ON u.id = c.user_id
+        WHERE c.user_id = $1::uuid AND c.deleted_at IS NULL
+        """,
+        uid,
+    )
+    if not cand:
+        result: dict[str, Any] = {"error": "Candidate profile not found"}
+    else:
+        result = analyze_jd_vs_profile(jd_text, dict(cand), job_id=job_id)
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    await _write_action(
+        db,
+        "aarya",
+        user_id,
+        session_id,
+        "analyze_pasted_jd",
+        {"job_id": job_id, "jd_len": len(jd_text or "")},
+        {
+            "overall_score": result.get("overall_score"),
+            "should_apply": (result.get("should_apply") or {}).get("recommendation"),
+        },
+        duration_ms,
+    )
+    return result
