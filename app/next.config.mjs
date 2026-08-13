@@ -51,6 +51,17 @@ const nextConfig = {
         destination: "https://www.hireschema.com/:path*",
         permanent: true,
       },
+      // Recruiter product is retired — leftover URLs land on the candidate home.
+      {
+        source: "/recruiters",
+        destination: "/",
+        permanent: true,
+      },
+      {
+        source: "/candidates",
+        destination: "/",
+        permanent: true,
+      },
     ];
   },
 
