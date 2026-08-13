@@ -32,21 +32,20 @@ from hireloop_api.config import Settings, get_settings
 from hireloop_api.deps import (
     _provision_user_row,
     get_current_user,
-    get_current_user_with_supabase,
     get_db,
     get_db_optional,
     get_supabase_identity,
 )
 from hireloop_api.markets import normalize_market, validate_e164_phone
-from hireloop_api.services.invite_access import (
-    enforce_invite_for_new_user,
-    normalize_email,
-)
 from hireloop_api.routes.me import _ensure_candidate_row
 from hireloop_api.services import otp_store
 from hireloop_api.services.bootstrap_roles import can_switch_roles, resolve_bootstrap_role
 from hireloop_api.services.consent import log_consent
 from hireloop_api.services.email.transactional import maybe_send_signup_confirmation
+from hireloop_api.services.invite_access import (
+    enforce_invite_for_new_user,
+    normalize_email,
+)
 from hireloop_api.services.linkedin_oauth import (
     extract_linkedin_display_name,
     extract_linkedin_headline,
@@ -242,24 +241,22 @@ async def _send_signup_welcome_email(
 @router.post("/bootstrap", status_code=200)
 async def bootstrap_user(
     body: BootstrapRequest,
-    current_user: dict = Depends(get_current_user_with_supabase),
+    supabase_user: dict = Depends(get_supabase_identity),
     settings: Settings = Depends(get_settings),
     db: asyncpg.Connection = Depends(get_db),
 ) -> dict:
     """
     After Supabase OAuth, sync profile + create candidate/recruiter row.
     Called from /auth/callback (app) with Bearer token.
-    """
-    user_id = uuid.UUID(str(current_user["id"]))
-    supabase_user: dict[str, Any] = current_user.get("_supabase_user") or {}
 
-    email = normalize_email(
-        str(
-            current_user.get("email")
-            or supabase_user.get("email")
-            or ""
-        )
-    )
+    Invite-only: a Supabase session is not enough. New accounts are created
+    only after the email is approved on the waitlist (or is a super-admin).
+    """
+    user_id = uuid.UUID(str(supabase_user["id"]))
+    meta = supabase_user.get("user_metadata") or {}
+    email = normalize_email(str(supabase_user.get("email") or ""))
+    full_name = meta.get("full_name") or meta.get("name")
+
     existing_user = await db.fetchval(
         """
         SELECT 1 FROM public.users
@@ -410,7 +407,7 @@ async def bootstrap_user(
                 db,
                 user_id=user_id,
                 linkedin_data=linkedin_data,
-                user_full_name=current_user.get("full_name"),
+                user_full_name=full_name,
             )
         except Exception as exc:
             logger.warning(
@@ -487,16 +484,14 @@ async def bootstrap_user(
         logger.warning("oauth_email_confirm_failed", user_id=str(user_id), error=str(exc)[:200])
 
     # Welcome email once per account (deduped in consent_log).
-    welcome_email = current_user.get("email") or (
-        supabase_user.get("email") if supabase_user else None
-    )
+    welcome_email = email or (supabase_user.get("email") if supabase_user else None)
     if welcome_email:
         await _send_signup_welcome_email(
             db,
             settings,
             user_id=user_id,
             email=welcome_email,
-            full_name=current_user.get("full_name")
+            full_name=full_name
             or (supabase_user.get("user_metadata") or {}).get("full_name")
             or (supabase_user.get("user_metadata") or {}).get("name"),
             role=effective_role,

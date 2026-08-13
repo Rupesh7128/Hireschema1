@@ -90,6 +90,16 @@ class Settings(BaseSettings):
     # default — it spends Apify credits, so enable deliberately in production.
     auto_ingest_on_empty_search: bool = False
 
+    # Free-tier chat caps (India cheap-ops). Burst + daily so uncapped
+    # Sonnet turns cannot run away on the invite-only waitlist.
+    chat_turns_per_hour: int = 8
+    chat_turns_per_day: int = 20
+    public_chat_turns_per_day: int = 10
+
+    # India geo gate. None = enforce in production/staging when a country header
+    # is present. true = always (when header present). false = never.
+    require_india_geo: bool | None = None
+
     # Poll the durable background_jobs queue from the API process (disable in unit tests).
     background_worker_enabled: bool = True
     background_worker_poll_seconds: float = 2.0
@@ -310,6 +320,20 @@ class Settings(BaseSettings):
         # deploys cannot accidentally ingest US/GB/etc. jobs.
         india_only = [p for p in parts if p == "IN"]
         return india_only or ["IN"]
+
+    @field_validator("require_india_geo", mode="before")
+    @classmethod
+    def parse_optional_bool(cls, v: object) -> bool | None:
+        if v is None or v == "":
+            return None
+        if isinstance(v, bool):
+            return v
+        s = str(v).strip().lower()
+        if s in {"true", "1", "yes", "on"}:
+            return True
+        if s in {"false", "0", "no", "off"}:
+            return False
+        return None
 
     # Secrets that MUST be overridden in production. Their insecure defaults gate
     # privileged surfaces (service-secret webhooks, admin job ingest/cron, token

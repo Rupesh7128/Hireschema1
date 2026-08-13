@@ -2,12 +2,6 @@
 
 import dynamic from "next/dynamic";
 
-import type { LandingAudience } from "@/components/landing/landing-audience";
-
-type ChatPreviewLazyProps = {
-  audience?: LandingAudience;
-};
-
 function ChatPreviewSkeleton() {
   return (
     <div
@@ -37,6 +31,6 @@ const ChatPreview = dynamic(
   },
 );
 
-export function ChatPreviewLazy({ audience = "candidate" }: ChatPreviewLazyProps) {
-  return <ChatPreview audience={audience} />;
+export function ChatPreviewLazy() {
+  return <ChatPreview />;
 }

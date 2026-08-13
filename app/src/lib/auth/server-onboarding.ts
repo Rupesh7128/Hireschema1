@@ -1,14 +1,48 @@
 import { getServerApiBaseUrl } from "@/lib/api/base-url";
+import {
+  classifySignedInGate,
+  type SignedInGate,
+} from "@/lib/auth/app-destination";
 
 type ProfileOnboardingPayload = {
+  user?: { full_name?: string | null } | null;
   candidate?: {
+    id?: string;
     onboarding_complete?: boolean;
     profile_complete?: boolean;
     current_title?: string | null;
     skills?: string[] | null;
     looking_for?: string | null;
-  };
+  } | null;
+  resume_filename?: string | null;
 };
+
+export type SignedInGateProbe = SignedInGate & {
+  profile: ProfileOnboardingPayload | null;
+};
+
+export async function probeSignedInGate(opts: {
+  token: string;
+  apiBase?: string;
+}): Promise<SignedInGateProbe> {
+  const apiBase = opts.apiBase ?? getServerApiBaseUrl();
+  try {
+    const res = await fetch(`${apiBase}/api/v1/me/profile`, {
+      headers: { Authorization: `Bearer ${opts.token}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(12_000),
+    });
+    const body: unknown = await res.json().catch(() => null);
+    const gate = classifySignedInGate(res.status, body);
+    const profile =
+      res.ok && body && typeof body === "object"
+        ? (body as ProfileOnboardingPayload)
+        : null;
+    return { ...gate, profile };
+  } catch {
+    return { kind: "unknown", profile: null };
+  }
+}
 
 export type SupabaseOnboardingCandidate = {
   onboarding_complete?: boolean | null;

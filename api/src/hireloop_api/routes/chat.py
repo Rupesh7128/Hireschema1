@@ -983,9 +983,21 @@ async def send_message(
     """
     pool = await get_db_pool(settings)
 
-    # #48: every turn is real LLM spend — cap per user per hour (cluster-wide).
+    # Every turn is real LLM spend — hourly burst + daily cap (cluster-wide).
     async with pool.acquire() as rl_db:
-        await check_rate_limit(str(current_user["id"]), "chat_turn", max_per_hour=60, db=rl_db)
+        await check_rate_limit(
+            str(current_user["id"]),
+            "chat_turn",
+            max_per_hour=settings.chat_turns_per_hour,
+            db=rl_db,
+        )
+        await check_rate_limit(
+            str(current_user["id"]),
+            "chat_turn_day",
+            max_per_hour=settings.chat_turns_per_day,
+            db=rl_db,
+            period="day",
+        )
 
     # Pre-stream DB work on a short-lived connection — do not hold through SSE.
     async with pool.acquire() as db:

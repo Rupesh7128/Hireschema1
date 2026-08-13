@@ -118,24 +118,27 @@ def scrape_locations_for_market(market: str, *, city_hint: str | None = None) ->
     return [hint, *base]
 
 
+def remote_allowed_regions(market: str = DEFAULT_MARKET) -> list[str]:
+    """Tag India-eligible remote jobs with the home market — never WORLD."""
+    return [normalize_market(market)]
+
+
 def job_visible_for_market_sql(*, job_alias: str = "j", market_param: str) -> str:
     """
     SQL boolean expression: job is visible to a candidate in `market_param`.
 
     Onsite: job.country_code must match.
-    Remote: allowed_regions NULL/empty → worldwide; else must list market or WORLD.
+    Remote: must list the home market in allowed_regions. WORLD / empty
+    regions are not eligible — India-only marketplace.
     """
     j = job_alias
     return f"""(
         {j}.country_code = {market_param}
         OR (
             {j}.is_remote = TRUE
-            AND (
-                {j}.allowed_regions IS NULL
-                OR cardinality({j}.allowed_regions) = 0
-                OR {market_param} = ANY({j}.allowed_regions)
-                OR 'WORLD' = ANY({j}.allowed_regions)
-            )
+            AND {j}.allowed_regions IS NOT NULL
+            AND cardinality({j}.allowed_regions) > 0
+            AND {market_param} = ANY({j}.allowed_regions)
         )
     )"""
 

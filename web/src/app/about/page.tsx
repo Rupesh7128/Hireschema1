@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "About Hireschema",
   description:
-    "Hireschema is an AI recruiting platform for candidates and recruiters in India — fit-aware matching, salaries in INR, and warm intros.",
+    "Hireschema is an AI recruiting platform for candidates in India — fit-aware matching, salaries in INR, and warm intros.",
 };
 
 const VALUES = [
@@ -26,7 +26,7 @@ const VALUES = [
   {
     icon: "⚡",
     title: "AI with guardrails",
-    desc: "Hireschema AI and Hireschema are powerful, but they never send an email without your approval. The human is always in the loop for consequential actions.",
+    desc: "Hireschema AI is powerful, but it never sends an email without your approval. The human is always in the loop for consequential actions.",
   },
 ];
 

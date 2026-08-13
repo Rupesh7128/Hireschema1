@@ -8,13 +8,9 @@ import {
   FileText,
   GraduationCap,
   MessageSquare,
-  Search,
   Send,
-  ShieldCheck,
-  Users,
 } from "@/components/brand/icons";
 import { SectionHeader } from "@/components/landing/SectionHeader";
-import type { LandingAudience } from "@/components/landing/landing-audience";
 import { RevealStagger, StaggerItem } from "@/components/ui/motion";
 
 type Feature = { Icon: LucideIcon; title: string; body: string };
@@ -52,66 +48,7 @@ const CANDIDATE_FEATURES: Feature[] = [
   },
 ];
 
-const RECRUITER_FEATURES: Feature[] = [
-  {
-    Icon: MessageSquare,
-    title: "One chat with Hireschema",
-    body: "Describe the role in plain words. Hireschema turns it into a brief you can review and edit.",
-  },
-  {
-    Icon: Search,
-    title: "Smart shortlists",
-    body: "Hireschema ranks candidates against the active role and shows the evidence behind the score.",
-  },
-  {
-    Icon: Users,
-    title: "Opted-in candidates",
-    body: "Only people who want to be contacted appear in your pipeline.",
-  },
-  {
-    Icon: Send,
-    title: "Warm intros",
-    body: "Request a two-sided introduction and let the candidate accept or decline.",
-  },
-  {
-    Icon: ShieldCheck,
-    title: "Consent-first",
-    body: "Recruiter search includes only candidates who turned discovery on.",
-  },
-  {
-    Icon: Brain,
-    title: "Hiring intelligence",
-    body: "Hireschema logs every search and outreach — full transparency on every action.",
-  },
-];
-
-const SECTION_COPY: Record<
-  LandingAudience,
-  { label: string; title: string; description: string }
-> = {
-  candidate: {
-    label: "What Hireschema AI does",
-    title: "Your recruiter, coach, and strategist.",
-    description:
-      "Search, matching, application preparation, and career guidance — with you in control.",
-  },
-  recruiter: {
-    label: "What Hireschema does",
-    title: "Your sourcer, screener, and intro partner.",
-    description:
-      "Role intake, matching, evidence, and introductions — scoped to the role you are hiring for.",
-  },
-};
-
-type FeaturesSectionProps = {
-  audience: LandingAudience;
-};
-
-export function FeaturesSection({ audience }: FeaturesSectionProps) {
-  const features =
-    audience === "candidate" ? CANDIDATE_FEATURES : RECRUITER_FEATURES;
-  const header = SECTION_COPY[audience];
-
+export function FeaturesSection() {
   return (
     <section
       id="features"
@@ -119,16 +56,13 @@ export function FeaturesSection({ audience }: FeaturesSectionProps) {
     >
       <div className="mx-auto max-w-page px-6 py-16 md:py-24">
         <SectionHeader
-          label={header.label}
-          title={header.title}
-          description={header.description}
+          label="What Hireschema AI does"
+          title="Your recruiter, coach, and strategist."
+          description="Search, matching, application preparation, and career guidance — with you in control."
         />
 
-        <RevealStagger
-          key={audience}
-          className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {features.map(({ Icon, title, body }) => (
+        <RevealStagger className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {CANDIDATE_FEATURES.map(({ Icon, title, body }) => (
             <StaggerItem key={title}>
               <motion.div
                 className="group h-full space-y-3 rounded-xl border border-ink-100 bg-paper-0 p-6"

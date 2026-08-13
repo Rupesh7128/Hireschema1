@@ -386,14 +386,10 @@ def _detect_likely_intent(text: str) -> str:
     return "general_career_chat"
 
 
-# Conversational / low-complexity intents that don't need the heavy model.
-_FAST_MODEL_INTENTS = frozenset({"general_career_chat", "preference_update", "chit_chat"})
+# Sonnet-only intents. Everything else uses Gemini Flash.
+_PRIMARY_MODEL_INTENTS = frozenset({"intro_request", "profile_improvement"})
 # Greetings and meta questions — answer directly without tool calls.
 _NO_TOOL_INTENTS = frozenset({"chit_chat"})
-_JOB_UUID_RE = re.compile(
-    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
-    re.IGNORECASE,
-)
 
 
 def _detect_hinglish(text: str) -> bool:
@@ -436,26 +432,12 @@ def _prefer_fast_model(
     has_tool_results: bool,
 ) -> bool:
     """
-    Choose the fast/cheaper model for low-complexity turns to cut latency.
-
-    Voice: primary for tool selection; fast model only for post-tool synthesis.
-    Text: primary for complex reasoning; fast for simple turns and some synthesis.
+    Flash is the default. Sonnet only for intro drafts and profile/resume
+    advice — the expensive turns that still need careful reasoning.
     """
-    if voice_mode:
-        return has_tool_results
+    _ = (voice_mode, has_tool_results)
     intent = _detect_likely_intent(last_human_text)
-    if has_tool_results:
-        # Post-tool synthesis: profile/job/intro need careful reasoning; application
-        # kits already have full JSON from prepare_application_kit — brief walkthrough only.
-        if intent in {"profile_improvement", "job_search", "intro_request"}:
-            return False
-        return True
-    if intent in _FAST_MODEL_INTENTS:
-        return True
-    # Explicit kit request with job id — tool choice is deterministic.
-    if intent == "job_application" and _JOB_UUID_RE.search(last_human_text):
-        return True
-    return False
+    return intent not in _PRIMARY_MODEL_INTENTS
 
 
 def _tool_round_budget_exhausted(state: dict[str, Any]) -> bool:

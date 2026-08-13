@@ -1,6 +1,7 @@
 ###############################################################################
 # Hireschema — Cloudflare WAF rules
-# Rate limits + security headers (no geo-blocking — global access)
+# Rate limits + India-only API geo + security headers
+# Marketing/SEO HTML stays globally crawlable; API spend paths are India-only.
 ###############################################################################
 
 terraform {
@@ -57,6 +58,23 @@ resource "cloudflare_ruleset" "rate_limits" {
       requests_per_period = 200
       mitigation_timeout = 60
     }
+  }
+}
+
+# ── India-only API (marketing HTML stays globally crawlable) ──────────────────
+
+resource "cloudflare_ruleset" "india_only_api" {
+  zone_id     = var.cloudflare_zone_id
+  name        = "Hireschema India-only API"
+  description = "Block non-India clients from API spend paths; waitlist + health + webhooks stay open"
+  kind        = "zone"
+  phase       = "http_request_firewall_custom"
+
+  rules {
+    action      = "block"
+    description = "Non-India API access except waitlist, health, and service paths"
+    enabled     = true
+    expression  = "(not ip.src.country in {\"IN\"} and starts_with(http.request.uri.path, \"/api/v1\") and not starts_with(http.request.uri.path, \"/api/v1/health\") and http.request.uri.path ne \"/api/v1/markets\" and http.request.uri.path ne \"/api/v1/public/invite-request\" and not starts_with(http.request.uri.path, \"/api/v1/jobs/ingest\") and not starts_with(http.request.uri.path, \"/api/v1/matches/embed\") and not starts_with(http.request.uri.path, \"/api/v1/matches/recompute\") and not starts_with(http.request.uri.path, \"/api/v1/gmail\") and not starts_with(http.request.uri.path, \"/api/v1/webhooks\"))"
   }
 }
 

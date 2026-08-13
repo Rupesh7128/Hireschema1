@@ -3,10 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Mic, Send, Sparkles, Zap } from "@/components/brand/icons";
-import {
-  LANDING_AGENTS,
-  type LandingAudience,
-} from "@/components/landing/landing-audience";
+import { LANDING_AGENT } from "@/components/landing/landing-audience";
 import { BTN_COMPOSER_ICON, BTN_COMPOSER_SEND } from "@/lib/button-classes";
 import { cn } from "@/lib/utils";
 
@@ -47,40 +44,9 @@ const CANDIDATE_SCRIPT: Line[] = [
   },
 ];
 
-const RECRUITER_SCRIPT: Line[] = [
-  {
-    role: "assistant",
-    text: "Hi, I'm Hireschema. Tell me about the role you're hiring for.",
-  },
-  {
-    role: "user",
-    text: "Staff backend engineer, Bangalore, ₹45–55L, Python + Postgres.",
-  },
-  {
-    role: "assistant",
-    text: "The brief is ready. I found 6 candidates above 80% fit who opted into recruiter discovery. The top match has 7 years in fintech and is actively looking.",
-    actions: "Hireschema performed 3 actions",
-  },
-  { role: "user", text: "Request introductions to the top two." },
-  {
-    role: "assistant",
-    text: "Requests sent. Each candidate can accept or decline before a conversation starts.",
-    actions: "Hireschema performed 2 actions",
-  },
-];
-
-const SCRIPTS: Record<LandingAudience, Line[]> = {
-  candidate: CANDIDATE_SCRIPT,
-  recruiter: RECRUITER_SCRIPT,
-};
-
-type ChatPreviewProps = {
-  audience?: LandingAudience;
-};
-
-export function ChatPreview({ audience = "candidate" }: ChatPreviewProps) {
-  const script = SCRIPTS[audience];
-  const agent = LANDING_AGENTS[audience];
+export function ChatPreview() {
+  const script = CANDIDATE_SCRIPT;
+  const agent = LANDING_AGENT;
 
   const [shown, setShown] = useState(1);
   const [typing, setTyping] = useState(false);
@@ -88,7 +54,6 @@ export function ChatPreview({ audience = "candidate" }: ChatPreviewProps) {
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Reset demo when audience toggles
   useEffect(() => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
@@ -138,7 +103,7 @@ export function ChatPreview({ audience = "candidate" }: ChatPreviewProps) {
       timers.current.forEach(clearTimeout);
       timers.current = [];
     };
-  }, [audience, script]);
+  }, [script]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -205,7 +170,7 @@ export function ChatPreview({ audience = "candidate" }: ChatPreviewProps) {
           {visible.map((line, i) =>
             line.role === "user" ? (
               <motion.div
-                key={`${audience}-u-${i}`}
+                key={`u-${i}`}
                 initial={{ opacity: 0, y: 10, x: 8 }}
                 animate={{ opacity: 1, y: 0, x: 0 }}
                 transition={{ duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] }}
@@ -217,7 +182,7 @@ export function ChatPreview({ audience = "candidate" }: ChatPreviewProps) {
               </motion.div>
             ) : (
               <motion.div
-                key={`${audience}-a-${i}`}
+                key={`a-${i}`}
                 initial={{ opacity: 0, y: 10, x: -8 }}
                 animate={{ opacity: 1, y: 0, x: 0 }}
                 transition={{ duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] }}

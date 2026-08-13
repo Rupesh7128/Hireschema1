@@ -76,6 +76,7 @@ def test_parse_lever_remote_workplace() -> None:
     recs = parse_lever(payload, company="startup")
     assert len(recs) == 1
     assert recs[0].is_remote is True
+    assert recs[0].allowed_regions == ["IN"]
     assert recs[0].apify_job_id == "lever:startup:abc"
     assert recs[0].source == "lever"
     assert recs[0].company_name == "Startup"

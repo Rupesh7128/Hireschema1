@@ -10,7 +10,9 @@ import { createClient } from "@/lib/supabase/server";
 import { DashboardClient } from "./DashboardClient";
 import { VALID_JOBS_TABS, VALID_PANELS, VALID_PROFILE_TABS, LEGACY_PANEL_REDIRECT, LEGACY_JOBS_TAB_REDIRECT, type JobsTab, type PanelId, type ProfileTabId } from "@/lib/dashboard/panel-types";
 import { sanitizeDisplayName } from "@/lib/auth/display-name";
-import { isOnboardingCompleteOnServer } from "@/lib/auth/server-onboarding";
+import { resolveSignedInPath } from "@/lib/auth/app-destination";
+import { probeSignedInGate } from "@/lib/auth/server-onboarding";
+import { getServerApiBaseUrl } from "@/lib/api/base-url";
 import { canApplyOrIntro, shouldShowProfileBoosters } from "@/lib/profile/readiness";
 
 export const dynamic = "force-dynamic";
@@ -19,8 +21,7 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_URL = getServerApiBaseUrl();
 
 type DashboardCandidate = {
   id: string;
@@ -208,24 +209,24 @@ export default async function DashboardPage({
     }
   }
 
-  if (!profile) {
-    redirect("/onboarding");
+  // API /me/profile is the only onboarding/invite signal. A missing Supabase
+  // public.users row must not send us to /onboarding while the API would send
+  // us back to /dashboard (that was the blank-screen loop).
+  const gate = await probeSignedInGate({ token, apiBase: API_URL });
+  const dest = resolveSignedInPath("/dashboard", gate);
+  if (dest !== "/dashboard") {
+    redirect(dest);
   }
 
-  let apiProfileData: DashboardApiProfile | null = null;
-  if (token) {
-    try {
-      const profileRes = await fetch(`${API_URL}/api/v1/me/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      });
-      if (profileRes.ok) {
-        apiProfileData = (await profileRes.json()) as DashboardApiProfile;
+  const apiProfileData: DashboardApiProfile | null = gate.profile
+    ? {
+        user: gate.profile.user,
+        candidate: gate.profile.candidate?.id
+          ? (gate.profile.candidate as DashboardApiProfile["candidate"])
+          : null,
+        resume_filename: gate.profile.resume_filename ?? null,
       }
-    } catch {
-      /* fall back to direct Supabase reads below */
-    }
-  }
+    : null;
 
   let candidateRaw = candidateFromApi(apiProfileData?.candidate);
 
@@ -245,7 +246,7 @@ export default async function DashboardPage({
   }
 
   if (!candidateRaw) {
-    redirect("/onboarding");
+    return <DashboardUnavailable />;
   }
 
   const candidateId = candidateRaw.id;
@@ -258,20 +259,6 @@ export default async function DashboardPage({
 
   const hasResume =
     Boolean(apiProfileData?.resume_filename) || (resumeResult.count ?? 0) > 0;
-
-  const onboardingComplete =
-    apiProfileData?.candidate
-      ? apiProfileData.candidate.onboarding_complete === true
-      : await isOnboardingCompleteOnServer({
-          token,
-          supabaseCandidate: candidateRaw,
-          hasResume,
-          apiBase: API_URL,
-        });
-
-  if (!onboardingComplete) {
-    redirect("/onboarding");
-  }
 
   // ── Profile readiness (frontend gates only — match APIs unchanged) ────────
   // Private session metadata crosses the authenticated API boundary; the
@@ -365,5 +352,19 @@ export default async function DashboardPage({
         showAdminLink={canSeeAdmin}
       />
     </Suspense>
+  );
+}
+
+function DashboardUnavailable() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-paper-0 px-6 text-center">
+      <p className="text-body text-ink-900">Couldn&apos;t load your workspace.</p>
+      <p className="max-w-sm text-small text-ink-500">
+        Refresh this page. If you haven&apos;t finished setup yet, continue from onboarding.
+      </p>
+      <a href="/onboarding" className="text-small font-medium text-accent hover:underline">
+        Continue setup
+      </a>
+    </main>
   );
 }

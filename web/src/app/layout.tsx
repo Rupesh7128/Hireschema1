@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: "%s | Hireschema",
   },
   description:
-    "Hireschema's AI agents Hireschema AI and Hireschema match top Indian talent with the right opportunities — and make the intro happen.",
+    "Hireschema AI finds India-eligible roles, scores your fit, and sends a warm intro from your Gmail — after you approve every word.",
   keywords: [
     "AI recruiting India",
     "job search India",
@@ -26,13 +26,13 @@ export const metadata: Metadata = {
     siteName: "Hireschema",
     title: "Hireschema — AI Recruiting for India",
     description:
-      "Hireschema's AI agents Hireschema AI and Hireschema match top Indian talent with the right opportunities — and make the intro happen.",
+      "Hireschema AI finds India-eligible roles, scores your fit, and sends a warm intro from your Gmail — after you approve every word.",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Hireschema — AI Recruiting for India",
-    description: "AI agents that match talent to opportunities and make the intro happen.",
+    description: "Hireschema AI finds India-eligible roles and sends warm intros from your Gmail.",
     images: ["/og-image.png"],
   },
   robots: { index: true, follow: true },

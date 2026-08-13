@@ -32,6 +32,7 @@ from hireloop_api.markets import (
     MARKET_SCRAPE_LOCATIONS,
     SUPPORTED_MARKETS,
     currency_for_market,
+    remote_allowed_regions,
     resolve_country_from_location,
 )
 
@@ -429,7 +430,7 @@ class ApifyJobsScraper:
         )
 
         is_remote = "remote" in location_raw.lower() or "remote" in title.lower()
-        allowed_regions = ["WORLD"] if is_remote else None
+        allowed_regions = remote_allowed_regions(market) if is_remote else None
 
         try:
             return JobRecord(

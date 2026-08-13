@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Admin / Placements — P22 deferred to v2, manually managed here for first hires.
- * Records hired candidates with compensation + invoice tracking.
+ * Admin / Hires — invite-only product, no payments.
+ * Records hired candidates (CTC for context, not invoices).
  */
 
 import Link from "next/link";
@@ -27,8 +27,8 @@ const STATUS_BADGE: Record<
 > = {
   pending:   { tone: "muted",   label: "Pending"   },
   confirmed: { tone: "strong",  label: "Confirmed" },
-  invoiced:  { tone: "accent",  label: "Invoiced"  },
-  paid:      { tone: "accent",  label: "Paid ✓"    },
+  invoiced:  { tone: "accent",  label: "Hired"     },
+  paid:      { tone: "accent",  label: "Hired"     },
 };
 
 export default function AdminPlacementsPage() {
@@ -55,9 +55,9 @@ export default function AdminPlacementsPage() {
             <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
           </Link>
           <div>
-            <h1 className="text-h1 text-paper-0">Placements</h1>
+            <h1 className="text-h1 text-paper-0">Hires</h1>
             <p className="text-small text-ink-500">
-              P22 (Razorpay) deferred to v2 — manual billing via this panel
+              Candidates marked hired. No payments in this product — access is invite-only.
             </p>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function AdminPlacementsPage() {
           <EmptyState
             icon={<CheckCircle strokeWidth={1.5} />}
             title="No placements yet"
-            description="When a recruiter marks a candidate as 'Hired' in the pipeline, the placement record appears here."
+            description="When a recruiter marks a candidate as hired, the record appears here."
           />
         )}
 
@@ -139,9 +139,8 @@ export default function AdminPlacementsPage() {
         <div className="flex items-start gap-2 text-small text-ink-500 border border-ink-700 rounded-md px-4 py-3">
           <Clock className="h-4 w-4 shrink-0 mt-0.5" strokeWidth={1.5} />
           <p>
-            Placements are created automatically when a recruiter drags a candidate
-            to the <strong className="text-ink-300">Hired</strong> column in the
-            pipeline view. Invoice management and Razorpay integration is v2.
+            Hireschema is invite-only and has no in-app payments. This list is a
+            hire log only — not invoices or checkout.
           </p>
         </div>
 

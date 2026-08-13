@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 export const metadata: Metadata = {
   title: "How It Works",
   description:
-    "Step-by-step: how Hireschema AI and Hireschema work together to match candidates to jobs and make warm introductions to hiring managers.",
+    "Step-by-step: how Hireschema AI matches candidates to India-eligible jobs and makes warm introductions to hiring managers.",
 };
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://hireschema.com";
@@ -20,20 +20,11 @@ const CANDIDATE_STEPS = [
   { n: 7, title: "Track replies & prep for interviews", detail: "See real-time status. When a hiring manager replies, Hireschema AI automatically starts interview prep for that role." },
 ];
 
-const RECRUITER_STEPS = [
-  { n: 1, title: "Describe the role", detail: "Plain English is fine. Hireschema asks follow-up questions if she needs more signal — seniority, must-haves, company culture." },
-  { n: 2, title: "Hireschema builds the brief", detail: "She generates a structured hiring brief and converts it into a semantic search query across the candidate graph." },
-  { n: 3, title: "Review the shortlist", detail: "Ranked candidates with match score cards. Filter by skill fit, experience, CTC alignment, or availability." },
-  { n: 4, title: "Hireschema enriches contacts", detail: "For each candidate you want to reach, Hireschema runs the Apify waterfall: LinkedIn → email finder → NeverBounce verify." },
-  { n: 5, title: "Intros go out via candidate Gmail", detail: "The email comes from the candidate's own Gmail — not a recruiter address. Reply rates are 3× higher." },
-  { n: 6, title: "Manage the pipeline", detail: "Track every intro, every reply, every stage in the Hireschema pipeline view. Auto-reminders for follow-ups." },
-];
-
 const ARCHITECTURE = [
   { icon: "🧠", label: "Conversational Engine", desc: "Claude-3.5-Sonnet via OpenRouter. Single-threaded master agent loop. All state persisted in Postgres via LangGraph." },
   { icon: "📚", label: "Knowledge Engine", desc: "pgvector HNSW indexes on candidate and job embeddings. Semantic cosine similarity — not keyword matching." },
   { icon: "🔗", label: "Matching Engine", desc: "Multi-signal scoring: skills (40%), experience (25%), location (20%), CTC (15%). Bias audit on every score." },
-  { icon: "🔁", label: "Intro Handshake", desc: "DB-state driven. Candidate clicks → intro_requests table INSERT → Postgres NOTIFY wakes Hireschema → Gmail OAuth send." },
+  { icon: "🔁", label: "Intro Handshake", desc: "DB-state driven. Candidate clicks → intro_requests table INSERT → Postgres NOTIFY wakes the intro pipeline → Gmail OAuth send." },
 ];
 
 export default function HowItWorksPage() {
@@ -46,12 +37,11 @@ export default function HowItWorksPage() {
           </Badge>
           <h1 className="text-5xl font-bold text-ink-900 mb-4">How Hireschema works</h1>
           <p className="text-ink-500 text-lg">
-            Two AI agents. One shared candidate graph. End-to-end — from profile to offer.
+            Hireschema AI. One candidate graph. End-to-end — from profile to intro.
           </p>
         </div>
       </section>
 
-      {/* Candidate flow */}
       <section className="py-20 bg-paper-1">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="flex items-center gap-3 mb-10">
@@ -74,30 +64,6 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      {/* Recruiter flow */}
-      <section className="py-20 bg-ink-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 rounded-full ">N</div>
-            <h2 className="text-3xl font-bold text-ink-900">Hireschema — Recruiter flow</h2>
-          </div>
-          <div className="space-y-4">
-            {RECRUITER_STEPS.map((s) => (
-              <div key={s.n} className="flex gap-5 bg-paper-1 rounded-2xl p-5 shadow-sm border border-ink-100">
-                <div className="w-8 h-8 rounded-full bg-accent text-accent font-bold text-sm flex items-center justify-center shrink-0 mt-0.5">
-                  {s.n}
-                </div>
-                <div>
-                  <p className="font-semibold text-ink-900">{s.title}</p>
-                  <p className="text-sm text-ink-500 mt-1">{s.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Architecture */}
       <section className="py-20 bg-paper-1 border-y border-ink-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -116,7 +82,6 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="py-20 bg-paper-1 text-center">
         <div className="max-w-lg mx-auto px-4">
           <h2 className="text-3xl font-bold text-ink-900 mb-4">Ready to try it?</h2>
@@ -125,13 +90,7 @@ export default function HowItWorksPage() {
               href={APP_URL + "/invite"}
               className="inline-flex items-center justify-center bg-accent hover:bg-accent-hover text-accent-fg font-semibold px-6 py-3 rounded-xl text-sm transition-colors"
             >
-              I&apos;m a job seeker →
-            </Link>
-            <Link
-              href={APP_URL + "/invite"}
-              className="inline-flex items-center justify-center border border-ink-100 hover:bg-ink-50 text-ink-700 font-semibold px-6 py-3 rounded-xl text-sm transition-colors"
-            >
-              I&apos;m hiring →
+              Request an invite →
             </Link>
           </div>
         </div>

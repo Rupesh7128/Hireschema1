@@ -10,7 +10,6 @@ import {
   Mail,
   MessageCircle,
   Percent,
-  Users,
 } from "lucide-react";
 import { ProductPreview } from "@/components/marketing/ProductPreview";
 import { Reveal } from "@/components/ui/Reveal";
@@ -93,7 +92,7 @@ function Hero() {
           </div>
 
           <Reveal delay={120}>
-            <ProductPreview variant="candidate" className="lg:max-w-none" />
+            <ProductPreview className="lg:max-w-none" />
           </Reveal>
         </div>
       </div>
@@ -228,44 +227,27 @@ function HowItWorks() {
   );
 }
 
-// ── Two-up: Candidates vs Recruiters ─────────────────────────────────────────
+// ── Candidate product ────────────────────────────────────────────────────────
 
 function ForWhom() {
   return (
     <section className="border-b border-ink-100">
       <div className="max-w-page mx-auto px-6 py-20">
-        <div className="grid md:grid-cols-2 gap-6">
-          <Reveal>
-            <PathCard
-              tag="For candidates"
-              icon={Briefcase}
-              title="Stop applying. Start being found."
-              bullets={[
-                "Every match scored 0–100% with a plain-English why",
-                "Warm intros sent from your Gmail — full editorial control",
-                "Tailored resume PDF per role, in 20 seconds",
-                "Voice mode with Hireschema AI (en-IN, Hinglish-aware)",
-              ]}
-              cta="Request an invite"
-              href={APP_URL + "/invite"}
-            />
-          </Reveal>
-          <Reveal delay={100}>
-            <PathCard
-              tag="For recruiters"
-              icon={Users}
-              title="Your hiring pipeline, in one chat."
-              bullets={[
-                "Hireschema intakes your role through a conversation",
-                "Finds + ranks candidates from your private pipeline + ours",
-                "Drafts personalised outreach you approve in one click",
-                "Tracks replies, scheduling, and pipeline state",
-              ]}
-              cta="Request an invite"
-              href={APP_URL + "/invite"}
-            />
-          </Reveal>
-        </div>
+        <Reveal>
+          <PathCard
+            tag="For candidates"
+            icon={Briefcase}
+            title="Stop applying. Start being found."
+            bullets={[
+              "Every match scored 0–100% with a plain-English why",
+              "Warm intros sent from your Gmail — full editorial control",
+              "Tailored resume PDF per role, in 20 seconds",
+              "Voice mode with Hireschema AI (en-IN, Hinglish-aware)",
+            ]}
+            cta="Request an invite"
+            href={APP_URL + "/invite"}
+          />
+        </Reveal>
       </div>
     </section>
   );
@@ -328,11 +310,11 @@ function Principles() {
     },
     {
       title: "India-only marketplace",
-      body: "Indian candidates, Indian recruiters, salaries in INR. No global spray-and-pray.",
+      body: "Indian candidates, salaries in INR. No global spray-and-pray.",
     },
     {
-      title: "Two AIs, one database",
-      body: "Hireschema AI and Hireschema share state through Postgres — auditable, reproducible, no black-box handoffs.",
+      title: "You approve every send",
+      body: "Hireschema AI drafts intros in your voice — nothing leaves your Gmail until you sign off.",
     },
   ];
 
@@ -431,7 +413,7 @@ function CtaStrip() {
                   transition-colors duration-fast
                 "
               >
-                Talk to us about hiring
+                Email us
               </Link>
             </div>
           </div>

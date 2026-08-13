@@ -4,7 +4,6 @@ const FOOTER_LINKS = {
   Product: [
     { href: "/how-it-works", label: "How it works" },
     { href: "/candidates", label: "For Candidates" },
-    { href: "/recruiters", label: "For Recruiters" },
     { href: "/contact", label: "Request invite" },
   ],
   Company: [
@@ -41,8 +40,8 @@ export function Footer() {
               </span>
             </div>
             <p className="text-sm text-ink-500 leading-relaxed max-w-xs">
-              AI recruiting for candidates and recruiters in India. Hireschema AI finds the
-              right role. Hireschema helps hiring teams find opted-in talent.
+              AI recruiting for candidates in India. Hireschema AI finds the
+              right role and sends a warm intro from your Gmail.
             </p>
             <div className="mt-6 space-y-1">
               <p className="text-xs text-ink-700">India-only marketplace · salaries in INR</p>

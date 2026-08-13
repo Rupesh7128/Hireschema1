@@ -990,12 +990,8 @@ async def update_my_profile(
                 from hireloop_api.services.display_currency import VALID_DISPLAY_CURRENCIES
 
                 cur = str(updates["display_currency"] or "auto").lower().strip()
-                if cur not in {c.lower() for c in VALID_DISPLAY_CURRENCIES}:
-                    raise HTTPException(
-                        status_code=422,
-                        detail="Invalid display_currency. Use auto, INR, USD, GBP, or EUR.",
-                    )
-                updates["display_currency"] = cur
+                canonical = {c.lower(): c for c in VALID_DISPLAY_CURRENCIES}
+                updates["display_currency"] = canonical.get(cur, "INR")
             if "remote_preference" in updates:
                 pref = normalize_remote_preference(updates["remote_preference"])
                 if pref not in VALID_REMOTE_PREFERENCES:

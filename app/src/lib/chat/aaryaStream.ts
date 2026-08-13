@@ -161,6 +161,12 @@ export function sanitizeChatError(message: string): string {
     return "Failed.";
   }
   if (
+    lower.includes("today") &&
+    (lower.includes("limit") || lower.includes("chat") || lower.includes("tomorrow"))
+  ) {
+    return message;
+  }
+  if (
     lower.includes("rate limit") ||
     lower.includes("too many requests") ||
     lower.includes("429") ||

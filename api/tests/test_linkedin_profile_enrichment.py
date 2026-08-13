@@ -11,6 +11,13 @@ from hireloop_api.routes.auth import bootstrap_user
 # current (scraper-free) behaviour.
 
 
+def test_bootstrap_gates_new_users_on_invite_before_provision() -> None:
+    source = inspect.getsource(bootstrap_user)
+    assert "get_supabase_identity" in source
+    assert "enforce_invite_for_new_user" in source
+    assert source.find("enforce_invite_for_new_user") < source.find("_provision_user_row")
+
+
 def test_bootstrap_does_not_schedule_linkedin_profile_scraper() -> None:
     source = inspect.getsource(bootstrap_user)
 

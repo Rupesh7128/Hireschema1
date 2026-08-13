@@ -237,17 +237,14 @@ async def _load_app_user(
             )
             if user:
                 return serialize_row(user)
-            provisioned = await _provision_user_row(db, supabase_user)
-            if provisioned:
-                return provisioned
+            # Invite-only: do not auto-create public.users. Bootstrap provisions
+            # only after the waitlist (or super-admin) check.
         except Exception as exc:
             logger.warning("asyncpg_user_lookup_failed", error=str(exc)[:200])
 
     from hireloop_api.services import supabase_users as rest_users
 
     row = await rest_users.fetch_user(settings, user_id)
-    if not row:
-        row = await rest_users.provision_user(settings, supabase_user)
     return row
 
 
@@ -391,8 +388,15 @@ async def get_current_user(
     row = await _load_app_user(settings, db, supabase_user)
     if not row:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "invite_required",
+                "status": "pending",
+                "message": (
+                    "Hireschema is invite-only. Request an invite with this email "
+                    "and we'll get back to you."
+                ),
+            },
         )
 
     uid = coerce_uuid(row["id"])
@@ -449,8 +453,15 @@ async def get_current_user_with_supabase(
     base = await _load_app_user(settings, db, supabase_user)
     if not base:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "invite_required",
+                "status": "pending",
+                "message": (
+                    "Hireschema is invite-only. Request an invite with this email "
+                    "and we'll get back to you."
+                ),
+            },
         )
 
     uid = coerce_uuid(base["id"])

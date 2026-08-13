@@ -13,6 +13,7 @@ vi.mock("@/lib/supabase/client", () => ({
 import {
   ApiUnreachableError,
   apiAuthFetch,
+  indiaOnlyInvitePath,
 } from "@/lib/api/auth-fetch";
 import { API_PROXY_PREFIX } from "@/lib/api/base-url";
 import { sanitizeChatError } from "@/lib/chat/aaryaStream";
@@ -183,5 +184,31 @@ describe("apiAuthFetch error classification", () => {
     expect(sanitizeChatError("Hireschema AI took too long to respond. Please try again.")).not.toMatch(
       /railway|hireloop-api|can't reach api/i,
     );
+    expect(
+      sanitizeChatError("You've used today's chat limit (20 turns). Try again tomorrow."),
+    ).toBe("You've used today's chat limit (20 turns). Try again tomorrow.");
+  });
+
+  it("maps india_only 403 bodies to the waitlist path", () => {
+    expect(
+      indiaOnlyInvitePath(403, {
+        detail: {
+          error_code: "india_only",
+          invite_path: "/invite?reason=india",
+        },
+      }),
+    ).toBe("/invite?reason=india");
+    expect(indiaOnlyInvitePath(403, { detail: "nope" })).toBeNull();
+    expect(indiaOnlyInvitePath(401, { detail: { error_code: "india_only" } })).toBeNull();
+    expect(
+      indiaOnlyInvitePath(403, {
+        detail: { code: "invite_required", status: "pending" },
+      }),
+    ).toBe("/invite?thanks=1&status=pending");
+    expect(
+      indiaOnlyInvitePath(403, {
+        detail: { code: "invite_rejected", status: "rejected" },
+      }),
+    ).toBe("/invite?thanks=1&status=rejected");
   });
 });

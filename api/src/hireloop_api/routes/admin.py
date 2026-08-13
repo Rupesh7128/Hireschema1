@@ -257,10 +257,10 @@ async def admin_placements(
     _: dict = Depends(get_admin_user),
     db: asyncpg.Connection = Depends(get_db),
 ) -> list[dict]:
-    """Manual billing queue until P22 Razorpay (v2)."""
+    """Hire log — no payments. Invite-only product."""
     rows = await db.fetch(
         """
-        SELECT p.id, p.status, p.hired_at, p.ctc_inr, p.placement_fee_inr,
+        SELECT p.id, p.status, p.hired_at, p.ctc_inr,
                p.admin_notes, r.title AS role_title, u.full_name AS candidate_name
         FROM public.placements p
         LEFT JOIN public.roles r ON r.id = p.role_id

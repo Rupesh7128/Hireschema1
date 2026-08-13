@@ -12,8 +12,6 @@ import {
   publishPublicProfile,
   updateMyProfile,
   type CandidateVisibility,
-  type DisplayCurrency,
-  type MyProfileData,
 } from "@/lib/api/profile";
 import { Button, Card, CardBody, CardFooter, CardHeader, useToast } from "@/components/ui";
 import { PathResumePreviewModal } from "@/components/resumes/PathResumePreviewModal";
@@ -22,21 +20,10 @@ import { useAiOperations } from "@/components/providers/AiOperationsProvider";
 import { resolveReadyOrAccepted } from "@/lib/operations/resolve";
 import { AI_OPERATION_KINDS } from "@/lib/operations/kinds";
 
-const CURRENCY_OPTIONS: { id: DisplayCurrency; label: string }[] = [
-  { id: "auto", label: "Auto (from country / resume)" },
-  { id: "INR", label: "Indian Rupee (₹)" },
-  { id: "USD", label: "US Dollar ($)" },
-  { id: "GBP", label: "British Pound (£)" },
-  { id: "EUR", label: "Euro (€)" },
-];
-
 export function CandidateSharingSettings() {
   const { toast } = useToast();
   const { trackAndWait } = useAiOperations();
-  const [profile, setProfile] = useState<MyProfileData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currency, setCurrency] = useState<DisplayCurrency>("auto");
-  const [savingCurrency, setSavingCurrency] = useState(false);
   const [hideContact, setHideContact] = useState(true);
   const [shareRecruiters, setShareRecruiters] = useState(false);
   const [visibility, setVisibility] = useState<CandidateVisibility>("open_to_matches");
@@ -56,8 +43,6 @@ export function CandidateSharingSettings() {
         fetchMyProfile({ force: true }),
         fetchCareerPathResumes().catch(() => [] as CareerPathResume[]),
       ]);
-      setProfile(p);
-      setCurrency((p.candidate?.display_currency as DisplayCurrency) ?? "auto");
       setHideContact(p.candidate?.hide_contact_public ?? true);
       setShareRecruiters(p.candidate?.share_with_recruiters ?? false);
       setVisibility(p.candidate?.visibility ?? "open_to_matches");
@@ -76,19 +61,6 @@ export function CandidateSharingSettings() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function saveCurrency() {
-    setSavingCurrency(true);
-    try {
-      await updateMyProfile({ display_currency: currency });
-      toast.success("Currency preference saved");
-      await load();
-    } catch (err) {
-      toast.error((err as Error).message ?? "Couldn't save currency");
-    } finally {
-      setSavingCurrency(false);
-    }
-  }
 
   async function savePrivacy() {
     setSavingPrivacy(true);
@@ -152,8 +124,6 @@ export function CandidateSharingSettings() {
     toast.success("Link copied");
   }
 
-  const resolved = profile?.candidate?.display_currency_resolved ?? "INR";
-
   if (loading) {
     return (
       <Card>
@@ -169,31 +139,14 @@ export function CandidateSharingSettings() {
       <Card>
         <CardHeader
           title="Currency"
-          description="How salaries and compensation are shown across jobs and your profile."
+          description="Hireschema is India-only. Salaries and CTC are shown in INR (LPA)."
         />
-        <CardBody className="space-y-3 !pt-0">
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value as DisplayCurrency)}
-            className="h-10 w-full rounded-md border border-ink-100 bg-paper-1 px-3 text-small text-ink-900 outline-none focus:ring-2 focus:ring-accent-ring"
-          >
-            {CURRENCY_OPTIONS.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <p className="text-micro text-ink-500">
-            {currency === "auto"
-              ? `Auto resolves to ${resolved} from your market and resume location.`
-              : `Salaries will display in ${currency}.`}
+        <CardBody className="!pt-0">
+          <p className="text-small text-ink-700">Indian Rupee (₹) · lakhs per annum</p>
+          <p className="mt-1 text-micro text-ink-500">
+            Roles, matches, and your expected CTC use LPA. Other currencies are not supported.
           </p>
         </CardBody>
-        <CardFooter>
-          <Button variant="primary" size="sm" loading={savingCurrency} onClick={() => void saveCurrency()}>
-            Save currency
-          </Button>
-        </CardFooter>
       </Card>
 
       <Card>

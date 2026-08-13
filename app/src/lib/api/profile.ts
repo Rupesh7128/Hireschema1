@@ -1,7 +1,7 @@
 import { apiFetch } from "@/lib/api/client";
 import { apiAuthFetch } from "@/lib/api/auth-fetch";
 
-export type DisplayCurrency = "auto" | "INR" | "USD" | "GBP" | "EUR";
+export type DisplayCurrency = "auto" | "INR";
 
 export type MyProfileData = {
   user: {

@@ -20,7 +20,7 @@ export default async function AdminLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/signup");
+  if (!user) redirect("/signup?mode=signin");
 
   const {
     data: { session },

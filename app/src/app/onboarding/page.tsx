@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import { getServerApiBaseUrl } from "@/lib/api/base-url";
 import { resolveSignupMethod } from "@/lib/auth/signup-method";
 import { displayNameFromSupabaseUser } from "@/lib/auth/display-name";
-import { shouldRedirectOnboardingToDashboard } from "@/lib/auth/server-onboarding";
+import { resolveSignedInPath } from "@/lib/auth/app-destination";
+import { probeSignedInGate } from "@/lib/auth/server-onboarding";
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingClientGate } from "@/components/auth/OnboardingClientGate";
 import { OnboardingFlow } from "./OnboardingFlow";
@@ -25,7 +26,7 @@ export default async function OnboardingPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/signup");
+    redirect("/invite");
   }
 
   const {
@@ -33,34 +34,20 @@ export default async function OnboardingPage() {
   } = await supabase.auth.getSession();
   const token = session?.access_token;
   const apiBase = getServerApiBaseUrl();
-  const serverFetchTimeoutMs = 12_000;
+
+  let apiFullName: string | undefined;
   if (token) {
-    if (await shouldRedirectOnboardingToDashboard({ token, apiBase })) {
-      redirect("/dashboard");
+    const gate = await probeSignedInGate({ token, apiBase });
+    const dest = resolveSignedInPath("/onboarding", gate);
+    if (dest !== "/onboarding") {
+      redirect(dest);
     }
+    apiFullName = gate.profile?.user?.full_name?.trim() || undefined;
   }
 
-  let candidateName: string | undefined = displayNameFromSupabaseUser(user);
+  let candidateName: string | undefined = apiFullName || displayNameFromSupabaseUser(user);
 
-  if (token) {
-    try {
-      const profileRes = await fetch(`${apiBase}/api/v1/me/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-        signal: AbortSignal.timeout(serverFetchTimeoutMs),
-      });
-      if (profileRes.ok) {
-        const profileData = (await profileRes.json()) as {
-          user?: { full_name?: string | null };
-        };
-        candidateName = profileData.user?.full_name?.trim() || candidateName;
-      }
-    } catch {
-      /* non-fatal */
-    }
-  }
-
-  if (!candidateName) {
+  if (!candidateName && token) {
     try {
       const supabase = await createClient();
       const { data: { user } } = await supabase.auth.getUser();

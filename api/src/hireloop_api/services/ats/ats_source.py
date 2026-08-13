@@ -24,6 +24,7 @@ from datetime import UTC, datetime, timedelta
 import httpx
 import structlog
 
+from hireloop_api.markets import remote_allowed_regions
 from hireloop_api.services.apify.jobs_scraper import JobRecord
 
 logger = structlog.get_logger()
@@ -134,6 +135,7 @@ def parse_greenhouse(payload: dict, *, token: str, company_name: str) -> list[Jo
                 company_name=company_name,
                 location_city=_india_city(location),
                 is_remote=is_remote,
+                allowed_regions=remote_allowed_regions() if is_remote else None,
                 apply_url=job.get("absolute_url"),
                 source="greenhouse",
                 expires_at=datetime.now(UTC) + timedelta(days=30),
@@ -168,6 +170,7 @@ def parse_lever(payload: list, *, company: str) -> list[JobRecord]:
                 company_name=company_name,
                 location_city=_india_city(location),
                 is_remote=is_remote,
+                allowed_regions=remote_allowed_regions() if is_remote else None,
                 apply_url=job.get("hostedUrl") or job.get("applyUrl"),
                 source="lever",
                 expires_at=datetime.now(UTC) + timedelta(days=30),

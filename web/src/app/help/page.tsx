@@ -5,7 +5,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://hireschema.com";
 
 export const metadata: Metadata = {
   title: "Help & support",
-  description: "Get help with Hireschema — candidates, recruiters, privacy, and account issues.",
+  description: "Get help with Hireschema — matching, intros, privacy, and account issues.",
 };
 
 const FAQ = [
@@ -22,10 +22,6 @@ const FAQ = [
     a: "Request an intro from a job card. Hireschema AI drafts a warm email; you send it from your own Gmail after approving the draft.",
   },
   {
-    q: "I'm a recruiter — how do I claim an invite?",
-    a: "Open the link in your email, accept the invite, and the candidate appears in your recruiter inbox.",
-  },
-  {
     q: "How do I delete my data?",
     a: "In the app, go to Settings → Privacy → request export or deletion. You can also email privacy@hireschema.com.",
   },
@@ -37,7 +33,7 @@ export default function HelpPage() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         <h1 className="text-h1 font-semibold text-ink-900">Help & support</h1>
         <p className="mt-2 text-body text-ink-600">
-          Quick answers for candidates and recruiters using Hireschema in India.
+          Quick answers for candidates using Hireschema in India.
         </p>
 
         <div className="mt-10 space-y-6">

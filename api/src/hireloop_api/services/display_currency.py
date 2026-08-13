@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from hireloop_api.markets import currency_for_market, resolve_country_from_location
+from hireloop_api.markets import resolve_country_from_location
 
-VALID_DISPLAY_CURRENCIES = frozenset({"auto", "INR", "USD", "GBP", "EUR"})
+VALID_DISPLAY_CURRENCIES = frozenset({"auto", "INR"})
 
 
 def infer_market_from_resume_location(location: str | None) -> str | None:
@@ -25,17 +25,10 @@ def resolve_display_currency(
     """
     Return ISO currency code for UI salary formatting.
 
-    auto → market currency, else best-effort from resume/profile location.
+    India-only marketplace: always INR, regardless of stored preference.
     """
-    pref = (preference or "auto").upper().strip()
-    if pref in {"INR", "USD", "GBP", "EUR"}:
-        return pref
-    loc_market = infer_market_from_resume_location(
-        " ".join(p for p in (location_city, location_state) if p)
-    )
-    if loc_market:
-        return currency_for_market(loc_market)
-    return currency_for_market(market)
+    _ = (preference, market, location_city, location_state)
+    return "INR"
 
 
 def currency_fields_for_candidate(row: dict[str, Any] | None) -> dict[str, str]:

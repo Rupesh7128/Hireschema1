@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { SignupForm } from "@/components/auth/SignupForm";
 import { HireschemaLogo } from "@/components/brand/HireschemaLogo";
 
@@ -10,7 +11,16 @@ export const metadata: Metadata = {
   title: "Sign in",
 };
 
-export default function SignupPage() {
+type PageProps = {
+  searchParams: Promise<{ mode?: string }>;
+};
+
+export default async function SignupPage({ searchParams }: PageProps) {
+  const { mode } = await searchParams;
+  if (mode !== "signin") {
+    redirect("/invite");
+  }
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-paper-0 px-4">
       <div className="max-w-md w-full bg-paper-1 rounded-xl shadow-2 border border-ink-100 p-8 space-y-6">
@@ -18,9 +28,9 @@ export default function SignupPage() {
         <HireschemaLogo size={34} />
 
         <div className="space-y-1">
-          <h1 className="text-h1 text-ink-900">Welcome</h1>
+          <h1 className="text-h1 text-ink-900">Welcome back</h1>
           <p className="text-small text-ink-500">
-            Invite-only AI career platform for job seekers in India.
+            Invite-only. Sign in with the email we approved.
           </p>
         </div>
 

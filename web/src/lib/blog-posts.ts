@@ -61,7 +61,7 @@ export const BLOG_POSTS: BlogPost[] = [
     readMins: 8,
     body: [
       "India's hiring stack is shifting from keyword filters to semantic matching — but matches alone don't get interviews.",
-      "Agents like Hireschema AI (candidate) and Hireschema (recruiter) sit on a shared graph: preferences, skills, and intro state in one Postgres database.",
+      "Agents like Hireschema AI sit on a candidate graph: preferences, skills, and intro state in one Postgres database.",
       "The winning mechanic in 2026 is warm intros at scale — AI drafts, humans approve, Gmail sends.",
     ],
   },

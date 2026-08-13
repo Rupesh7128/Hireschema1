@@ -59,9 +59,15 @@ const nextConfig = {
     ];
   },
 
-  // Redirect naked domain to www (Cloudflare handles the reverse in prod)
+  // Recruiter marketing page is retired — candidate-only product
   async redirects() {
-    return [];
+    return [
+      {
+        source: "/recruiters",
+        destination: "/candidates",
+        permanent: true,
+      },
+    ];
   },
 };
 

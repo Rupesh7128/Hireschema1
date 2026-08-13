@@ -25,6 +25,7 @@ from fastapi.responses import JSONResponse
 
 from hireloop_api.agents.nitya.agent import NityaWorker
 from hireloop_api.config import get_settings
+from hireloop_api.india_geo import india_geo_middleware
 from hireloop_api.rate_limit import rate_limit_middleware
 from hireloop_api.routes.admin import router as admin_router
 from hireloop_api.routes.ai_operations import router as ai_operations_router
@@ -212,6 +213,9 @@ async def _request_timing(
 # In-process per-IP flood protection (health-exempt, auth tightened). See
 # rate_limit.py for semantics/limits.
 app.middleware("http")(rate_limit_middleware)
+
+# India-only marketplace: reject non-IN CDN country on API spend paths.
+app.middleware("http")(india_geo_middleware)
 
 
 # ── Routers ───────────────────────────────────────────────────────────────────

@@ -74,12 +74,10 @@ Never invent employers, degrees, dates, titles, or metrics the candidate does no
 def _kit_system_prompt(market: str) -> str:
     m = normalize_market(market)
     label = MARKET_LABELS.get(m, m)
-    currency = currency_for_market(m)
-    if m == "IN":
-        comp_hint = "Use INR/LPA and India notice-period norms when relevant."
-    else:
-        comp_hint = f"Use {currency} annual salary framing for {label}; avoid India-only LPA unless the role is IN-based."
-    return f"{KIT_SYSTEM_BASE}\nCandidate home market: {label} ({m}). {comp_hint}"
+    return (
+        f"{KIT_SYSTEM_BASE}\nCandidate home market: {label} ({m}). "
+        "Use INR/LPA and India notice-period norms when relevant."
+    )
 
 
 # Application kits run two LLM jobs (text assets + resume HTML). Use the fast

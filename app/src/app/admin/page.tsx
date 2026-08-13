@@ -48,7 +48,7 @@ const STAT_META: {
   { key: "intros_7d",           label: "Intros (7d)",  Icon: BarChart3   },
   { key: "intros_sent_7d",      label: "Sent (7d)",    Icon: Activity    },
   { key: "voice_sessions_7d",   label: "Voice (7d)",   Icon: Activity    },
-  { key: "placements_total",    label: "Placements",   Icon: BarChart3, accent: true },
+  { key: "placements_total",    label: "Hires",        Icon: BarChart3, accent: true },
 ];
 
 export default function AdminHomePage() {
@@ -134,7 +134,7 @@ export default function AdminHomePage() {
         {/* ── Quick nav ────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap gap-3">
           {[
-            { href: "/admin/placements", label: "Placements", note: "manual billing" },
+            { href: "/admin/placements", label: "Hires", note: "placement records" },
             { href: "/admin/super",     label: "Super admin", note: "users + recruiters" },
           ].map(({ href, label, note }) => (
             <Link

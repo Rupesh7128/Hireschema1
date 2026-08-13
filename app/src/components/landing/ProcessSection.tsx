@@ -10,16 +10,11 @@ import {
   Mic,
   Search,
   Send,
-  ShieldCheck,
   Sparkles,
-  Users,
   Zap,
 } from "@/components/brand/icons";
 import { SectionHeader } from "@/components/landing/SectionHeader";
-import {
-  LANDING_AGENTS,
-  type LandingAudience,
-} from "@/components/landing/landing-audience";
+import { LANDING_AGENT } from "@/components/landing/landing-audience";
 import { RevealStagger, StaggerItem } from "@/components/ui/motion";
 
 type Step = {
@@ -61,63 +56,9 @@ const CANDIDATE_STEPS: Step[] = [
   },
 ];
 
-const RECRUITER_STEPS: Step[] = [
-  {
-    step: "01",
-    Icon: MessageSquare,
-    title: "Tell Hireschema the role",
-    body: "Describe the opening in plain words — title, skills, location, and comp. Hireschema turns it into a structured brief without forms or templates.",
-    detail: "Hireschema · voice or text",
-  },
-  {
-    step: "02",
-    Icon: Search,
-    title: "Hireschema searches the graph",
-    body: "Hireschema searches candidates who opted into recruiter discovery and compares skills, seniority, location, preferences, and role evidence.",
-    detail: "Opted-in candidate graph",
-  },
-  {
-    step: "03",
-    Icon: Users,
-    title: "Hireschema ranks who opted in",
-    body: "Only candidates who want to be contacted surface in your shortlist — ranked by fit score, not keyword spam.",
-    detail: "Pre-scored · Consent-first",
-  },
-  {
-    step: "04",
-    Icon: Send,
-    title: "Hireschema warms up the intro",
-    body: "Request an introduction from a candidate's profile. The candidate can accept or decline before the conversation begins.",
-    detail: "Two-sided introduction · Candidate choice",
-  },
-];
-
-const SECTION_COPY: Record<
-  LandingAudience,
-  { label: string; title: string; description: string }
-> = {
-  candidate: {
-    label: "How Hireschema AI works",
-    title: "From CV to a reviewed introduction.",
-    description:
-      "Hireschema AI does the search and preparation. You decide what is accurate and what gets sent.",
-  },
-  recruiter: {
-    label: "How Hireschema works",
-    title: "From role brief to a consented shortlist.",
-    description:
-      "Hireschema structures the work and explains the matches. You choose whom to contact.",
-  },
-};
-
-type ProcessSectionProps = {
-  audience: LandingAudience;
-};
-
-export function ProcessSection({ audience }: ProcessSectionProps) {
-  const steps = audience === "candidate" ? CANDIDATE_STEPS : RECRUITER_STEPS;
-  const header = SECTION_COPY[audience];
-  const agent = LANDING_AGENTS[audience];
+export function ProcessSection() {
+  const steps = CANDIDATE_STEPS;
+  const agent = LANDING_AGENT;
 
   return (
     <section
@@ -126,9 +67,9 @@ export function ProcessSection({ audience }: ProcessSectionProps) {
     >
       <div className="mx-auto max-w-page px-6 py-16 md:py-24">
         <SectionHeader
-          label={header.label}
-          title={header.title}
-          description={header.description}
+          label="How Hireschema AI works"
+          title="From CV to a reviewed introduction."
+          description="Hireschema AI does the search and preparation. You decide what is accurate and what gets sent."
         />
 
         <div className="relative mt-14">
@@ -137,9 +78,9 @@ export function ProcessSection({ audience }: ProcessSectionProps) {
             aria-hidden
           />
 
-          <RevealStagger key={audience} className="space-y-6">
+          <RevealStagger className="space-y-6">
             {steps.map(({ step, Icon, title, body, detail }, i) => (
-              <StaggerItem key={`${audience}-${step}`}>
+              <StaggerItem key={step}>
                 <motion.article
                   className="group relative grid gap-4 rounded-xl border border-ink-100 bg-paper-1 p-6 transition-colors hover:border-ink-300 md:grid-cols-[auto_1fr] md:gap-6"
                   whileHover={{ y: -2 }}
@@ -195,41 +136,19 @@ export function ProcessSection({ audience }: ProcessSectionProps) {
   );
 }
 
-const CREDIBILITY: Record<
-  LandingAudience,
-  { Icon: LucideIcon; label: string; sub: string }[]
-> = {
-  candidate: [
-    { Icon: Mic, label: "Talk to Hireschema AI", sub: "Text or voice" },
-    { Icon: MapPin, label: "India-focused", sub: "Onsite and eligible remote" },
-    { Icon: Zap, label: "Live actions", sub: "Every step logged" },
-    { Icon: FileText, label: "CV per role", sub: "Hireschema AI tailors each one" },
-  ],
-  recruiter: [
-    { Icon: Mic, label: "Talk to Hireschema", sub: "Text or voice" },
-    { Icon: MapPin, label: "India-focused", sub: "Role and location filters" },
-    { Icon: Zap, label: "Live actions", sub: "Every step logged" },
-    {
-      Icon: ShieldCheck,
-      label: "Consent-first",
-      sub: "Opted-in candidates only",
-    },
-  ],
-};
+const CREDIBILITY: { Icon: LucideIcon; label: string; sub: string }[] = [
+  { Icon: Mic, label: "Talk to Hireschema AI", sub: "Text or voice" },
+  { Icon: MapPin, label: "India-focused", sub: "Onsite and eligible remote" },
+  { Icon: Zap, label: "Live actions", sub: "Every step logged" },
+  { Icon: FileText, label: "CV per role", sub: "Hireschema AI tailors each one" },
+];
 
-type CredibilityBarProps = {
-  audience: LandingAudience;
-};
-
-export function CredibilityBar({ audience }: CredibilityBarProps) {
-  const items = CREDIBILITY[audience];
+export function CredibilityBar() {
+  const items = CREDIBILITY;
 
   return (
     <section className="border-y border-ink-100 bg-paper-1">
-      <RevealStagger
-        key={audience}
-        className="mx-auto grid max-w-page grid-cols-2 gap-6 px-6 py-8 md:grid-cols-4"
-      >
+      <RevealStagger className="mx-auto grid max-w-page grid-cols-2 gap-6 px-6 py-8 md:grid-cols-4">
         {items.map(({ Icon, label, sub }) => (
           <StaggerItem key={label}>
             <motion.div

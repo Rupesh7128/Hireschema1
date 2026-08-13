@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import time
 from collections import defaultdict, deque
+from typing import Literal
 
 import asyncpg
 import structlog
@@ -20,7 +21,9 @@ from hireloop_api.services.distributed_rate_limit import check_distributed_rate_
 
 logger = structlog.get_logger()
 
-_WINDOW_SECONDS = 3600
+Period = Literal["hour", "day"]
+
+_WINDOW_SECONDS: dict[Period, int] = {"hour": 3600, "day": 86400}
 
 # (user_id, bucket) → deque of event timestamps inside the window.
 _events: dict[tuple[str, str], deque[float]] = defaultdict(deque)
@@ -30,26 +33,32 @@ def _user_identity_hash(user_id: str) -> str:
     return hashlib.sha256(f"user:{user_id}".encode()).hexdigest()
 
 
+def _limit_detail(period: Period, max_events: int, retry_in: int) -> str:
+    if period == "day":
+        return f"You've used today's chat limit ({max_events} turns). Try again tomorrow."
+    minutes = max(1, retry_in // 60)
+    return f"You've hit the hourly limit for this action — try again in about {minutes} min."
+
+
 def _check_in_memory(
     user_id: str,
     bucket: str,
     max_per_hour: int,
     *,
     now: float | None = None,
+    period: Period = "hour",
 ) -> None:
     ts = now if now is not None else time.time()
+    window = _WINDOW_SECONDS[period]
     q = _events[(user_id, bucket)]
-    cutoff = ts - _WINDOW_SECONDS
+    cutoff = ts - window
     while q and q[0] <= cutoff:
         q.popleft()
     if len(q) >= max_per_hour:
-        retry_in = int(q[0] + _WINDOW_SECONDS - ts) + 1
+        retry_in = int(q[0] + window - ts) + 1
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=(
-                "You've hit the hourly limit for this action — "
-                f"try again in about {max(1, retry_in // 60)} min."
-            ),
+            detail=_limit_detail(period, max_per_hour, retry_in),
             headers={"Retry-After": str(retry_in)},
         )
     q.append(ts)
@@ -62,10 +71,11 @@ async def check_rate_limit(
     *,
     db: asyncpg.Connection | None = None,
     now: float | None = None,
+    period: Period = "hour",
 ) -> None:
     """
     Record one event and raise 429 when the caller exceeds `max_per_hour`
-    in a 1-hour window. Prefer Postgres when `db` is provided.
+    in the chosen window. Prefer Postgres when `db` is provided.
     """
     if db is not None:
         try:
@@ -79,6 +89,7 @@ async def check_rate_limit(
                     identity_hash=_user_identity_hash(user_id),
                     bucket=bucket,
                     max_per_hour=max_per_hour,
+                    period=period,
                 )
             return
         except HTTPException:
@@ -90,7 +101,7 @@ async def check_rate_limit(
                 bucket=bucket,
                 error=str(exc)[:200],
             )
-    _check_in_memory(user_id, bucket, max_per_hour, now=now)
+    _check_in_memory(user_id, bucket, max_per_hour, now=now, period=period)
 
 
 def reset_rate_limits() -> None:

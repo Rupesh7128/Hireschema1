@@ -95,7 +95,7 @@ export default function CandidatesPage() {
               Request an invite
             </Link>
           </div>
-          <ProductPreview variant="candidate" />
+          <ProductPreview />
         </div>
       </section>
 

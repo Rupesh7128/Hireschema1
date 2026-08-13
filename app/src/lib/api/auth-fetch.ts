@@ -99,6 +99,29 @@ export async function getAccessToken(): Promise<string | null> {
   }
 }
 
+export function indiaOnlyInvitePath(status: number, body: unknown): string | null {
+  if (status !== 403) return null;
+  const detail =
+    typeof body === "object" && body !== null && "detail" in body
+      ? (body as { detail: unknown }).detail
+      : body;
+  if (typeof detail === "object" && detail !== null) {
+    const rec = detail as { error_code?: unknown; code?: unknown; status?: unknown };
+    if (rec.error_code === "india_only") {
+      return "/invite?reason=india";
+    }
+    if (
+      rec.code === "invite_required" ||
+      rec.code === "invite_pending" ||
+      rec.code === "invite_rejected"
+    ) {
+      const rejected = rec.code === "invite_rejected" || rec.status === "rejected";
+      return rejected ? "/invite?thanks=1&status=rejected" : "/invite?thanks=1&status=pending";
+    }
+  }
+  return null;
+}
+
 export async function apiAuthFetch(
   path: string,
   init: RequestInit = {},
@@ -147,6 +170,15 @@ export async function apiAuthFetch(
       signal: hasCallerSignal
         ? init.signal
         : (timeoutSignal ?? controller!.signal),
+    }).then(async (res) => {
+      if (res.status === 403 && typeof window !== "undefined") {
+        const body: unknown = await res.clone().json().catch(() => null);
+        const invitePath = indiaOnlyInvitePath(403, body);
+        if (invitePath) {
+          window.location.replace(invitePath);
+        }
+      }
+      return res;
     });
   } catch (err) {
     // Caller-owned cancellation must not look like "API unreachable / timed out".

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchMyProfile } from "@/lib/api/profile";
+import { shouldAllowClientAppRedirect } from "@/lib/auth/app-destination";
 import {
   isClientOnboardingCompleteRecent,
   markClientOnboardingComplete,
@@ -20,6 +21,7 @@ const PROFILE_FETCH_TIMEOUT_MS = 8_000;
 export function OnboardingClientGate({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [slowApi, setSlowApi] = useState(false);
+  const [redirectBlocked, setRedirectBlocked] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +51,12 @@ export function OnboardingClientGate({ children }: { children: React.ReactNode }
 
           if (profile.candidate?.onboarding_complete === true) {
             markClientOnboardingComplete(userId);
-            window.location.replace("/dashboard");
+            if (shouldAllowClientAppRedirect("/dashboard")) {
+              window.location.replace("/dashboard");
+              return;
+            }
+            setRedirectBlocked(true);
+            setReady(true);
             return;
           }
         }
@@ -78,6 +85,20 @@ export function OnboardingClientGate({ children }: { children: React.ReactNode }
           </p>
         ) : null}
       </div>
+    );
+  }
+
+  if (redirectBlocked) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-paper-0 px-6 text-center">
+        <p className="text-body text-ink-900">You&apos;re already set up.</p>
+        <p className="max-w-sm text-small text-ink-500">
+          Open your dashboard to keep going. If this page sent you in a loop, stay here and refresh once.
+        </p>
+        <a href="/dashboard" className="text-small font-medium text-accent hover:underline">
+          Open dashboard
+        </a>
+      </main>
     );
   }
 

@@ -3,9 +3,19 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 import asyncpg
 from fastapi import HTTPException, status
+
+
+def rate_limit_window_start(
+    now: datetime,
+    period: Literal["hour", "day"] = "hour",
+) -> datetime:
+    if period == "day":
+        return now.replace(hour=0, minute=0, second=0, microsecond=0)
+    return now.replace(minute=0, second=0, microsecond=0)
 
 
 async def check_distributed_rate_limit(
@@ -14,9 +24,10 @@ async def check_distributed_rate_limit(
     identity_hash: str,
     bucket: str,
     max_per_hour: int,
+    period: Literal["hour", "day"] = "hour",
 ) -> None:
     now = datetime.now(UTC)
-    window_start = now.replace(minute=0, second=0, microsecond=0)
+    window_start = rate_limit_window_start(now, period)
     count = await db.fetchval(
         """
         INSERT INTO public.api_rate_limits
@@ -33,7 +44,8 @@ async def check_distributed_rate_limit(
     )
     if int(count or 0) <= max_per_hour:
         return
-    retry_in = max(1, int((window_start + timedelta(hours=1) - now).total_seconds()))
+    delta = timedelta(days=1) if period == "day" else timedelta(hours=1)
+    retry_in = max(1, int((window_start + delta - now).total_seconds()))
     raise HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         detail="Too many requests. Try again later.",

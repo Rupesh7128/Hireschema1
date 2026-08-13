@@ -192,6 +192,13 @@ async def _prepare_public_chat_turn(
         max_per_hour=40,
         db=db,
     )
+    await check_rate_limit(
+        str(visitor_session_id),
+        "public_profile_chat_day",
+        max_per_hour=settings.public_chat_turns_per_day,
+        db=db,
+        period="day",
+    )
 
     chat_id = await _get_or_create_chat(
         db,

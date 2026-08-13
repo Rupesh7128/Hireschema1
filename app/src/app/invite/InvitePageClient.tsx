@@ -25,6 +25,7 @@ export function InvitePageClient() {
   const searchParams = useSearchParams();
   const thanksFromAuth = searchParams.get("thanks") === "1";
   const statusFromAuth = searchParams.get("status") || "pending";
+  const indiaWaitlist = searchParams.get("reason") === "india";
 
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -117,12 +118,18 @@ export function InvitePageClient() {
           Private beta
         </p>
         <h1 className="mt-3 text-[32px] font-semibold leading-tight tracking-tight text-ink-900">
-          {showThanks ? "You're on the list" : "Request an invite"}
+          {showThanks
+            ? "You're on the list"
+            : indiaWaitlist
+              ? "India-only for now"
+              : "Request an invite"}
         </h1>
         <p className="mt-3 text-body leading-relaxed text-ink-500">
           {showThanks
             ? "Only approved emails can sign in and open the dashboard. Hang tight — we'll email you when you're in."
-            : "Hireschema is invite-only. Leave your email — use the same address you'll sign in with (LinkedIn email). A founder will approve access."}
+            : indiaWaitlist
+              ? "Hireschema is built for Indian candidates and Indian roles, with salaries in INR. Leave your email if you want access when we expand — or if you're in India and this was a mistake."
+              : "Hireschema is invite-only. Leave your email — use the same address you'll sign in with (LinkedIn email). A founder will approve access."}
         </p>
 
         {result ? (
