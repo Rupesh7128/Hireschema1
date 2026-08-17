@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { ToastProvider } from "@/components/ui";
 import { CandidateGate } from "@/components/auth/CandidateGate";
 import { OAuthReturnHandler } from "@/components/auth/OAuthReturnHandler";
+import { PendingJobHandler } from "@/components/auth/PendingJobHandler";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AiOperationsProvider } from "@/components/providers/AiOperationsProvider";
 import { AiOperationIndicator } from "@/components/operations/AiOperationIndicator";
@@ -48,6 +49,7 @@ export default function RootLayout({
               <AiOperationIndicator />
               <Suspense fallback={null}>
                 <OAuthReturnHandler />
+                <PendingJobHandler />
                 <CandidateGate>{children}</CandidateGate>
               </Suspense>
             </AiOperationsProvider>

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
+  { href: "/live-feed", label: "Live Feed" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/candidates", label: "For Candidates" },
   { href: "/about", label: "About" },

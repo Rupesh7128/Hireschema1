@@ -53,6 +53,7 @@ from hireloop_api.routes.tailored_resumes import router as tailored_resumes_rout
 from hireloop_api.routes.voice import router as voice_router
 from hireloop_api.routes.voice_sessions import router as voice_sessions_router
 from hireloop_api.routes.whatsapp_routes import router as whatsapp_router
+from hireloop_api.routes.live_feed import router as live_feed_router
 
 # ── Settings ──────────────────────────────────────────────────────────────────
 settings = get_settings()
@@ -286,6 +287,7 @@ app.include_router(admin_router, prefix="/api/v1")
 
 # P23: Super admin (internal user management)
 app.include_router(super_admin_router, prefix="/api/v1")
+app.include_router(live_feed_router, prefix="/api/v1")
 
 
 # ── Global exception handler ──────────────────────────────────────────────────

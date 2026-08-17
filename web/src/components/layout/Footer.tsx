@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const FOOTER_LINKS = {
   Product: [
+    { href: "/live-feed", label: "Live Feed" },
     { href: "/how-it-works", label: "How it works" },
     { href: "/candidates", label: "For Candidates" },
     { href: "/contact", label: "Request invite" },
