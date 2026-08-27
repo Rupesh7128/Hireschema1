@@ -104,9 +104,9 @@ export function Hero() {
                 transformStyle: "preserve-3d",
               }
         }
-        className="relative z-10 mx-auto flex min-h-[100svh] max-w-wide flex-col px-6 pb-8 pt-24 lg:h-[100svh] lg:min-h-0 lg:pb-7 lg:pt-[92px]"
+        className="relative z-10 mx-auto flex min-h-[100svh] max-w-wide flex-col px-6 pb-8 pt-24 lg:h-[100svh] lg:min-h-0 lg:pb-8 lg:pt-[104px]"
       >
-        <div className="grid flex-1 items-start gap-10 pt-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,400px)] lg:gap-12 lg:pt-2">
+        <div className="grid flex-1 items-start gap-10 pt-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,410px)] lg:content-center lg:gap-12 lg:pt-0">
           {/* Copy column */}
           <motion.div style={reduced ? undefined : { x: headX }}>
             <motion.div
@@ -123,7 +123,7 @@ export function Hero() {
             </motion.div>
 
             <h1 className="mb-5 font-display">
-              <span className="block text-[clamp(2.25rem,min(8.5vw,9.5vh),6.5rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">
+              <span className="block text-[clamp(2.25rem,min(9vw,11vh),7rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">
                 <SplitText
                   text="Money follows"
                   by="word"
@@ -131,7 +131,7 @@ export function Hero() {
                   unitClassName="text-gradient-accent"
                 />
               </span>
-              <span className="flex flex-wrap items-center gap-x-5 gap-y-3 text-[clamp(2.25rem,min(8.5vw,9.5vh),6.5rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">
+              <span className="flex flex-wrap items-center gap-x-5 gap-y-3 text-[clamp(2.25rem,min(9vw,11vh),7rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">
                 <SplitText text="my brotha." by="word" delay={0.18} unitClassName="text-outline" />
                 <motion.span
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -187,6 +187,28 @@ export function Hero() {
                 </MagneticButton>
               </MemePopover>
             </motion.div>
+            <motion.ul
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.95 }}
+              className="mt-9 grid gap-x-6 gap-y-3 sm:grid-cols-3"
+            >
+              {TRUST.map((t) => (
+                <li key={t.label} className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border border-accent bg-accent/10">
+                    <Check className="h-3 w-3 text-accent" strokeWidth={3} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-small font-semibold leading-tight text-ink-800">
+                      {t.label}
+                    </span>
+                    <span className="block text-[12px] leading-tight text-ink-400">
+                      {t.hindi}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </motion.ul>
           </motion.div>
 
           {/* The product, running */}
@@ -204,27 +226,6 @@ export function Hero() {
           </motion.div>
         </div>
 
-        {/* Trust band — spans both columns so it always lands inside the fold. */}
-        <motion.ul
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.95 }}
-          className="mt-8 grid shrink-0 gap-3 sm:grid-cols-3 lg:mt-6"
-        >
-          {TRUST.map((t) => (
-            <li key={t.label} className="glass flex items-center gap-3 rounded-xl px-4 py-3 edge-light">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent/10">
-                <Check className="h-3.5 w-3.5 text-accent" strokeWidth={2.6} />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-small font-semibold text-ink-800">
-                  {t.label}
-                </span>
-                <span className="block truncate text-[12px] text-ink-400">{t.hindi}</span>
-              </span>
-            </li>
-          ))}
-        </motion.ul>
       </motion.div>
     </section>
   );
