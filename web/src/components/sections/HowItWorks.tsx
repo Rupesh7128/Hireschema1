@@ -20,7 +20,7 @@ import {
   useTransform,
   type MotionValue,
 } from "framer-motion";
-import { Mic, Radar, Gauge, Send } from "lucide-react";
+import { Mic, Radar, Gauge, Send } from "@/components/brand/icons";
 import { MemeGif } from "@/components/premium/MemeGif";
 import { cn } from "@/lib/utils";
 

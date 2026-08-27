@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import { Eye, ShieldCheck, Lock } from "lucide-react";
+import { Eye, ShieldCheck, Lock } from "@/components/brand/icons";
 import { ScrollHighlightText } from "@/components/premium/Parallax";
 import { cn } from "@/lib/utils";
 

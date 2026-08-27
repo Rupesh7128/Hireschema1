@@ -9,7 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight } from "@/components/brand/icons";
 import { cn } from "@/lib/utils";
 import { APP_URL, INVITE_URL } from "@/lib/site";
 

@@ -10,7 +10,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { Mic, Send, Sparkles, Zap } from "lucide-react";
+import { Mic, Send, Sparkles, Zap } from "@/components/brand/icons";
 import { cn } from "@/lib/utils";
 
 type Line =

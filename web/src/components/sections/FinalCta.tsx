@@ -7,7 +7,7 @@
  */
 
 import { useRef } from "react";
-import { ArrowRight, FileText } from "lucide-react";
+import { ArrowRight, FileText } from "@/components/brand/icons";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { MagneticButton } from "@/components/premium/MagneticButton";
 import { MemePopover } from "@/components/premium/MemePopover";

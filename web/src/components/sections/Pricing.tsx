@@ -8,7 +8,7 @@
  * in the copy rather than being sold as a plan.
  */
 
-import { ArrowRight, Check, Clock } from "lucide-react";
+import { ArrowRight, Check, Clock } from "@/components/brand/icons";
 import { motion } from "framer-motion";
 import { MagneticButton } from "@/components/premium/MagneticButton";
 import { MemePopover } from "@/components/premium/MemePopover";

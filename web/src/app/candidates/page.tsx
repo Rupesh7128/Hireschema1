@@ -9,7 +9,7 @@ import {
   Shield,
   Target,
   TrendingUp,
-} from "lucide-react";
+} from "@/components/brand/icons";
 import { Badge } from "@/components/ui/Badge";
 import { ProductPreview } from "@/components/marketing/ProductPreview";
 

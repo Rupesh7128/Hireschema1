@@ -125,6 +125,8 @@ const config: Config = {
         "shine-wide":  "shineWide 4.5s linear infinite",
         "shine-mid":   "shineMid 4.5s linear infinite",
         "shine-core":  "shineCore 4.5s linear infinite",
+        /* Lit segment walking the hero's trace curve. */
+        "trace":       "trace 7s cubic-bezier(0.55, 0, 0.45, 1) infinite",
         "blink":       "blink 1.1s steps(2, start) infinite",
         "gradient":    "gradientShift 9s ease infinite",
       },
@@ -147,6 +149,10 @@ const config: Config = {
           "100%": { backgroundPosition: "200% 0" },
         },
         blink: { "0%,100%": { opacity: "1" }, "50%": { opacity: "0" } },
+        trace: {
+          "0%":   { strokeDashoffset: "1850" },
+          "100%": { strokeDashoffset: "0" },
+        },
         shineWide: {
           "0%":   { clipPath: "polygon(-60% 0, -20% 0, -31% 100%, -71% 100%)" },
           "100%": { clipPath: "polygon(120% 0, 160% 0, 149% 100%, 109% 100%)" },

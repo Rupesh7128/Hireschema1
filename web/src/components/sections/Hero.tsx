@@ -14,7 +14,7 @@
  */
 
 import { useRef } from "react";
-import { ArrowRight, FileText, Check } from "lucide-react";
+import { ArrowRight, FileText, Check } from "@/components/brand/icons";
 import {
   motion,
   useMotionValue,
@@ -27,6 +27,7 @@ import { MagneticButton } from "@/components/premium/MagneticButton";
 import { MemePopover } from "@/components/premium/MemePopover";
 import { SplitText } from "@/components/premium/SplitText";
 import { ShineText } from "@/components/premium/ShineText";
+import { TraceLine } from "@/components/premium/TraceLine";
 import { ChatPreview } from "@/components/premium/ChatPreview";
 import { MemeGif } from "@/components/premium/MemeGif";
 import { INVITE_URL, REVIEW_CV_URL } from "@/lib/site";
@@ -211,6 +212,14 @@ export function Hero() {
                 </li>
               ))}
             </motion.ul>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1.2, delay: 1.15 }}
+            >
+              <TraceLine className="mt-6 h-[110px] w-full" />
+            </motion.div>
           </motion.div>
 
           {/* The product, running */}

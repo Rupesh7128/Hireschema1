@@ -24,7 +24,7 @@ import {
   Map,
   TrendingUp,
   type LucideIcon,
-} from "lucide-react";
+} from "@/components/brand/icons";
 import { cn } from "@/lib/utils";
 
 type Feature = {
