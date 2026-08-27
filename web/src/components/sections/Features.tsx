@@ -105,12 +105,12 @@ export function Features() {
       <div className="mx-auto max-w-page px-6 pb-8 pt-28 text-center">
         <span className="eyebrow mb-6">Features</span>
         <h2 className="text-h1 font-display">
-          <span className="text-gradient">Parampara, Pratishtha,</span>{" "}
-          <span className="text-gradient-accent">aur Remote Jobs.</span>
+          <span className="text-gradient">Recruiter, coach,</span>{" "}
+          <span className="text-gradient-accent">aur strategist — ek jagah.</span>
         </h2>
         <p className="mx-auto mt-5 max-w-prose text-lead text-ink-500">
-          Recruiter, coach aur strategist — teeno ek jagah. Aisa koi kaam nahi
-          jo Hireschema ne nahi kiya ho.
+          CV review se lekar intro bhejne tak, aur beech mein jo bhi chahiye —
+          sab ek hi chat ke andar.
         </p>
       </div>
 

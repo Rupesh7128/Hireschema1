@@ -73,7 +73,7 @@ export function Hero() {
     <section
       ref={ref}
       onPointerMove={onPointerMove}
-      className="relative min-h-[100svh] overflow-hidden perspective-far lg:h-[100svh]"
+      className="relative overflow-hidden perspective-far"
     >
       {/* ── Backdrop ────────────────────────────────────────────────── */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
@@ -104,9 +104,9 @@ export function Hero() {
                 transformStyle: "preserve-3d",
               }
         }
-        className="relative z-10 mx-auto flex min-h-[100svh] max-w-wide flex-col px-6 pb-8 pt-24 lg:h-[100svh] lg:min-h-0 lg:pb-8 lg:pt-[104px]"
+        className="relative z-10 mx-auto flex min-h-[100svh] max-w-wide flex-col justify-center px-6 pb-14 pt-24 lg:min-h-0 lg:pb-16 lg:pt-[136px]"
       >
-        <div className="grid flex-1 items-start gap-10 pt-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,410px)] lg:items-center lg:content-center lg:gap-12 lg:pt-0">
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,410px)] lg:items-center lg:gap-12">
           {/* Copy column */}
           <motion.div style={reduced ? undefined : { x: headX }}>
             <motion.div

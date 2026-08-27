@@ -34,8 +34,9 @@ export function Pricing() {
       <div className="relative mx-auto max-w-page px-6 text-center">
         <span className="eyebrow mb-6">Pricing</span>
         <h2 className="text-h1 font-display">
-          <span className="text-gradient">Ek kaam kar —</span>{" "}
-          <span className="text-gradient-accent">₹500 mahina, launch pe.</span>
+          <span className="text-gradient">&ldquo;Dedh sau rupiya dega?&rdquo;</span>
+          <br />
+          <span className="text-gradient-accent">Nahi — ₹500 mahina, launch pe.</span>
         </h2>
         <p className="mx-auto mt-5 max-w-prose text-lead text-ink-500">
           Product paid hai. Beta ke dauraan invite maangna free hai — approve

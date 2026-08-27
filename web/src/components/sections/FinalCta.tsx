@@ -46,14 +46,14 @@ export function FinalCta() {
         <h2 className="font-display text-display">
           <span className="block">
             <SplitText
-              text="Abhi maza ayega"
+              text="Ab tera number"
               by="word"
               unitClassName="text-gradient-accent"
             />
           </span>
           <span className="block">
             <SplitText
-              text="na bhidu!"
+              text="aane wala hai."
               by="word"
               delay={0.15}
               unitClassName="text-outline-accent"
@@ -62,12 +62,9 @@ export function FinalCta() {
         </h2>
 
         <p className="mx-auto mt-7 max-w-prose text-lead text-ink-500">
-          Traditional job hunting is pain.{" "}
-          <span className="font-semibold text-ink-700">
-            Ye dukh kaahe khatam nahi hota be?
-          </span>{" "}
-          Yahin khatam hota hai. Hireschema try karo, aur consent-first hiring
-          banane mein help karo.
+          Job hunting ko full-time job banne ki zaroorat nahi hai. Invite
+          maang, CV daal, aur dekh kaunse remote roles tere liye actually
+          banne hain.
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">

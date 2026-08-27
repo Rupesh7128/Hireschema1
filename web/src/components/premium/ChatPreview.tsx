@@ -108,7 +108,7 @@ export function ChatPreview({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "glass-strong w-full overflow-hidden rounded-2xl shadow-block edge-light",
+        "glass-strong flex w-full flex-col overflow-hidden shadow-block edge-light",
         className,
       )}
     >
@@ -144,7 +144,7 @@ export function ChatPreview({ className }: { className?: string }) {
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 className="flex justify-end"
               >
-                <div className="max-w-[84%] rounded-2xl rounded-br-md bg-accent px-3.5 py-2.5 text-small font-medium leading-relaxed text-accent-fg border-2 border-black shadow-ring">
+                <div className="max-w-[84%] bg-accent px-3.5 py-2.5 text-small font-medium leading-relaxed text-accent-fg border-2 border-black shadow-ring">
                   {line.text}
                 </div>
               </motion.div>
@@ -162,7 +162,7 @@ export function ChatPreview({ className }: { className?: string }) {
                   </span>
                 </span>
                 <div className="max-w-[84%] space-y-1.5">
-                  <div className="rounded-2xl rounded-bl-md border border-ink-200/70 bg-paper-2 px-3.5 py-2.5 text-small leading-relaxed text-ink-700">
+                  <div className="border border-ink-200/70 bg-paper-2 px-3.5 py-2.5 text-small leading-relaxed text-ink-700">
                     {line.text}
                   </div>
                   {line.actions && (
@@ -195,7 +195,7 @@ export function ChatPreview({ className }: { className?: string }) {
                   {AGENT.initial}
                 </span>
               </span>
-              <div className="rounded-2xl rounded-bl-md border border-ink-200/70 bg-paper-2 px-3.5 py-3">
+              <div className="border border-ink-200/70 bg-paper-2 px-3.5 py-3">
                 <div className="flex items-center gap-1">
                   {[0, 1, 2].map((dot) => (
                     <motion.span

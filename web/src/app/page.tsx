@@ -16,6 +16,7 @@ import { Pricing } from "@/components/sections/Pricing";
 import { FinalCta } from "@/components/sections/FinalCta";
 import { VoidScene, ScoreScene } from "@/components/sections/Interludes";
 import { ZoomThrough } from "@/components/premium/ZoomThrough";
+import { SplitReveal } from "@/components/premium/SplitReveal";
 
 export const metadata = {
   title: "Hireschema — Money follows my brotha. Remote roles that fit.",
@@ -40,13 +41,14 @@ export default function HomePage() {
         <HowItWorks />
       </section>
 
-      {/* …and again, into the scoring model. */}
-      <ZoomThrough
+      {/* Different mechanic on purpose — the same zoom twice reads as one
+          trick repeated. This one tears the word in half. */}
+      <SplitReveal
         word="AUKAT"
         kicker="Every role, scored"
         sub="Match score, aur uske peeche ki poori wajah."
         behind={<ScoreScene />}
-        height="280vh"
+        height="250vh"
       />
 
       <Features />

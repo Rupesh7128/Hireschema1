@@ -86,11 +86,12 @@ export function HowItWorks() {
       <div className="relative mx-auto max-w-page px-6 pb-16 pt-28 text-center">
         <span className="eyebrow mb-6">How Hireschema works</span>
         <h2 className="text-h1 font-display">
-          <span className="text-gradient">Bhai, kya kar raha hai tu?</span>
+          <span className="text-gradient">&ldquo;Aap chronology</span>{" "}
+          <span className="text-gradient-accent">samajhiye&rdquo;</span>
         </h2>
         <p className="mx-auto mt-5 max-w-prose text-lead text-ink-500">
-          Stop throwing CVs into the void. Naukri portals pe ghamand ba, par
-          reply zero. Chaar step mein waqt badal denge.
+          CV se lekar intro tak — chaar step, usi order mein. Har step pe tu
+          dekh sakta hai AI ne kya kiya, aur kyun.
         </p>
       </div>
 

@@ -33,10 +33,11 @@ export function Trust() {
         <div className="mx-auto max-w-page text-center">
           <span className="eyebrow mb-6">Trust &amp; privacy</span>
           <h2 className="text-h1 font-display">
-            <span className="text-gradient-accent">&ldquo;Aap chronology samajhiye&rdquo;</span>
+            <span className="text-gradient">Har action dikhta hai.</span>{" "}
+            <span className="text-gradient-accent">Har decision tera hai.</span>
           </h2>
           <ScrollHighlightText
-            text="Clear actions. Clear consent. Hum kaam dikhate hain aur important decisions tumhare paas chhod dete hain."
+            text="Hireschema AI jo bhi karta hai wo logged hai. Aur jo bhi bhejna hai, wo tere approve karne ke baad hi jaata hai."
             className="mx-auto mt-6 max-w-prose justify-center text-center text-lead text-ink-700"
           />
         </div>
