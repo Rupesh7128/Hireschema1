@@ -97,9 +97,9 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"} https://www.googletagmanager.com`,
+              `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"} https://www.googletagmanager.com https://www.google-analytics.com`,
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https://*.supabase.co https://media.licdn.com https://*.google-analytics.com https://*.googletagmanager.com",
+              "img-src 'self' data: https://*.supabase.co https://media.licdn.com https://*.google-analytics.com https://*.googletagmanager.com https://*.giphy.com https://media.tenor.com https://*.tenor.com",
               "font-src 'self' data:",
               // Live voice upgrades directly to the configured FastAPI origin.
               `connect-src 'self' ${apiConnectOrigin} ${apiWebSocketOrigin}${developmentWebSocketOrigins} https://*.supabase.co wss://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com`,

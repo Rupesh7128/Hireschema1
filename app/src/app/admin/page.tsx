@@ -22,6 +22,13 @@ import {
 } from "@/components/brand/icons";
 import { apiFetch } from "@/lib/api/client";
 import { Badge, Button, Card, CardBody, CardHeader } from "@/components/ui";
+import {
+  ADMIN_CARD,
+  ADMIN_KICKER,
+  ADMIN_NAV_CHIP,
+  ADMIN_PAGE,
+  ADMIN_TITLE,
+} from "@/lib/admin-theme";
 
 type DashStats = {
   total_users: number;
@@ -84,7 +91,7 @@ export default function AdminHomePage() {
   useEffect(() => { void load(); }, []);
 
   return (
-    <main className="min-h-screen bg-ink-900 text-paper-0 p-6">
+    <main className={ADMIN_PAGE}>
       <div className="max-w-5xl mx-auto space-y-8">
 
         {/* ── Header ───────────────────────────────────────────────────────── */}
@@ -92,11 +99,11 @@ export default function AdminHomePage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <ShieldAlert className="h-5 w-5 text-accent" strokeWidth={1.5} />
-              <span className="text-micro text-ink-500 uppercase tracking-wider">
+              <span className={ADMIN_KICKER}>
                 Admin panel
               </span>
             </div>
-            <h1 className="text-h1 text-paper-0">Platform overview</h1>
+            <h1 className={ADMIN_TITLE}>Platform overview</h1>
           </div>
           <Button
             variant="secondary"
@@ -120,10 +127,10 @@ export default function AdminHomePage() {
           {STAT_META.map(({ key, label, Icon, accent }) => (
             <div
               key={key}
-              className="rounded-lg bg-ink-900 border border-ink-700 p-4 space-y-2"
+              className={`${ADMIN_CARD} p-4 space-y-2`}
             >
               <div className="flex items-center justify-between">
-                <p className="text-micro text-ink-500 uppercase tracking-wider">
+                <p className={ADMIN_KICKER}>
                   {label}
                 </p>
                 <Icon
@@ -131,7 +138,7 @@ export default function AdminHomePage() {
                   strokeWidth={1.5}
                 />
               </div>
-              <p className={`text-h2 font-semibold ${accent ? "text-accent" : "text-paper-0"}`}>
+              <p className={`text-h2 font-semibold ${accent ? "text-accent" : "text-ink-900"}`}>
                 {loading ? "—" : (stats?.[key] ?? 0).toLocaleString("en-IN")}
               </p>
             </div>
@@ -147,11 +154,7 @@ export default function AdminHomePage() {
             <Link
               key={href}
               href={href}
-              className="
-                flex items-center gap-2 rounded-md border border-ink-700
-                px-4 py-2.5 text-small text-paper-0
-                hover:border-ink-500 hover:bg-ink-700 transition-colors
-              "
+              className={ADMIN_NAV_CHIP}
             >
               <ExternalLink className="h-3.5 w-3.5 text-ink-500" strokeWidth={1.5} />
               {label}
@@ -163,7 +166,7 @@ export default function AdminHomePage() {
         {/* ── Bias audit sample ─────────────────────────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-h3 text-paper-0">Bias audit sample (last 5)</h2>
+            <h2 className="text-h3 text-ink-900">Bias audit sample (last 5)</h2>
             <Badge tone="muted">DPDP Act 2023</Badge>
           </div>
 
@@ -188,7 +191,7 @@ export default function AdminHomePage() {
               return (
               <div
                 key={id}
-                className="rounded-md border border-ink-700 bg-ink-900 px-4 py-3 text-small"
+                className={`${ADMIN_CARD} px-4 py-3 text-small`}
               >
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-ink-500 font-mono text-micro">
@@ -215,7 +218,7 @@ export default function AdminHomePage() {
         </section>
 
         {/* ── DPDP export queue note ───────────────────────────────────────── */}
-        <Card className="border-ink-700 bg-ink-900">
+        <Card>
           <CardHeader
             title="DPDP Act 2023 compliance"
             description="Scheduled purge jobs run nightly via pg_cron"

@@ -11,6 +11,22 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Search, ShieldAlert, Trash2 } from "@/components/brand/icons";
 import { apiFetch } from "@/lib/api/client";
 import { Badge, Button, EmptyState, Input, Select } from "@/components/ui";
+import {
+  ADMIN_BACK,
+  ADMIN_CARD,
+  ADMIN_KICKER,
+  ADMIN_PAGE,
+  ADMIN_SUB,
+  ADMIN_TABLE_WRAP,
+  ADMIN_TBODY,
+  ADMIN_TD,
+  ADMIN_TD_META,
+  ADMIN_TD_STRONG,
+  ADMIN_TH,
+  ADMIN_THEAD,
+  ADMIN_TITLE,
+  ADMIN_TR,
+} from "@/lib/admin-theme";
 import { cn } from "@/lib/utils";
 
 type UserSummary = {
@@ -206,23 +222,23 @@ export default function SuperAdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-ink-900 text-paper-0 p-6">
+    <main className={ADMIN_PAGE}>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <Link href="/admin" className="text-ink-500 hover:text-paper-0 transition-colors mt-1">
+            <Link href="/admin" className={cn(ADMIN_BACK, "mt-1")}>
               <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
             </Link>
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <ShieldAlert className="h-5 w-5 text-accent" strokeWidth={1.5} />
-                <span className="text-micro text-ink-500 uppercase tracking-wider">
+                <span className={ADMIN_KICKER}>
                   Super admin
                 </span>
               </div>
-              <h1 className="text-h1 text-paper-0">User management</h1>
-              <p className="text-small text-ink-500">
+              <h1 className={ADMIN_TITLE}>User management</h1>
+              <p className={ADMIN_SUB}>
                 {loading && tab === "invites"
                   ? "All invite requests, newest first."
                   : `${inviteStats.total.toLocaleString("en-IN")} invite${inviteStats.total === 1 ? "" : "s"} received. Approve or reject from this list.`}
@@ -275,7 +291,7 @@ export default function SuperAdminPage() {
               ]}
             />
           ) : (
-            <label className="flex items-center gap-2 text-small text-ink-300 select-none">
+            <label className="flex items-center gap-2 text-small text-ink-500 select-none">
               <input
                 type="checkbox"
                 checked={includeDeleted}
@@ -298,10 +314,10 @@ export default function SuperAdminPage() {
             ).map(({ key, label, accent }) => (
               <div
                 key={key}
-                className="rounded-lg bg-ink-900 border border-ink-700 p-4 space-y-2"
+                className={cn(ADMIN_CARD, "p-4 space-y-2")}
               >
-                <p className="text-micro text-ink-500 uppercase tracking-wider">{label}</p>
-                <p className={`text-h2 font-semibold ${accent ? "text-accent" : "text-paper-0"}`}>
+                <p className={ADMIN_KICKER}>{label}</p>
+                <p className={`text-h2 font-semibold ${accent ? "text-accent" : "text-ink-900"}`}>
                   {loading ? "—" : inviteStats[key].toLocaleString("en-IN")}
                 </p>
               </div>
@@ -383,8 +399,8 @@ function TabButton({
       className={cn(
         "px-3.5 h-9 rounded-full text-small font-medium transition-colors",
         active
-          ? "bg-paper-1 text-ink-900"
-          : "bg-ink-900 border border-ink-700 text-paper-0 hover:bg-ink-700/40"
+          ? "bg-accent text-on-accent border border-accent"
+          : "border border-ink-200 text-ink-500 hover:text-ink-900 hover:bg-ink-50 hover:border-ink-300"
       )}
     >
       {children}
@@ -412,29 +428,29 @@ function InvitesTable({
   }
 
   return (
-    <div className="rounded-lg border border-ink-700 overflow-hidden">
+    <div className={ADMIN_TABLE_WRAP}>
       <table className="w-full text-small">
-        <thead className="bg-ink-700">
+        <thead className={ADMIN_THEAD}>
           <tr>
             {["Email", "Name", "Note", "Source", "Status", "Requested", ""].map((h) => (
               <th
                 key={h || "actions"}
-                className="text-left px-4 py-3 text-micro text-ink-300 uppercase tracking-wider font-semibold"
+                className={ADMIN_TH}
               >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-ink-700">
+        <tbody className={ADMIN_TBODY}>
           {rows.map((row) => (
-            <tr key={row.id} className="hover:bg-ink-700/30 transition-colors">
-              <td className="px-4 py-3 font-medium text-paper-0">{row.email}</td>
-              <td className="px-4 py-3 text-ink-300">{row.full_name ?? "—"}</td>
-              <td className="px-4 py-3 text-ink-300 max-w-[220px] truncate" title={row.note ?? undefined}>
+            <tr key={row.id} className={ADMIN_TR}>
+              <td className={ADMIN_TD_STRONG}>{row.email}</td>
+              <td className={ADMIN_TD}>{row.full_name ?? "—"}</td>
+              <td className={cn(ADMIN_TD, "max-w-[220px] truncate")} title={row.note ?? undefined}>
                 {row.note ?? "—"}
               </td>
-              <td className="px-4 py-3 text-ink-300">{row.source}</td>
+              <td className={ADMIN_TD}>{row.source}</td>
               <td className="px-4 py-3">
                 <Badge
                   tone={
@@ -448,7 +464,7 @@ function InvitesTable({
                   {row.status}
                 </Badge>
               </td>
-              <td className="px-4 py-3 text-ink-500 text-micro">
+              <td className={ADMIN_TD_META}>
                 {row.created_at
                   ? new Date(row.created_at).toLocaleDateString("en-IN")
                   : "—"}
@@ -517,31 +533,31 @@ function UsersTable({
   }
 
   return (
-    <div className="rounded-lg border border-ink-700 overflow-hidden">
+    <div className={ADMIN_TABLE_WRAP}>
       <table className="w-full text-small">
-        <thead className="bg-ink-700">
+        <thead className={ADMIN_THEAD}>
           <tr>
             {["Email", "Name", "Market", "Role", "Phone", "Candidate", "Recruiter", "Created", ""].map((h) => (
               <th
                 key={h}
-                className="text-left px-4 py-3 text-micro text-ink-300 uppercase tracking-wider font-semibold"
+                className={ADMIN_TH}
               >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-ink-700">
+        <tbody className={ADMIN_TBODY}>
           {rows.map((u) => (
-            <tr key={u.id} className="hover:bg-ink-700/30 transition-colors">
-              <td className="px-4 py-3 font-medium text-paper-0">{u.email}</td>
-              <td className="px-4 py-3 text-ink-300">{u.full_name ?? "—"}</td>
-              <td className="px-4 py-3 text-ink-300">{u.market ?? "—"}</td>
+            <tr key={u.id} className={ADMIN_TR}>
+              <td className={ADMIN_TD_STRONG}>{u.email}</td>
+              <td className={ADMIN_TD}>{u.full_name ?? "—"}</td>
+              <td className={ADMIN_TD}>{u.market ?? "—"}</td>
               <td className="px-4 py-3">
                 <Select
                   value={u.role}
                   options={ROLE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-                  className="bg-ink-900 border-ink-700 text-paper-0 h-9 py-0 rounded-md px-3"
+                  className="h-9 py-0 px-3"
                   onChange={(e) => void onUpdate(u.id, { role: e.target.value as UserSummary["role"] })}
                 />
               </td>
@@ -550,9 +566,9 @@ function UsersTable({
                   type="button"
                   onClick={() => void onUpdate(u.id, { phone_verified: !u.phone_verified })}
                   className={cn(
-                    "px-2.5 py-1 rounded-full text-micro font-semibold border transition-colors",
+                    "px-2.5 py-1 text-micro font-semibold border transition-colors",
                     u.phone_verified
-                      ? "bg-ink-900 border-ink-700 text-paper-0 hover:bg-ink-700/40"
+                      ? "bg-ink-50 border-ink-200 text-ink-900 hover:bg-ink-100"
                       : "bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/15"
                   )}
                 >
@@ -577,7 +593,7 @@ function UsersTable({
                   <span className="text-ink-500">—</span>
                 )}
               </td>
-              <td className="px-4 py-3 text-ink-500 text-micro">
+              <td className={ADMIN_TD_META}>
                 {new Date(u.created_at).toLocaleDateString("en-IN")}
               </td>
               <td className="px-4 py-3 text-right">
@@ -619,28 +635,28 @@ function CandidatesTable({
   }
 
   return (
-    <div className="rounded-lg border border-ink-700 overflow-hidden">
+    <div className={ADMIN_TABLE_WRAP}>
       <table className="w-full text-small">
-        <thead className="bg-ink-700">
+        <thead className={ADMIN_THEAD}>
           <tr>
             {["Email", "Name", "Title", "City", "Exp", "Status", ""].map((h) => (
               <th
                 key={h}
-                className="text-left px-4 py-3 text-micro text-ink-300 uppercase tracking-wider font-semibold"
+                className={ADMIN_TH}
               >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-ink-700">
+        <tbody className={ADMIN_TBODY}>
           {rows.map((c) => (
-            <tr key={c.id} className="hover:bg-ink-700/30 transition-colors">
-              <td className="px-4 py-3 font-medium text-paper-0">{c.user_email}</td>
-              <td className="px-4 py-3 text-ink-300">{c.user_name ?? "—"}</td>
-              <td className="px-4 py-3 text-ink-300">{c.current_title ?? c.headline ?? "—"}</td>
-              <td className="px-4 py-3 text-ink-300">{c.location_city ?? "—"}</td>
-              <td className="px-4 py-3 text-ink-300">
+            <tr key={c.id} className={ADMIN_TR}>
+              <td className={ADMIN_TD_STRONG}>{c.user_email}</td>
+              <td className={ADMIN_TD}>{c.user_name ?? "—"}</td>
+              <td className={ADMIN_TD}>{c.current_title ?? c.headline ?? "—"}</td>
+              <td className={ADMIN_TD}>{c.location_city ?? "—"}</td>
+              <td className={ADMIN_TD}>
                 {c.years_experience != null ? `${c.years_experience}y` : "—"}
               </td>
               <td className="px-4 py-3">
@@ -685,29 +701,29 @@ function RecruitersTable({
   }
 
   return (
-    <div className="rounded-lg border border-ink-700 overflow-hidden">
+    <div className={ADMIN_TABLE_WRAP}>
       <table className="w-full text-small">
-        <thead className="bg-ink-700">
+        <thead className={ADMIN_THEAD}>
           <tr>
             {["Email", "Name", "Title", "Company", "Status", ""].map((h) => (
               <th
                 key={h}
-                className="text-left px-4 py-3 text-micro text-ink-300 uppercase tracking-wider font-semibold"
+                className={ADMIN_TH}
               >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-ink-700">
+        <tbody className={ADMIN_TBODY}>
           {rows.map((r) => {
             const enabled = !r.deleted_at;
             return (
-              <tr key={r.id} className="hover:bg-ink-700/30 transition-colors">
-                <td className="px-4 py-3 font-medium text-paper-0">{r.user_email}</td>
-                <td className="px-4 py-3 text-ink-300">{r.user_name ?? "—"}</td>
-                <td className="px-4 py-3 text-ink-300">{r.title ?? "—"}</td>
-                <td className="px-4 py-3 text-ink-300">
+              <tr key={r.id} className={ADMIN_TR}>
+                <td className={ADMIN_TD_STRONG}>{r.user_email}</td>
+                <td className={ADMIN_TD}>{r.user_name ?? "—"}</td>
+                <td className={ADMIN_TD}>{r.title ?? "—"}</td>
+                <td className={ADMIN_TD}>
                   {r.company_id ? r.company_id.slice(0, 8) + "…" : "—"}
                 </td>
                 <td className="px-4 py-3">

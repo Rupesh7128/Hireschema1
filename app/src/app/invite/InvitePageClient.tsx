@@ -7,6 +7,7 @@ import { HireschemaLogo } from "@/components/brand/HireschemaLogo";
 import { getApiBaseUrl } from "@/lib/api/base-url";
 import { createClient } from "@/lib/supabase/client";
 import { BTN_GHOST, BTN_PRIMARY } from "@/lib/button-classes";
+import { InviteOnItPopup } from "@/components/invite/InviteOnItPopup";
 import { Input } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,9 @@ export function InvitePageClient() {
           status: statusFromAuth === "rejected" ? "rejected" : "pending",
         }
       : null,
+  );
+  const [showOnIt, setShowOnIt] = useState(
+    () => thanksFromAuth && statusFromAuth !== "rejected",
   );
 
   const showThanks = useMemo(() => Boolean(result), [result]);
@@ -90,6 +94,7 @@ export function InvitePageClient() {
         status,
         already_exists: body.already_exists,
       });
+      if (status !== "rejected") setShowOnIt(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -220,6 +225,12 @@ export function InvitePageClient() {
           </form>
         )}
       </div>
+
+      <InviteOnItPopup
+        open={showOnIt}
+        approved={result?.status === "approved"}
+        onClose={() => setShowOnIt(false)}
+      />
     </main>
   );
 }

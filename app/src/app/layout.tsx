@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Bricolage_Grotesque } from "next/font/google";
 import { ToastProvider } from "@/components/ui";
 import { CandidateGate } from "@/components/auth/CandidateGate";
 import { OAuthReturnHandler } from "@/components/auth/OAuthReturnHandler";
@@ -10,6 +11,13 @@ import { AiOperationIndicator } from "@/components/operations/AiOperationIndicat
 import { AppWarmup } from "@/components/providers/AppWarmup";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import "./globals.css";
+
+const display = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+  weight: ["600", "700", "800"],
+});
 
 const APP_ORIGIN =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -22,6 +30,13 @@ export const metadata: Metadata = {
     template: "%s | Hireschema",
   },
   description: "Your AI career partner — Hireschema AI is ready to help.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-icon.png" }],
+  },
   robots: {
     // App should not be indexed by search engines
     index: false,
@@ -35,7 +50,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-IN" suppressHydrationWarning>
+    <html lang="en-IN" className={display.variable} suppressHydrationWarning>
       <body className="font-sans antialiased min-h-screen bg-paper-0 text-ink-900">
         <GoogleAnalytics />
         <a

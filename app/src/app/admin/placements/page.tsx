@@ -10,6 +10,22 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle, Clock } from "@/components/brand/icons";
 import { apiFetch } from "@/lib/api/client";
 import { Badge, EmptyState } from "@/components/ui";
+import {
+  ADMIN_BACK,
+  ADMIN_NOTE,
+  ADMIN_PAGE,
+  ADMIN_SKELETON,
+  ADMIN_SUB,
+  ADMIN_TABLE_WRAP,
+  ADMIN_TBODY,
+  ADMIN_TD,
+  ADMIN_TD_META,
+  ADMIN_TD_STRONG,
+  ADMIN_TH,
+  ADMIN_THEAD,
+  ADMIN_TITLE,
+  ADMIN_TR,
+} from "@/lib/admin-theme";
 
 type Placement = {
   id: string;
@@ -43,20 +59,20 @@ export default function AdminPlacementsPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-ink-900 text-paper-0 p-6">
+    <main className={ADMIN_PAGE}>
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link
             href="/admin"
-            className="text-ink-500 hover:text-paper-0 transition-colors"
+            className={ADMIN_BACK}
           >
             <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
           </Link>
           <div>
-            <h1 className="text-h1 text-paper-0">Hires</h1>
-            <p className="text-small text-ink-500">
+            <h1 className={ADMIN_TITLE}>Hires</h1>
+            <p className={ADMIN_SUB}>
               Candidates marked hired. No payments in this product — access is invite-only.
             </p>
           </div>
@@ -78,36 +94,36 @@ export default function AdminPlacementsPage() {
         )}
 
         {rows.length > 0 && (
-          <div className="rounded-lg border border-ink-700 overflow-hidden">
+          <div className={ADMIN_TABLE_WRAP}>
             <table className="w-full text-small">
-              <thead className="bg-ink-700">
+              <thead className={ADMIN_THEAD}>
                 <tr>
                   {["Candidate", "Role", "Company", "CTC (INR)", "Date", "Status"].map((h) => (
                     <th
                       key={h}
-                      className="text-left px-4 py-3 text-micro text-ink-300 uppercase tracking-wider font-semibold"
+                      className={ADMIN_TH}
                     >
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ink-700">
+              <tbody className={ADMIN_TBODY}>
                 {rows.map((r) => {
                   const meta = STATUS_BADGE[r.status] ?? STATUS_BADGE.pending;
                   return (
-                    <tr key={r.id} className="hover:bg-ink-700/40 transition-colors">
-                      <td className="px-4 py-3 text-paper-0 font-medium">
+                    <tr key={r.id} className={ADMIN_TR}>
+                      <td className={ADMIN_TD_STRONG}>
                         {r.candidate_name}
                       </td>
-                      <td className="px-4 py-3 text-ink-300">{r.role_title}</td>
-                      <td className="px-4 py-3 text-ink-300">{r.company_name}</td>
-                      <td className="px-4 py-3 text-paper-0">
+                      <td className={ADMIN_TD}>{r.role_title}</td>
+                      <td className={ADMIN_TD}>{r.company_name}</td>
+                      <td className={ADMIN_TD_STRONG}>
                         {r.ctc_inr
                           ? `₹${(r.ctc_inr / 100000).toFixed(1)}L`
                           : <span className="text-ink-500">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-ink-500 text-micro">
+                      <td className={ADMIN_TD_META}>
                         {new Date(r.placed_at).toLocaleDateString("en-IN", {
                           day: "numeric", month: "short", year: "numeric",
                         })}
@@ -129,14 +145,14 @@ export default function AdminPlacementsPage() {
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="h-12 rounded-md bg-ink-700 animate-skeleton"
+                className={ADMIN_SKELETON}
               />
             ))}
           </div>
         )}
 
         {/* Note */}
-        <div className="flex items-start gap-2 text-small text-ink-500 border border-ink-700 rounded-md px-4 py-3">
+        <div className={ADMIN_NOTE}>
           <Clock className="h-4 w-4 shrink-0 mt-0.5" strokeWidth={1.5} />
           <p>
             Hireschema is invite-only and has no in-app payments. This list is a

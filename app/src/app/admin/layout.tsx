@@ -35,6 +35,6 @@ export default async function AdminLayout({
 
   if (!res.ok) redirect("/dashboard");
 
-  return children;
+  return <div className="min-h-screen bg-paper-0">{children}</div>;
 }
 
