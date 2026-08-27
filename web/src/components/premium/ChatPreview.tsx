@@ -26,21 +26,21 @@ const RESTART_MS = 3200;
 const SCRIPT: Line[] = [
   {
     role: "assistant",
-    text: "Namaste! Main Hireschema AI hoon. Kaunsa role dhoondh rahe ho?",
+    text: "Hi, I'm Hireschema AI. What role are you looking for?",
   },
   {
     role: "user",
-    text: "Senior backend roles, fully remote, ₹40–50 LPA. Main India mein hoon.",
+    text: "Senior backend roles, fully remote, ₹40–50 LPA. I am in India.",
   },
   {
     role: "assistant",
-    text: "14 remote roles mile jo tum India se kar sakte ho. Top match: Senior Backend Engineer, 89% fit — Python, Postgres aur fintech experience ki wajah se. Role review karein?",
+    text: "Found 14 remote roles you can do from India. Top match: Senior Backend Engineer, 89% fit — due to Python, Postgres, and fintech experience. Shall we review the role?",
     actions: "Hireschema AI performed 4 actions",
   },
-  { role: "user", text: "Haan. Intro draft karo, main review karunga." },
+  { role: "user", text: "Yes. Draft the intro, I will review it." },
   {
     role: "assistant",
-    text: "Draft ready hai. Jab tak tum approve nahi karte aur Gmail connect nahi karte, kuch bhi send nahi hoga.",
+    text: "Draft is ready. Nothing will be sent until you approve and connect your Gmail.",
     actions: "Hireschema AI performed 2 actions",
   },
 ];

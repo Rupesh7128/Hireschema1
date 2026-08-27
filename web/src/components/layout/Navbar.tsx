@@ -72,6 +72,8 @@ export function Navbar() {
             </span>
           </Link>
 
+          {/* NAV LINKS HIDDEN FOR NOW */}
+          {/*
           <div className="hidden items-center gap-1 md:flex">
             {NAV_LINKS.map((link) => {
               const active =
@@ -98,6 +100,7 @@ export function Navbar() {
               );
             })}
           </div>
+          */}
 
           <div className="hidden items-center gap-2 md:flex">
             <Link
@@ -148,6 +151,7 @@ export function Navbar() {
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="flex h-full flex-col justify-center gap-2 px-8"
             >
+              {/* NAV_LINKS are currently hidden
               {NAV_LINKS.map((link, i) => (
                 <motion.div
                   key={link.href}
@@ -164,6 +168,7 @@ export function Navbar() {
                   </Link>
                 </motion.div>
               ))}
+              */}
 
               <div className="mt-8 flex flex-col gap-3">
                 <Link

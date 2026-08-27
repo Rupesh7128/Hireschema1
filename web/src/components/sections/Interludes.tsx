@@ -13,14 +13,14 @@ import { MemeGif } from "@/components/premium/MemeGif";
 /* ── Scene revealed through "DOGLAPAN" ───────────────────────────────────── */
 
 const VOID_ITEMS = [
-  "Applied · no response",
-  "Applied · no response",
-  "Applied · viewed, no response",
-  "Applied · no response",
-  "Applied · rejected after 41 days",
-  "Applied · no response",
-  "Applied · 'we'll keep your CV on file'",
-  "Applied · no response",
+  { action: "Applied", result: "no response", resClass: "text-ink-400" },
+  { action: "Applied", result: "no response", resClass: "text-ink-400" },
+  { action: "Applied", result: "viewed, no response", resClass: "text-chai/90" },
+  { action: "Applied", result: "no response", resClass: "text-ink-400" },
+  { action: "Applied", result: "rejected after 41 days", resClass: "text-[#EF4444]/90" },
+  { action: "Applied", result: "no response", resClass: "text-ink-400" },
+  { action: "Applied", result: "'we'll keep your CV on file'", resClass: "text-accent/80" },
+  { action: "Applied", result: "no response", resClass: "text-ink-400" },
 ];
 
 export function VoidScene() {
@@ -73,10 +73,13 @@ export function VoidScene() {
               {[...VOID_ITEMS, ...VOID_ITEMS].map((item, i) => (
                 <li
                   key={i}
-                  className="flex items-center justify-between rounded-lg border border-ink-100 bg-paper-1/60 px-4 py-3 font-mono text-small text-ink-400"
-                  style={{ opacity: 1 - (i % VOID_ITEMS.length) * 0.07 }}
+                  className="flex items-center justify-between rounded-lg border border-ink-100 bg-paper-1/60 px-4 py-3 font-mono text-small"
                 >
-                  <span>{item}</span>
+                  <span>
+                    <span className="text-ink-500">{item.action}</span>
+                    <span className="text-ink-600 mx-2">·</span>
+                    <span className={item.resClass}>{item.result}</span>
+                  </span>
                   <span className="text-ink-300">—</span>
                 </li>
               ))}

@@ -92,7 +92,7 @@ export function Footer() {
 
         {/* Poster-scale wordmark */}
         <div aria-hidden className="mt-16 select-none overflow-hidden">
-          <p className="whitespace-nowrap text-center font-display text-[clamp(2rem,11vw,9rem)] font-extrabold leading-[0.9] tracking-[-0.02em] text-[#1C1C21]">
+          <p className="whitespace-nowrap text-center font-display text-[clamp(2rem,11vw,9rem)] font-extrabold leading-[0.9] tracking-[-0.02em] text-[#0A0A0B] [-webkit-text-stroke:2px_rgba(159,232,112,0.5)] [paint-order:stroke_fill]">
             HIRESCHEMA
           </p>
         </div>
@@ -101,15 +101,6 @@ export function Footer() {
           <p className="text-[12px] text-ink-400">
             © {new Date().getFullYear()} Hireschema · Beta
           </p>
-          <div className="flex items-center gap-4 text-[12px] text-ink-400">
-            <a href="mailto:privacy@hireschema.com" className="transition-colors hover:text-ink-600">
-              DPO: privacy@hireschema.com
-            </a>
-            <span className="text-ink-200">·</span>
-            <a href="mailto:hello@hireschema.com" className="transition-colors hover:text-ink-600">
-              hello@hireschema.com
-            </a>
-          </div>
         </div>
       </div>
     </footer>

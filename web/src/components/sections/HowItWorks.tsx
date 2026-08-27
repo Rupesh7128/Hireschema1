@@ -20,47 +20,56 @@ import {
   useTransform,
   type MotionValue,
 } from "framer-motion";
-import { Mic, Radar, Gauge, Send } from "@/components/brand/icons";
+import { Upload, Search, Bookmark, FileText, Send, Radar, Gauge, Sparkles } from "@/components/brand/icons";
 import { MemeGif } from "@/components/premium/MemeGif";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
   {
     n: "01",
-    icon: Mic,
-    title: "Batao tumhe kya chahiye",
-    body: "CV upload karo, aur bolo — role, city, salary. Type karo ya voice note bhejo, dono chalega. AI jo profile banata hai, usko tum khud correct kar sakte ho.",
-    punch: "Gyaan mat baant — seedha CV daal.",
+    icon: Upload,
+    title: "\“Aaiye dekhte hain mazaa aayega\” — Bas apna CV upload kar",
+    body: "Faltu ka gyaan mat baant, seedha apna CV upload kar aur bata tujhe kya chahiye. Role, salary, location daal aur baith ja. Baaki ka jadoo dekh fir kya kya hota hai.",
+    punch: "1-Click Upload · CV Parsing",
     tone: "accent" as const,
-    mock: "voice",
+    mock: "mazaa",
   },
   {
     n: "02",
-    icon: Radar,
-    title: "AI dhoondta hai remote roles",
-    body: "Sirf fully remote jobs: Indian companies aur worldwide teams (US, Australia) jo India mein baithe logon ko hire karti hain.",
-    punch: "JD mein ‘office aana padega’? Bilkul bakwas hai — band kar isko.",
+    icon: Search,
+    title: "“Tu ghar jaake sutti babu!”",
+    body: "Hireschema AI thakega nahi. Tu aaraam kar, aur AI tere liye 24x7 global remote jobs dhundh ke nikalega ekdum radar ki tarah.",
+    punch: "24/7 Automated Search • Remote Jobs Only",
     tone: "masala" as const,
     mock: "radar",
   },
   {
     n: "03",
-    icon: Gauge,
-    title: "Har role ka honest score",
-    body: "Real jobs, ranked by genuine match — skills, seniority, location, comp. Transparently batayenge tum kahan fit ho aur kahan improve karna hai.",
-    punch: "Aukat dikha di — taaki tumhe pata ho kahan kaam baaki hai.",
+    icon: Bookmark,
+    title: "\“Binod nhi dekh rha but Extention sab dekh rha\”",
+    body: "Internet pe kahin bhi badiya job dikhi? Hireschema Chrome extension use kar aur ek click mein save aur track kar. No scattered tabs, no doglapan—sab kuch ek single, clean dashboard pe.",
+    punch: "Chrome Extension · Unified Tracking",
     tone: "volt" as const,
     mock: "score",
   },
   {
     n: "04",
-    icon: Send,
-    title: "Warm intro, tumhare Gmail se",
-    body: "Role pasand aaya? Hireschema AI tailored CV aur intro draft banata hai. Tum review karo, approve karo — phir hi message tumhare Gmail se jaata hai.",
-    punch: "Tum bologe karne ka, tab hi jayega.",
+    icon: FileText,
+    title: "\“Aisa koi kaam nahi jo AI ne nahi kiya ho\” — Tailored Everything",
+    body: "Har job ka apna nakhra hota hai. Isliye Hireschema AI tujhe har specific role ke liye ek Tailored CV, custom Cover Letter, aur mock Interview Prep bana ke dega. Tension nahi lene ka, apun hai na.",
+    punch: "Custom CV · Cover Letters · AI Mock Interviews",
     tone: "chai" as const,
-    mock: "email",
+    mock: "document",
   },
+  {
+    n: "05",
+    icon: Send,
+    title: "\“Toh kar na!\” — Seedha apply kar aur track kar",
+    body: "Ab kiska wait kar raha hai? Tera arsenal ready hai. Seedha apply kar aur apni applications ko live track kar. Bete mauj kardi, waah bete waah! Offer letter tera intezaar kar raha hai.",
+    punch: "1-Click Apply · Live Status Tracking",
+    tone: "accent" as const,
+    mock: "email",
+  }
 ];
 
 const TONE = {
@@ -78,7 +87,7 @@ export function HowItWorks() {
     offset: ["start start", "end end"],
   });
   const p = useSpring(scrollYProgress, { stiffness: 90, damping: 26, mass: 0.4 });
-  const x = useTransform(p, [0, 1], ["0%", "-75%"]);
+  const x = useTransform(p, [0, 1], ["0%", "-80%"]);
 
   return (
     <>
@@ -101,7 +110,7 @@ export function HowItWorks() {
           <ProgressRail progress={p} />
           <motion.div
             style={reduced ? undefined : { x }}
-            className="flex w-[400vw] gap-8 px-[8vw] will-transform"
+            className="flex w-[500vw] gap-8 px-[8vw] will-transform"
           >
             {STEPS.map((step, i) => (
               <Panel key={step.n} step={step} index={i} progress={p} />
@@ -308,11 +317,22 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
       </div>
     );
 
+  if (kind === "mazaa")
+    return (
+      <div className="relative w-[320px] overflow-hidden rounded-2xl border border-ink-200/70 bg-paper-0/80 shadow-block">
+        <img 
+          src="https://media1.tenor.com/m/NyPzonwL-ycAAAAC/asraj-tsp.gif" 
+          alt="Maza aayega meme" 
+          className="w-full object-cover"
+        />
+      </div>
+    );
+
   if (kind === "radar")
     return (
       <div className="relative w-full rounded-2xl border border-ink-200/70 bg-paper-0/80 p-5">
         <p className="mb-4 text-micro uppercase text-ink-400">Remote-only filter</p>
-        <div className="relative mx-auto aspect-square w-full max-w-[240px]">
+        <div className="relative mx-auto aspect-square w-full max-w-[180px]">
           {[1, 0.7, 0.42].map((s, i) => (
             <div
               key={i}
@@ -347,7 +367,7 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
             />
           ))}
         </div>
-        <div className="mt-5 space-y-2 text-small">
+        <div className="mt-3 space-y-1.5 text-small">
           <p className="flex items-center gap-2 text-ink-600">
             <span className={cn("h-1.5 w-1.5 rounded-full", t.bg)} /> Fully remote · India OK
           </p>
@@ -357,7 +377,7 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
         </div>
         <MemeGif
           name="homeFromWork"
-          className="absolute -bottom-8 -right-6 w-[150px] rotate-[5deg] shadow-block"
+          className="absolute -bottom-6 -right-5 w-[130px] rotate-[5deg] shadow-block"
         />
       </div>
     );
@@ -397,6 +417,43 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
         <p className="pt-1 text-small text-ink-400">
           Kyun fit ho, kyun nahi — dono likha hota hai.
         </p>
+      </div>
+    );
+
+  if (kind === "document")
+    return (
+      <div className="relative w-full overflow-hidden rounded-2xl border border-ink-200/70 bg-paper-0/80 p-6 shadow-sm">
+        <div className="mb-6 flex items-center justify-between">
+          <p className="text-micro uppercase text-ink-400">Tailored Output</p>
+          <span className={cn("flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider", t.bg, "text-paper-0")}>
+            <Sparkles className="h-3 w-3" /> AI Generated
+          </span>
+        </div>
+        
+        <div className="relative space-y-4 rounded-xl border border-ink-100 bg-paper-1/50 p-5">
+          {/* Skeleton Doc */}
+          <div className="flex items-start gap-4">
+            <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-paper-0", t.border)}>
+              <FileText className={cn("h-5 w-5", t.text)} strokeWidth={2} />
+            </div>
+            <div className="flex-1 space-y-2.5">
+              <div className="h-3 w-3/4 rounded-full bg-ink-200" />
+              <div className="h-2 w-full rounded-full bg-ink-100" />
+              <div className="h-2 w-5/6 rounded-full bg-ink-100" />
+            </div>
+          </div>
+          
+          <div className="space-y-2 pt-2">
+            <div className="h-2 w-full rounded-full bg-ink-100" />
+            <div className="h-2 w-11/12 rounded-full bg-ink-100" />
+            <motion.div 
+              initial={{ width: "30%" }}
+              whileInView={{ width: "80%" }}
+              transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+              className={cn("h-2 rounded-full opacity-60", t.bg)} 
+            />
+          </div>
+        </div>
       </div>
     );
 

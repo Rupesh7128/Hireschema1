@@ -36,7 +36,7 @@ export function Pricing() {
         <h2 className="text-h1 font-display">
           <span className="text-gradient">&ldquo;Dedh sau rupiya dega?&rdquo;</span>
           <br />
-          <span className="text-gradient-accent">Nahi — ₹500 mahina, launch pe.</span>
+          <span className="text-gradient-accent">Nahi — ₹500 mahina, lunga, launch pe.</span>
         </h2>
         <p className="mx-auto mt-5 max-w-prose text-lead text-ink-500">
           Product paid hai. Beta ke dauraan invite maangna free hai — approve
@@ -58,12 +58,14 @@ export function Pricing() {
                 Launch pe
               </span>
 
-              <p className="mt-7 font-display text-mega leading-none text-gradient-accent">
-                ₹500
-                <span className="ml-3 align-middle font-sans text-lead font-normal text-ink-400">
+              <div className="mt-7 flex flex-wrap items-center gap-x-2 gap-y-2">
+                <p className="font-display text-mega leading-none text-gradient-accent pr-[0.08em]">
+                  ₹500
+                </p>
+                <p className="font-sans text-lead font-normal text-ink-400">
                   / month
-                </span>
-              </p>
+                </p>
+              </div>
 
               <ul className="mt-8 grid gap-3.5 sm:grid-cols-2">
                 {INCLUDED.map((p) => (

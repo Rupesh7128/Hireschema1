@@ -54,27 +54,9 @@ export function Hero() {
   const stageOpacity = useTransform(scrollYProgress, [0, 0.62, 1], [1, 1, 0]);
   const floorY = useTransform(scrollYProgress, [0, 1], [0, 160]);
 
-  // Pointer drift, damped — parallax should read as weight, not jitter.
-  const px = useMotionValue(0);
-  const py = useMotionValue(0);
-  const spring = { stiffness: 60, damping: 20, mass: 0.8 };
-  const sx = useSpring(px, spring);
-  const sy = useSpring(py, spring);
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (reduced) return;
-    px.set((e.clientX / window.innerWidth - 0.5) * 2);
-    py.set((e.clientY / window.innerHeight - 0.5) * 2);
-  };
-
-  const chatX = useTransform(sx, [-1, 1], [18, -18]);
-  const chatY = useTransform(sy, [-1, 1], [12, -12]);
-  const headX = useTransform(sx, [-1, 1], [8, -8]);
-
   return (
     <section
       ref={ref}
-      onPointerMove={onPointerMove}
       className="relative overflow-hidden perspective-far"
     >
       {/* ── Backdrop ────────────────────────────────────────────────── */}
@@ -109,8 +91,7 @@ export function Hero() {
         className="relative z-10 mx-auto flex min-h-[100svh] max-w-wide flex-col justify-center px-6 pb-14 pt-24 lg:min-h-0 lg:pb-16 lg:pt-[136px]"
       >
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,410px)] lg:items-center lg:gap-12">
-          {/* Copy column */}
-          <motion.div style={reduced ? undefined : { x: headX }}>
+          <motion.div>
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -194,7 +175,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.95 }}
-              className="mt-9"
+              className="mt-20"
             >
               <TrustTrace items={TRUST} />
             </motion.div>
@@ -205,12 +186,11 @@ export function Hero() {
             initial={{ opacity: 0, y: 36, rotateY: -10 }}
             animate={{ opacity: 1, y: 0, rotateY: 0 }}
             transition={{ duration: 1, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            style={reduced ? undefined : { x: chatX, y: chatY }}
             className="relative w-full"
           >
             <ChatPreview />
             <p className="mt-3 text-center text-small text-ink-400">
-              Ek hi chat. Search, score, intro — sab yahin.
+              One chat. Search, score, intro — all right here.
             </p>
           </motion.div>
         </div>
