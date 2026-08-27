@@ -124,14 +124,14 @@ export function Hero() {
             <h1 className="mb-5 font-display">
               <span className="block text-[clamp(2.25rem,min(8.5vw,9.5vh),6.5rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">
                 <SplitText
-                  text="Paisa hi paisa"
+                  text="Money follows"
                   by="word"
                   stagger={0.06}
                   unitClassName="text-gradient-accent"
                 />
               </span>
               <span className="block text-[clamp(2.25rem,min(8.5vw,9.5vh),6.5rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">
-                <SplitText text="hoga." by="word" delay={0.18} unitClassName="text-outline" />
+                <SplitText text="my brotha." by="word" delay={0.18} unitClassName="text-outline" />
               </span>
               <span className="mt-3.5 block text-[clamp(1rem,1.9vw,1.45rem)] font-bold leading-tight text-ink-700">
                 <SplitText

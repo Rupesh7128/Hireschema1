@@ -48,14 +48,14 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: "https://hireschema.com",
     siteName: "Hireschema",
-    title: "Hireschema — Paisa hi paisa hoga. Remote roles, bina doglapan ke.",
+    title: "Hireschema — Money follows my brotha. Remote roles, bina doglapan ke.",
     description:
       "Fully remote roles you can do from India. Hireschema AI scores every match and sends a warm intro from your Gmail — after you approve every word.",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hireschema — Paisa hi paisa hoga.",
+    title: "Hireschema — Money follows my brotha.",
     description:
       "Fully remote jobs you can do from India. Warm intros from your own Gmail.",
     images: ["/og-image.png"],

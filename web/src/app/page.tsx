@@ -18,7 +18,7 @@ import { VoidScene, ScoreScene } from "@/components/sections/Interludes";
 import { ZoomThrough } from "@/components/premium/ZoomThrough";
 
 export const metadata = {
-  title: "Hireschema — Paisa hi paisa hoga. Remote roles, bina doglapan ke.",
+  title: "Hireschema — Money follows my brotha. Remote roles, bina doglapan ke.",
   description:
     "Hireschema AI tumhara CV padh ke US, Australia aur global teams ki fully remote jobs nikaalta hai — jo India se ho sakti hain. Har warm intro tum approve karte ho, tumhare Gmail se jaata hai.",
 };
