@@ -92,3 +92,6 @@ api/.railway-config-pull-*/
 !**/.env.example
 docs/Hireschema-Technical-Audit.zip
 docs/docs/
+
+# Local Claude Code preview config
+.claude/

@@ -2,98 +2,304 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Hireschema marketing globals — DESIGN.md v2 (dark charcoal + lime). */
-
-@layer utilities {
-  .bg-paper-0   { background-color: #141414; }
-  .bg-paper-1   { background-color: #1C1C1C; }
-  .text-paper-0 { color: #141414; }
-  .text-paper-1 { color: #1C1C1C; }
-
-  .bg-accent        { background-color: #9FE870; }
-  .bg-accent-hover  { background-color: #8CCC63; }
-  .text-accent      { color: #9FE870; }
-  .text-accent-fg   { color: #000000; }
-  .text-on-accent   { color: #000000; }
-  .border-accent    { border-color: #9FE870; }
-  .ring-accent-ring { --tw-ring-color: rgba(159, 232, 112, 0.30); }
-  .hover\:bg-accent-hover:hover { background-color: #8CCC63; }
-  .hover\:text-accent:hover { color: #9FE870; }
-
-  .hover\:bg-ink-50:hover { background-color: #2a2a2a; }
-  .bg-ink-50 { background-color: #2a2a2a; }
-
-  .bg-destructive-bg { background-color: rgba(247, 109, 109, 0.14); }
-  .text-destructive  { color: #F76D6D; }
-}
+/* ============================================================================
+   Hireschema marketing globals — "Premium Masala"
+   Charcoal stage, lime brand light, saffron + violet rim lights.
+   Everything here supports the 3D scroll scenes in src/components/premium.
+   ========================================================================== */
 
 @layer base {
   :root {
-    --font-geist-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-      system-ui, sans-serif;
-    --font-geist-mono: ui-monospace, SFMono-Regular, "Cascadia Code",
-      "Segoe UI Mono", Menlo, Monaco, Consolas, monospace;
+    --paper-0: #0A0A0B;
+    --paper-1: #111113;
+    --paper-2: #17171A;
+    --accent: #9FE870;
+    --masala: #FFB020;
+    --chai: #FF6B4A;
+    --volt: #8B5CF6;
+
+    /* Driven by <ScrollProgress/>; used by ambient gradients. */
+    --scroll: 0;
+    /* Driven by <Spotlight/>; pointer position in px. */
+    --mx: 50vw;
+    --my: 50vh;
   }
+
+  * { border-color: theme("colors.ink.100"); }
 
   html {
     -webkit-text-size-adjust: 100%;
-    scroll-behavior: smooth;
+    /* Lenis owns smooth scrolling; native smooth would fight it. */
+    scroll-behavior: auto;
   }
 
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto !important; }
+  .lenis.lenis-stopped { overflow: hidden; }
+
   body {
-    background-color: #141414;
+    background-color: var(--paper-0);
     color: #FAFAFA;
-    font-family: var(--font-geist-sans), "Inter", -apple-system,
-                 BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    font-size: 14px;
-    line-height: 1.55;
-    font-weight: 400;
+    font-family: var(--font-sans), Inter, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
     font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-  }
-
-  h1, h2, h3, h4, h5, h6,
-  p, span, label, button, input, textarea, select, a, li, td, th {
-    font-family: inherit;
-    color: inherit;
+    overflow-x: clip;
   }
 
   h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display), var(--font-sans), sans-serif;
     color: #FAFAFA;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
   }
 
-  input, textarea, select, button {
-    font: inherit;
-    color: inherit;
-  }
+  p { text-wrap: pretty; }
 
-  ::placeholder { color: #6B6B6B; opacity: 1; }
+  input, textarea, select, button { font: inherit; color: inherit; }
+  ::placeholder { color: theme("colors.ink.400"); opacity: 1; }
 
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px #141414, 0 0 0 4px #9FE870;
-    border-radius: 0;
+    box-shadow: 0 0 0 2px var(--paper-0), 0 0 0 4px var(--accent);
+    border-radius: 8px;
   }
 
   ::selection {
-    background-color: rgba(159, 232, 112, 0.22);
+    background-color: rgba(159, 232, 112, 0.28);
     color: #FAFAFA;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--paper-0); }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #2E2E34, #18181B);
+    border-radius: 99px;
+    border: 2px solid var(--paper-0);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: theme("colors.ink.300"); }
+}
+
+/* ── Component primitives ─────────────────────────────────────────────── */
+
+@layer components {
+  /*
+   * Frosted card.
+   *
+   * Deliberately NO backdrop-filter: the page paints ~35 of these, and each
+   * backdrop-filter forces the compositor to re-sample everything underneath
+   * it every frame. Over a scroll-driven page that is the difference between
+   * 60fps and single digits. A layered gradient over the charcoal reads the
+   * same at these opacities and costs nothing.
+   */
+  .glass {
+    background:
+      linear-gradient(
+        160deg,
+        rgba(255, 255, 255, 0.06) 0%,
+        rgba(255, 255, 255, 0.022) 45%,
+        rgba(255, 255, 255, 0.008) 100%
+      ),
+      rgba(17, 17, 19, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-strong {
+    background:
+      linear-gradient(
+        160deg,
+        rgba(255, 255, 255, 0.10) 0%,
+        rgba(255, 255, 255, 0.035) 55%,
+        rgba(255, 255, 255, 0.012) 100%
+      ),
+      rgba(20, 20, 23, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  /* Fully opaque variant, for cards that stack on top of each other. */
+  .glass-solid {
+    background:
+      linear-gradient(
+        160deg,
+        rgba(255, 255, 255, 0.10) 0%,
+        rgba(255, 255, 255, 0.035) 55%,
+        rgba(255, 255, 255, 0.012) 100%
+      ),
+      #131316;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  /*
+   * The real thing, for the one element that sits over moving content and
+   * genuinely needs it: the navbar.
+   */
+  .glass-blur {
+    background: rgba(12, 12, 14, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+  }
+
+  /* Hairline top highlight — sells the "lit from above" 3D read. */
+  .edge-light {
+    position: relative;
+  }
+  .edge-light::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.35),
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  .text-gradient {
+    background: linear-gradient(120deg, #FAFAFA 0%, #D9D9DE 40%, #8E8E96 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-gradient-accent {
+    background: linear-gradient(110deg, #9FE870 0%, #E6FF9B 35%, #FFB020 100%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradientShift 9s ease infinite;
+  }
+
+  .text-outline {
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.22);
+  }
+
+  .text-outline-accent {
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(159, 232, 112, 0.45);
+  }
+
+  /* Section eyebrow chip. */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-ink-200/80
+           bg-ink-50/70 px-3.5 py-1.5 text-micro uppercase text-ink-500;
+  }
+
+  .hairline {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.14) 20%,
+      rgba(159, 232, 112, 0.35) 50%,
+      rgba(255, 255, 255, 0.14) 80%,
+      transparent
+    );
   }
 }
 
-@layer base {
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb {
-    background-color: #2A2A2A;
-    border-radius: 0;
-    border: 2px solid #141414;
+/* ── Utilities ────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  .perspective-near { perspective: 600px; }
+  .perspective      { perspective: 1200px; }
+  .perspective-far  { perspective: 2400px; }
+  .preserve-3d      { transform-style: preserve-3d; }
+  .backface-hidden  { backface-visibility: hidden; }
+
+  .mask-fade-y {
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent);
   }
-  ::-webkit-scrollbar-thumb:hover { background-color: #4D4D4D; }
+  .mask-fade-x {
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  }
+
+  /* Blueprint grid — the "stage floor" behind hero + CTA. */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+  .bg-grid-sm {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .bg-dots {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.10) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .glow-accent  { box-shadow: 0 0 60px -12px rgba(159, 232, 112, 0.55); }
+  .glow-masala  { box-shadow: 0 0 60px -12px rgba(255, 176, 32, 0.5); }
+
+  /*
+   * Ambient light pools. These replace `blur-[140px]` divs — a radial gradient
+   * is painted once, a large blur filter is re-run on every composite.
+   */
+  .pool-accent {
+    background: radial-gradient(closest-side, rgba(159, 232, 112, 0.22), rgba(159, 232, 112, 0.07) 55%, transparent 100%);
+  }
+  .pool-masala {
+    background: radial-gradient(closest-side, rgba(255, 176, 32, 0.20), rgba(255, 176, 32, 0.06) 55%, transparent 100%);
+  }
+  .pool-volt {
+    background: radial-gradient(closest-side, rgba(139, 92, 246, 0.22), rgba(139, 92, 246, 0.07) 55%, transparent 100%);
+  }
+  .pool-chai {
+    background: radial-gradient(closest-side, rgba(255, 107, 74, 0.20), rgba(255, 107, 74, 0.06) 55%, transparent 100%);
+  }
+
+  .shimmer {
+    background-image: linear-gradient(
+      100deg,
+      transparent 20%,
+      rgba(255, 255, 255, 0.16) 40%,
+      rgba(255, 255, 255, 0.16) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+  }
+
+  .will-transform { will-change: transform; }
+  .gpu { transform: translate3d(0, 0, 0); }
 }
+
+/* ── Film grain: one fixed overlay, cheap, sells the premium print feel ── */
+
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  animation: grainShift 1s steps(4) infinite;
+}
+
+@keyframes grainShift {
+  0%   { background-position: 0 0; }
+  25%  { background-position: -30px 20px; }
+  50%  { background-position: 20px -30px; }
+  75%  { background-position: -20px -10px; }
+  100% { background-position: 0 0; }
+}
+
+/* ── Reduced motion: strip the choreography, keep the content ─────────── */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -102,4 +308,5 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .grain::after { display: none; }
 }
