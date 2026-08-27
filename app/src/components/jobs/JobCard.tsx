@@ -22,6 +22,7 @@ import {
 import { BTN_CHIP_ACTIVE } from "@/lib/button-classes";
 import { cn } from "@/lib/utils";
 import { formatSalaryRange } from "@/lib/salary";
+import { jobLocationLabel } from "@/lib/job-location";
 import type { MatchedJob } from "@/lib/api/matches";
 import { Avatar, Button, Card, ScoreDot, useToast } from "@/components/ui";
 
@@ -92,10 +93,7 @@ export function JobCard({
     currency: job.salary_currency,
   });
 
-  const locationLabel =
-    [job.location_city, job.location_state]
-      .filter(Boolean)
-      .join(", ") || (job.is_remote ? "Remote" : null);
+  const locationLabel = jobLocationLabel(job);
 
   const metaLine = [ctcLabel, locationLabel].filter(Boolean).join(" · ");
 

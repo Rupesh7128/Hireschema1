@@ -176,8 +176,8 @@ async def _candidate_with_intelligence(
 
     enriched["skills"] = _unique_nonempty([*(enriched.get("skills") or []), *ctx.skills])
     enriched["market"] = ctx.hard_filters.market or enriched.get("market")
-    enriched["remote_preference"] = ctx.hard_filters.remote_preference or enriched.get(
-        "remote_preference"
+    enriched["remote_preference"] = normalize_remote_preference(
+        ctx.hard_filters.remote_preference or enriched.get("remote_preference")
     )
     enriched["location_scope"] = ctx.hard_filters.location_scope or enriched.get("location_scope")
     if ctx.hard_filters.ctc_floor is not None:
@@ -650,12 +650,7 @@ async def get_match_feed(
         excluded_companies=excl_companies,
         excluded_titles=excl_titles,
     )
-    result = [
-        job
-        for job in result
-        if (test_jobs_enabled(settings) and is_test_job(job))
-        or (not is_test_job(job) and passes_hard_constraints(job, constraints))
-    ]
+    result = [job for job in result if passes_hard_constraints(job, constraints)]
     result = filter_and_rerank_jobs(dict(candidate), result, limit=limit)
     # Always collapse near-duplicates (same apply URL / company+title). The default
     # Matches sidebar uses limit=50, which used to skip assemble_first_screen and

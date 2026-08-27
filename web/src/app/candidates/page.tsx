@@ -89,11 +89,21 @@ export default function CandidatesPage() {
               warm intro to the hiring manager — all from a single chat.
             </p>
             <Link
-              href={`${APP_URL}/invite`}
+              href={`${APP_URL}/reviewmycv`}
               className="inline-flex h-12 items-center justify-center rounded-md bg-accent px-6 text-body font-medium text-accent-fg hover:bg-accent-hover transition-colors"
             >
-              Request an invite
+              Free CV review
             </Link>
+            <p className="mt-4 text-small text-ink-500">
+              Compare boards:{" "}
+              <Link href="/alternatives/naukri" className="text-accent hover:underline">
+                Naukri alternative
+              </Link>
+              {" · "}
+              <Link href="/how-it-works" className="text-accent hover:underline">
+                How it works
+              </Link>
+            </p>
           </div>
           <ProductPreview />
         </div>

@@ -11,6 +11,15 @@ from hireloop_api.config import Settings
 
 _EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
+# Always-on operators: can sign in without a waitlist row, list every invite
+# request, and approve/reject. SUPER_ADMIN_EMAILS still adds more addresses.
+FOUNDER_SUPER_ADMIN_EMAILS = frozenset(
+    {
+        "rupesh7126@gmail.com",
+        "rratanranjeet790395@gmail.com",
+    }
+)
+
 
 def normalize_email(email: str) -> str:
     return email.strip().lower()
@@ -21,10 +30,18 @@ def is_valid_email(email: str) -> bool:
     return bool(clean) and len(clean) <= 254 and bool(_EMAIL_RE.fullmatch(clean))
 
 
-def is_super_admin_email(settings: Settings, email: str) -> bool:
+def super_admin_allowlist(settings: Settings | None) -> set[str]:
+    allowed = set(FOUNDER_SUPER_ADMIN_EMAILS)
+    if settings is not None:
+        allowed.update(
+            normalize_email(e) for e in (getattr(settings, "super_admin_emails", None) or []) if e
+        )
+    return allowed
+
+
+def is_super_admin_email(settings: Settings | None, email: str) -> bool:
     clean = normalize_email(email)
-    allowed = {normalize_email(e) for e in (settings.super_admin_emails or []) if e}
-    return bool(clean) and clean in allowed
+    return bool(clean) and clean in super_admin_allowlist(settings)
 
 
 async def is_email_invite_approved(
@@ -178,7 +195,7 @@ async def list_invite_requests(
     *,
     status: str | None = None,
     q: str | None = None,
-    limit: int = 100,
+    limit: int = 200,
     offset: int = 0,
 ) -> list[dict[str, Any]]:
     where = ["1=1"]

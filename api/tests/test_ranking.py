@@ -33,6 +33,7 @@ def _job(
     ctc_min: int | None = None,
     ctc_max: int | None = None,
     apply_url: str | None = None,
+    employment_type: str | None = None,
 ) -> dict:
     return {
         "job_id": job_id,
@@ -45,6 +46,7 @@ def _job(
         "ctc_min": ctc_min,
         "ctc_max": ctc_max,
         "apply_url": apply_url,
+        "employment_type": employment_type,
     }
 
 
@@ -227,6 +229,19 @@ def test_remote_only_rejects_onsite() -> None:
     c = HardConstraints(remote_preference="remote_only")
     assert passes_hard_constraints(_job("a", is_remote=True), c) is True
     assert passes_hard_constraints(_job("b", is_remote=False), c) is False
+
+
+def test_remote_alias_and_hybrid_are_not_fully_remote() -> None:
+    c = HardConstraints(remote_preference="remote")
+    assert passes_hard_constraints(_job("a", is_remote=True), c) is True
+    assert passes_hard_constraints(_job("b", is_remote=False), c) is False
+    assert (
+        passes_hard_constraints(
+            _job("c", is_remote=True, employment_type="hybrid"),
+            c,
+        )
+        is False
+    )
 
 
 def test_onsite_only_rejects_remote() -> None:

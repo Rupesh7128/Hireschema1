@@ -112,6 +112,25 @@ async def test_get_admin_allows_configured_email_allowlist() -> None:
     assert out is user
 
 
+async def test_get_admin_allows_founder_gmail_without_env() -> None:
+    user = {"id": str(uuid.uuid4()), "role": "candidate", "email": "Rupesh7126@gmail.com"}
+    out = await get_admin_user(
+        current_user=user,
+        settings=_dev_settings(super_admin_emails=[]),
+    )
+    assert out is user
+    user2 = {
+        "id": str(uuid.uuid4()),
+        "role": "candidate",
+        "email": "rratanranjeet790395@gmail.com",
+    }
+    out2 = await get_admin_user(
+        current_user=user2,
+        settings=_dev_settings(super_admin_emails=[]),
+    )
+    assert out2 is user2
+
+
 # ── #3: production secret guard ────────────────────────────────────────────────
 
 

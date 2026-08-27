@@ -30,6 +30,8 @@ import { recordJobApplication, recordJobOutcome } from "@/lib/api/job-applicatio
 import { BTN_CHIP_ACTIVE } from "@/lib/button-classes";
 import { cn } from "@/lib/utils";
 import { formatSalaryRange } from "@/lib/salary";
+import { jobIsFullyRemote, jobLocationLabel } from "@/lib/job-location";
+import { jobLocationLabel } from "@/lib/job-location";
 import { AppShell } from "@/components/layout/AppShell";
 import { Avatar, Badge, Button, ScoreDot, useToast } from "@/components/ui";
 
@@ -323,9 +325,7 @@ function JobDetailBody({
     currency: job.salary_currency,
   });
 
-  const locationLabel =
-    [job.location_city, job.location_state].filter(Boolean).join(", ") ||
-    (job.is_remote ? "Remote" : "Onsite");
+  const locationLabel = jobLocationLabel(job) ?? "Onsite";
 
   const posted = postedAgo(job.posted_at);
   // Split skills into "you have" vs "gap" when the API provides it; otherwise
@@ -383,7 +383,7 @@ function JobDetailBody({
         {job.employment_type && (
           <Badge>{EMP_LABELS[job.employment_type] ?? job.employment_type}</Badge>
         )}
-        {job.is_remote && <Badge>Remote</Badge>}
+        {jobIsFullyRemote(job) && <Badge>Remote</Badge>}
         {ctcLabel && <Badge tone="accent">{ctcLabel}</Badge>}
       </div>
 

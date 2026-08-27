@@ -1,62 +1,30 @@
 {
   "manifest_version": 3,
-  "name": "Hireschema — Save job",
-  "description": "Save LinkedIn and career-site jobs to your Hireschema tracker in one click.",
+  "name": "Hireschema CV score",
   "version": "0.1.0",
+  "description": "Score a CV against live India jobs. Talks only to the public Hireschema review API. Load unpacked from this folder in chrome://extensions.",
   "action": {
-    "default_title": "Save job to Hireschema",
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
+    "default_title": "Hireschema CV score",
+    "default_popup": "popup.html"
   },
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
+  "permissions": ["activeTab"],
+  "host_permissions": [
+    "https://hireschema.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["storage", "activeTab", "scripting", "tabs"],
-  "host_permissions": [
-    "https://*.linkedin.com/*",
-    "https://boards.greenhouse.io/*",
-    "https://jobs.lever.co/*",
-    "https://*.ashbyhq.com/*",
-    "https://*.myworkdayjobs.com/*",
-    "https://jobs.ashbyhq.com/*",
-    "http://localhost:3001/*",
-    "http://127.0.0.1:3001/*",
-    "http://localhost:8000/*",
-    "http://127.0.0.1:8000/*",
-    "https://*.hireschema.com/*",
-    "https://*.vercel.app/*"
-  ],
   "content_scripts": [
     {
       "matches": [
-        "http://localhost:3001/*",
-        "http://127.0.0.1:3001/*",
-        "https://*.hireschema.com/*",
-        "https://*.vercel.app/*"
+        "https://www.naukri.com/*",
+        "https://naukri.com/*",
+        "https://www.instahyre.com/*",
+        "https://www.cutshort.io/*",
+        "https://cutshort.io/*",
+        "https://wellfound.com/*"
       ],
-      "js": ["content/app-connect.js"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": [
-        "https://www.linkedin.com/jobs/*",
-        "https://linkedin.com/jobs/*",
-        "https://boards.greenhouse.io/*",
-        "https://jobs.lever.co/*",
-        "https://*.ashbyhq.com/*",
-        "https://jobs.ashbyhq.com/*",
-        "https://*.myworkdayjobs.com/*"
-      ],
-      "js": ["content/job-page.js"],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
   ]

@@ -7,6 +7,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from hireloop_api.services.job_preferences import (
+    REMOTE_PREFERENCE_ANY,
+    REMOTE_PREFERENCE_ONSITE_ONLY,
+    REMOTE_PREFERENCE_REMOTE_ONLY,
+    job_is_fully_remote,
+    normalize_remote_preference,
+)
 from hireloop_api.services.salary_benchmark import lookup_salary_benchmark
 
 
@@ -20,14 +27,14 @@ def compute_culture_score(cand_row: Mapping[str, Any], job_row: Mapping[str, Any
     score = 0.55
     enrich = _enrichment(cand_row)
     work_style = enrich.get("work_style") if isinstance(enrich.get("work_style"), dict) else {}
-    remote_pref = str(cand_row.get("remote_preference") or "any").lower()
-    job_remote = bool(job_row.get("is_remote"))
+    remote_pref = normalize_remote_preference(cand_row.get("remote_preference"))
+    job_remote = job_is_fully_remote(job_row)
 
-    if job_remote and remote_pref in ("remote", "any"):
+    if job_remote and remote_pref in (REMOTE_PREFERENCE_REMOTE_ONLY, REMOTE_PREFERENCE_ANY):
         score += 0.2
-    elif not job_remote and remote_pref == "onsite":
+    elif not job_remote and remote_pref == REMOTE_PREFERENCE_ONSITE_ONLY:
         score += 0.15
-    elif not job_remote and remote_pref == "remote" and not cand_row.get("open_to_relocation"):
+    elif not job_remote and remote_pref == REMOTE_PREFERENCE_REMOTE_ONLY:
         score -= 0.25
 
     energizing = work_style.get("energizing_tasks") or []

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const NAV_LINKS = [
   { href: "/live-feed", label: "Live Feed" },
   { href: "/how-it-works", label: "How it works" },
+  { href: "/alternatives", label: "Alternatives" },
   { href: "/candidates", label: "For Candidates" },
   { href: "/about", label: "About" },
   { href: "/blog", label: "Blog" },
@@ -50,7 +51,8 @@ export function Navbar() {
                 href={link.href}
                 className={cn(
                   "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  pathname === link.href
+                  pathname === link.href ||
+                  (link.href !== "/" && pathname.startsWith(link.href))
                     ? "text-accent bg-ink-50"
                     : "text-ink-700 hover:text-ink-900 hover:bg-ink-50"
                 )}
@@ -108,7 +110,8 @@ export function Navbar() {
               onClick={() => setMobileOpen(false)}
               className={cn(
                 "block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                pathname === link.href
+                pathname === link.href ||
+                  (link.href !== "/" && pathname.startsWith(link.href))
                   ? "text-accent bg-ink-50"
                   : "text-ink-700 hover:bg-ink-50"
               )}

@@ -120,6 +120,7 @@ class Settings(BaseSettings):
     # server-side through the audited super-admin endpoint. Admin is NEVER
     # derived from a user-editable field (see deps.get_admin_user).
     # Example: SUPER_ADMIN_EMAILS=founder@hireschema.com
+    # Founder Gmail inboxes are always allowed in invite_access.FOUNDER_SUPER_ADMIN_EMAILS.
     super_admin_emails: list[str] = []
 
     # ── Apify ─────────────────────────────────────────────────────────────────
@@ -183,10 +184,13 @@ class Settings(BaseSettings):
     fantastic_jobs_ai_taxonomies_exclusions: list[str] = []
 
     # ── ATS feeds (#26) — free first-party boards, no Apify spend ─────────────
-    # Comma-separated allowlists. Greenhouse board tokens (the slug in
-    # boards.greenhouse.io/<token>) and Lever company slugs (jobs.lever.co/<slug>).
+    # Empty lists use the bundled India catalog (career-ops-india, MIT):
+    # Greenhouse + Lever + Ashby. Set a comma-separated list to override a channel.
     ats_greenhouse_boards: list[str] = []
     ats_lever_companies: list[str] = []
+    ats_ashby_boards: list[str] = []
+    ats_use_bundled_india_catalog: bool = True
+    ats_fetch_concurrency: int = 6
 
     # ── LinkDAPI (linkdapi.com) — LinkedIn profile enrichment ─────────────────
     # Resolves a candidate's LinkedIn URL into full profile details (overview,
@@ -283,6 +287,7 @@ class Settings(BaseSettings):
     @field_validator(
         "ats_greenhouse_boards",
         "ats_lever_companies",
+        "ats_ashby_boards",
         "fantastic_jobs_title_exclusions",
         "fantastic_jobs_location_exclusions",
         "fantastic_jobs_description_exclusions",

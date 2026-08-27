@@ -15,7 +15,7 @@ import {
   PencilLine,
   Shield,
 } from "@/components/brand/icons";
-import { apiFetch } from "@/lib/api/client";
+import { invalidateMatchFeedCache } from "@/lib/api/matches";
 import {
   applyProfileToForm,
   fetchMyProfile,
@@ -153,6 +153,7 @@ export function ProfilePanel({
     try {
       await updateRemotePreference(next);
       invalidateProfileCache();
+      invalidateMatchFeedCache();
       toast.success("Job search filter updated");
     } catch {
       setRemotePref(prev);

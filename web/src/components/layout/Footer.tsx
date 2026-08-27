@@ -1,9 +1,13 @@
 import Link from "next/link";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://hireschema.com";
+
 const FOOTER_LINKS = {
   Product: [
     { href: "/live-feed", label: "Live Feed" },
+    { href: `${APP_URL}/reviewmycv`, label: "Review my CV" },
     { href: "/how-it-works", label: "How it works" },
+    { href: "/alternatives", label: "Naukri alternatives" },
     { href: "/candidates", label: "For Candidates" },
     { href: "/contact", label: "Request invite" },
   ],

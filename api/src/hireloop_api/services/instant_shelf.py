@@ -61,11 +61,13 @@ async def fetch_instant_shelf(
             )
 
     if len(cards) < 5:
+        from hireloop_api.services.job_preferences import normalize_remote_preference
+
         starter = await _fetch_starter_market_jobs(
             db,
             candidate_id=candidate["id"],
             limit=limit,
-            remote_preference=str(candidate.get("remote_preference") or "any"),
+            remote_preference=normalize_remote_preference(candidate.get("remote_preference")),
             market=str(candidate.get("market") or "IN"),
         )
         seen = {str(c.get("job_id") or c.get("id")) for c in cards}

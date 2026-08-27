@@ -31,6 +31,8 @@ import {
   type MatchFeedFilters,
 } from "@/lib/api/matches";
 import { dedupeJobs } from "@/lib/chat/dedupeJobs";
+import { applyRemotePreferenceFilter, jobIsFullyRemote } from "@/lib/job-location";
+import { fetchMyProfile, getCachedProfile, type RemotePreference } from "@/lib/api/profile";
 import { useJobCardAssets } from "@/hooks/useJobCardAssets";
 import { ResumePreviewModal } from "@/components/resumes/ResumePreviewModal";
 import { Button, Card, EmptyState, Select } from "@/components/ui";
@@ -149,14 +151,20 @@ function groupWithNewSection(jobs: MatchedJob[], options: { enabled: boolean }):
 
 function applyLocalFilters(
   jobs: MatchedJob[],
-  filters: { remoteOnly: boolean; seniority: string }
+  filters: { remoteOnly: boolean; seniority: string; remotePreference?: RemotePreference | null },
 ): MatchedJob[] {
-  let visible = jobs;
-  if (filters.remoteOnly) visible = visible.filter((j) => j.is_remote);
+  let visible = applyRemotePreferenceFilter(jobs, filters.remotePreference);
+  if (filters.remoteOnly) visible = visible.filter((j) => jobIsFullyRemote(j));
   if (filters.seniority) {
     visible = visible.filter((j) => j.seniority === filters.seniority);
   }
   return visible;
+}
+
+function cachedRemotePreference(): RemotePreference | null {
+  const pref = getCachedProfile()?.candidate?.remote_preference;
+  if (pref === "any" || pref === "remote_only" || pref === "onsite_only") return pref;
+  return null;
 }
 
 export function MatchFeed({
@@ -198,6 +206,9 @@ export function MatchFeed({
   // Filters
   const [minScore, setMinScore] = useState(MATCH_FEED_RELEVANCE_FLOOR);
   const [remoteOnly, setRemoteOnly] = useState(false);
+  const [remotePreference, setRemotePreference] = useState<RemotePreference | null>(
+    cachedRemotePreference,
+  );
   const [seniority, setSeniority] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
@@ -231,14 +242,14 @@ export function MatchFeed({
 
         const cached = isFirst ? getCachedMatchFeed(filters) : null;
         if (cached) {
-          setJobs(applyLocalFilters(cached, { remoteOnly, seniority }));
+          setJobs(applyLocalFilters(cached, { remoteOnly, seniority, remotePreference }));
           setHasMore(compact ? false : cached.length === pageSize);
           setOffset(currentOffset + cached.length);
           setLoading(false);
           // Refresh in the background without blocking the sidebar.
           void fetchMatchFeed(filters, { force: true })
             .then((rawData) => {
-              const data = applyLocalFilters(rawData, { remoteOnly, seniority });
+              const data = applyLocalFilters(rawData, { remoteOnly, seniority, remotePreference });
               setJobs(data);
               setHasMore(compact ? false : rawData.length === pageSize);
               setOffset(rawData.length);
@@ -255,7 +266,7 @@ export function MatchFeed({
         }
 
         const rawData = await fetchMatchFeed(filters);
-        const data = applyLocalFilters(rawData, { remoteOnly, seniority });
+        const data = applyLocalFilters(rawData, { remoteOnly, seniority, remotePreference });
 
         if (isFirst && data.length === 0 && scoreFloor > 0.25) {
           return load(true, 0.25);
@@ -282,8 +293,24 @@ export function MatchFeed({
         setLoadingMore(false);
       }
     },
-    [minScore, remoteOnly, seniority, offset, compact, pageSize]
+    [minScore, remoteOnly, seniority, remotePreference, offset, compact, pageSize]
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchMyProfile()
+      .then((d) => {
+        if (cancelled) return;
+        const pref = d.candidate?.remote_preference;
+        if (pref === "any" || pref === "remote_only" || pref === "onsite_only") {
+          setRemotePreference(pref);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -390,7 +417,7 @@ export function MatchFeed({
     setEmptyRefreshCount(0);
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [minScore, remoteOnly, seniority]);
+  }, [minScore, remoteOnly, seniority, remotePreference]);
 
   useEffect(() => {
     const onInvalidate = () => {
@@ -402,6 +429,14 @@ export function MatchFeed({
       setOffset(0);
       setHasMore(true);
       setEmptyRefreshCount(0);
+      void fetchMyProfile({ force: true })
+        .then((d) => {
+          const pref = d.candidate?.remote_preference;
+          if (pref === "any" || pref === "remote_only" || pref === "onsite_only") {
+            setRemotePreference(pref);
+          }
+        })
+        .catch(() => undefined);
       void fetchMatchFeedCount({ min_score: minScore }, { force: true })
         .then((total) => setTotalCount(total))
         .catch(() => setTotalCount(null));
@@ -443,8 +478,13 @@ export function MatchFeed({
   // Hireschema AI showed in chat appears here immediately, while the feed still loads.
   const displayJobs = applyLocalFilters(
     seedJobs?.length ? dedupeJobs([...seedJobs, ...jobs]) : jobs,
-    { remoteOnly, seniority },
+    { remoteOnly, seniority, remotePreference },
   );
+  const visibleHistoryJobs = applyLocalFilters(historyJobs, {
+    remoteOnly,
+    seniority: "",
+    remotePreference,
+  });
   const visibleCount = displayJobs.length;
   const sections = groupWithNewSection(displayJobs, { enabled: !compact && offset <= pageSize });
   // Hide headers when the only section is the untiered "More" bucket (e.g. the
@@ -612,14 +652,14 @@ export function MatchFeed({
           />
         )}
 
-        {!loading && !error && visibleCount === 0 && historyJobs.length === 0 && !historyLoading && (
+        {!loading && !error && visibleCount === 0 && visibleHistoryJobs.length === 0 && !historyLoading && (
           <MatchesEmptyPanel
             onAskAarya={onAskAarya}
             isSearching={emptyRefreshCount < 5}
           />
         )}
 
-        {!loading && !error && visibleCount === 0 && (historyLoading || historyJobs.length > 0) && (
+        {!loading && !error && visibleCount === 0 && (historyLoading || visibleHistoryJobs.length > 0) && (
           <p className="text-micro text-ink-500 mb-2">
             No new matches right now — your past jobs are below.
           </p>
@@ -724,7 +764,7 @@ export function MatchFeed({
                 Job history
                 {!historyLoading && (
                   <span className="ml-1.5 text-ink-300 font-normal">
-                    {historyJobs.length}
+                    {visibleHistoryJobs.length}
                   </span>
                 )}
               </h4>
@@ -732,9 +772,9 @@ export function MatchFeed({
             </div>
             {historyLoading ? (
               <JobCardSkeleton />
-            ) : historyJobs.length > 0 ? (
+            ) : visibleHistoryJobs.length > 0 ? (
               <Stagger className="space-y-3">
-                {historyJobs.map((job) => (
+                {visibleHistoryJobs.map((job) => (
                   <StaggerItem key={`history-${job.job_id}`}>
                     <JobCard
                       job={job}

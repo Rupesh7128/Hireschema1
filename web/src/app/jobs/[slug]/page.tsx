@@ -117,15 +117,21 @@ export default async function ProgrammaticJobPage({ params }: PageProps) {
         </ul>
       </section>
 
-      <div className="mt-10 flex gap-4">
+      <div className="mt-10 flex flex-wrap gap-4">
         <a
-          href={`${appUrl}/invite`}
+          href={`${appUrl}/reviewmycv`}
           className="inline-flex bg-accent text-accent-fg px-6 py-3 rounded-xl font-medium"
         >
-          Get matched free
+          Free CV review
         </a>
-        <Link href="/candidates" className="inline-flex text-accent px-4 py-3">
-          How it works
+        <a
+          href={`${appUrl}/invite`}
+          className="inline-flex border border-ink-100 px-6 py-3 rounded-xl font-medium"
+        >
+          Request invite
+        </a>
+        <Link href="/alternatives/naukri" className="inline-flex text-accent px-4 py-3">
+          Naukri alternative
         </Link>
       </div>
 

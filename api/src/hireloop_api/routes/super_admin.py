@@ -527,7 +527,7 @@ class InviteCreateRequest(BaseModel):
 async def list_invites(
     status_filter: str | None = Query(default=None, alias="status"),
     q: str | None = Query(default=None),
-    limit: int = Query(default=100, ge=1, le=200),
+    limit: int = Query(default=200, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     admin: dict = Depends(get_admin_user),
     db: asyncpg.Connection = Depends(get_db),

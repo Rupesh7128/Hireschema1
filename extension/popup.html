@@ -1,44 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en-IN">
   <head>
-    <meta charset="UTF-8" />
-    <title>Hireschema</title>
+    <meta charset="utf-8" />
+    <title>Hireschema CV score</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <header>
-      <h1>Hireschema</h1>
-      <p id="status-line">Checking…</p>
-    </header>
-
-    <section class="actions">
-      <button id="btn-save" type="button">Save this job</button>
-      <button id="btn-prepare-kit" type="button" class="secondary">Save + prepare kit</button>
-      <button id="btn-tracker" type="button" class="secondary">Open tracker</button>
-      <button id="btn-connect" type="button" class="secondary">Sign in</button>
-      <button id="btn-disconnect" type="button" class="ghost hidden">Disconnect</button>
-    </section>
-
-    <label class="toggle">
-      <input id="auto-kit" type="checkbox" checked />
-      Also prepare kit when I save
-    </label>
-
-    <p id="message" class="message" hidden></p>
-
-    <details class="advanced">
-      <summary>Settings</summary>
-      <label>
-        API base
-        <input id="api-base" type="url" placeholder="https://hireschema1.vercel.app/hireloop-api" />
-      </label>
-      <label>
-        App origin
-        <input id="app-origin" type="url" placeholder="https://hireschema1.vercel.app" />
-      </label>
-      <button id="btn-save-settings" type="button" class="secondary">Save settings</button>
-    </details>
-
+    <p class="kicker">India only · file not stored</p>
+    <h1>Score this CV</h1>
+    <p class="lede">
+      Public Hireschema review. Not Naukri login. Not a recruiter tool.
+    </p>
+    <input id="file" type="file" accept=".pdf,.doc,.docx,application/pdf" />
+    <button id="run" type="button">Review</button>
+    <p id="status" class="status"></p>
+    <pre id="out" hidden></pre>
+    <p class="links">
+      <a href="https://hireschema.com/reviewmycv" target="_blank" rel="noreferrer">Full review page</a>
+      ·
+      <a href="https://hireschema.com/alternatives/naukri" target="_blank" rel="noreferrer">Naukri alternative</a>
+    </p>
     <script src="popup.js"></script>
   </body>
 </html>

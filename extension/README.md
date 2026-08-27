@@ -14,8 +14,8 @@ Save the job you’re viewing (LinkedIn / Greenhouse / Lever / Ashby / Workday, 
 
 Shipped defaults (override in Settings):
 
-- **API base** — `https://hireschema1.vercel.app/hireloop-api`
-- **App origin** — `https://hireschema1.vercel.app`
+- **API base** — `https://www.hireschema.com/hireloop-api`
+- **App origin** — `https://www.hireschema.com`
 
 ## Actions
 

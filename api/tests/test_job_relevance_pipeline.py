@@ -64,15 +64,22 @@ def test_pipeline_requires_title_or_skill_lexical_signal() -> None:
     assert [j["job_id"] for j in out] == ["platform"]
 
 
-def test_pipeline_reranks_by_embedding_composite_after_hard_filters() -> None:
+def test_pipeline_drops_onsite_when_remote_only() -> None:
     jobs = [
-        _job("lower", title="Backend Engineer", skills_required=["Python"], overall_score=0.55),
-        _job("higher", title="Backend Engineer", skills_required=["Python"], overall_score=0.82),
+        _job("onsite", title="Backend Engineer", is_remote=False, overall_score=0.95),
+        _job("remote", title="Backend Engineer", is_remote=True, overall_score=0.6),
+        _job(
+            "hybrid",
+            title="Backend Engineer",
+            is_remote=True,
+            employment_type="hybrid",
+            overall_score=0.9,
+        ),
     ]
 
-    out = filter_and_rerank_jobs(_candidate(), jobs, limit=10)
+    out = filter_and_rerank_jobs(_candidate(remote_preference="remote_only"), jobs, limit=10)
 
-    assert [j["job_id"] for j in out] == ["higher", "lower"]
+    assert [j["job_id"] for j in out] == ["remote"]
 
 
 def test_rationale_overlay_items_only_returns_final_top_ten() -> None:

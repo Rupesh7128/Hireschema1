@@ -70,7 +70,7 @@ export function jobFaqs(roleLabel: string, cityLabel: string): { q: string; a: s
   return [
     {
       q: `How do I find ${roleLabel} jobs in ${cityLabel}?`,
-      a: `Sign up on Hireschema, upload your résumé, and Hireschema AI surfaces India-only ${roleLabel} roles in ${cityLabel} ranked by an AI match score — with direct apply links and warm intros to hiring managers.`,
+      a: `Start with the free CV review (no account). After an invite, Hireschema surfaces India-only ${roleLabel} roles in ${cityLabel} ranked by match score — native apply links or a Gmail intro you approve.`,
     },
     {
       q: `Are ${roleLabel} roles in ${cityLabel} remote or on-site?`,
@@ -82,7 +82,7 @@ export function jobFaqs(roleLabel: string, cityLabel: string): { q: string; a: s
     },
     {
       q: `How is Hireschema different for ${roleLabel} job seekers?`,
-      a: `Instead of cold applications, Hireschema requests a warm intro to the hiring manager from your own Gmail, and tailors your résumé to each ${roleLabel} JD in seconds.`,
+      a: `Hireschema is not a second job board. It scores a CV against live India jobs, then — if you are invited — matches ${roleLabel} roles and can send a hiring-manager intro from your Gmail after you approve it. See also the Naukri alternative page.`,
     },
   ];
 }

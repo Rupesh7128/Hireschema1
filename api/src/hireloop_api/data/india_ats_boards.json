@@ -1,0 +1,1030 @@
+{
+  "source": "https://github.com/AnojSKunte/career-ops-india/blob/main/portals/india.yml",
+  "license": "MIT",
+  "greenhouse": [
+    {
+      "name": "Razorpay",
+      "slug": "razorpay"
+    },
+    {
+      "name": "BharatPe",
+      "slug": "bharatpe"
+    },
+    {
+      "name": "Perfios",
+      "slug": "perfios"
+    },
+    {
+      "name": "Setu",
+      "slug": "setu"
+    },
+    {
+      "name": "Juspay",
+      "slug": "juspay"
+    },
+    {
+      "name": "Niyo",
+      "slug": "niyo"
+    },
+    {
+      "name": "Cashfree",
+      "slug": "cashfree"
+    },
+    {
+      "name": "Happay",
+      "slug": "happay"
+    },
+    {
+      "name": "Open Financial",
+      "slug": "open-financial"
+    },
+    {
+      "name": "Cred Avenue",
+      "slug": "credavenue"
+    },
+    {
+      "name": "BrowserStack",
+      "slug": "browserstack"
+    },
+    {
+      "name": "Postman",
+      "slug": "postman"
+    },
+    {
+      "name": "Freshworks",
+      "slug": "freshworks"
+    },
+    {
+      "name": "Chargebee",
+      "slug": "chargebee"
+    },
+    {
+      "name": "Whatfix",
+      "slug": "whatfix"
+    },
+    {
+      "name": "Darwinbox",
+      "slug": "darwinbox"
+    },
+    {
+      "name": "Sprinklr",
+      "slug": "sprinklr"
+    },
+    {
+      "name": "Druva",
+      "slug": "druva"
+    },
+    {
+      "name": "Exotel",
+      "slug": "exotel"
+    },
+    {
+      "name": "Clevertap",
+      "slug": "clevertap"
+    },
+    {
+      "name": "MoEngage",
+      "slug": "moengage"
+    },
+    {
+      "name": "WebEngage",
+      "slug": "webengage"
+    },
+    {
+      "name": "Netcore Cloud",
+      "slug": "netcorecloud"
+    },
+    {
+      "name": "Helpshift",
+      "slug": "helpshift"
+    },
+    {
+      "name": "Kapture CRM",
+      "slug": "kapture"
+    },
+    {
+      "name": "LeadSquared",
+      "slug": "leadsquared"
+    },
+    {
+      "name": "Salesken",
+      "slug": "salesken"
+    },
+    {
+      "name": "Uniphore",
+      "slug": "uniphore"
+    },
+    {
+      "name": "Unacademy",
+      "slug": "unacademy"
+    },
+    {
+      "name": "upGrad",
+      "slug": "upgrad"
+    },
+    {
+      "name": "Simplilearn",
+      "slug": "simplilearn"
+    },
+    {
+      "name": "Scaler",
+      "slug": "scaler"
+    },
+    {
+      "name": "Great Learning",
+      "slug": "greatlearning"
+    },
+    {
+      "name": "Innovaccer",
+      "slug": "innovaccer"
+    },
+    {
+      "name": "Niramai",
+      "slug": "niramai"
+    },
+    {
+      "name": "Portea Medical",
+      "slug": "portea"
+    },
+    {
+      "name": "Practo",
+      "slug": "practo"
+    },
+    {
+      "name": "Healthplix",
+      "slug": "healthplix"
+    },
+    {
+      "name": "Lenskart",
+      "slug": "lenskart"
+    },
+    {
+      "name": "Mamaearth",
+      "slug": "mamaearth"
+    },
+    {
+      "name": "Purplle",
+      "slug": "purplle"
+    },
+    {
+      "name": "Zivame",
+      "slug": "zivame"
+    },
+    {
+      "name": "Shadowfax",
+      "slug": "shadowfax"
+    },
+    {
+      "name": "Rivigo",
+      "slug": "rivigo"
+    },
+    {
+      "name": "ElasticRun",
+      "slug": "elasticrun"
+    },
+    {
+      "name": "Gupshup",
+      "slug": "gupshup"
+    },
+    {
+      "name": "Hasura",
+      "slug": "hasura"
+    },
+    {
+      "name": "Mad Street Den",
+      "slug": "madstreetden"
+    },
+    {
+      "name": "Arya.ai",
+      "slug": "arya-ai"
+    },
+    {
+      "name": "Mu Sigma",
+      "slug": "mu-sigma"
+    },
+    {
+      "name": "Tiger Analytics",
+      "slug": "tigeranalytics"
+    },
+    {
+      "name": "Fractal Analytics",
+      "slug": "fractal"
+    },
+    {
+      "name": "LatentView Analytics",
+      "slug": "latentview"
+    },
+    {
+      "name": "InMobi",
+      "slug": "inmobi"
+    },
+    {
+      "name": "Gojek India",
+      "slug": "gojek"
+    },
+    {
+      "name": "Dunzo",
+      "slug": "dunzo"
+    },
+    {
+      "name": "Vedantu",
+      "slug": "vedantu"
+    },
+    {
+      "name": "Navi Technologies",
+      "slug": "navi"
+    },
+    {
+      "name": "Fampay",
+      "slug": "fampay"
+    },
+    {
+      "name": "Freo",
+      "slug": "freo"
+    },
+    {
+      "name": "Moxo",
+      "slug": "moxo"
+    },
+    {
+      "name": "Signzy",
+      "slug": "signzy"
+    },
+    {
+      "name": "Artoo",
+      "slug": "artoo"
+    },
+    {
+      "name": "Yubi (CredAvenue)",
+      "slug": "yubi"
+    },
+    {
+      "name": "Mintifi",
+      "slug": "mintifi"
+    },
+    {
+      "name": "Progcap",
+      "slug": "progcap"
+    },
+    {
+      "name": "Avail Finance",
+      "slug": "availfinance"
+    },
+    {
+      "name": "Eka Plus",
+      "slug": "ekaplus"
+    },
+    {
+      "name": "Vyapar",
+      "slug": "vyapar"
+    },
+    {
+      "name": "Zowork",
+      "slug": "zowork"
+    },
+    {
+      "name": "Numberz",
+      "slug": "numberz"
+    },
+    {
+      "name": "Ezetap",
+      "slug": "ezetap"
+    },
+    {
+      "name": "Kredx",
+      "slug": "kredx"
+    },
+    {
+      "name": "Happiest Minds",
+      "slug": "happiestminds"
+    },
+    {
+      "name": "Sigmoid",
+      "slug": "sigmoid"
+    },
+    {
+      "name": "DataWeave",
+      "slug": "dataweave"
+    },
+    {
+      "name": "Flutura",
+      "slug": "flutura"
+    },
+    {
+      "name": "Absolutdata",
+      "slug": "absolutdata"
+    },
+    {
+      "name": "Axtria",
+      "slug": "axtria"
+    },
+    {
+      "name": "Classplus",
+      "slug": "classplus"
+    },
+    {
+      "name": "Teachmint",
+      "slug": "teachmint"
+    },
+    {
+      "name": "Konversai",
+      "slug": "konversai"
+    },
+    {
+      "name": "iNeuron",
+      "slug": "ineuron"
+    }
+  ],
+  "lever": [
+    {
+      "name": "CRED",
+      "slug": "cred"
+    },
+    {
+      "name": "Groww",
+      "slug": "growwapp"
+    },
+    {
+      "name": "Zepto",
+      "slug": "zepto"
+    },
+    {
+      "name": "Meesho",
+      "slug": "meesho"
+    },
+    {
+      "name": "Ola Electric",
+      "slug": "olaelectric"
+    },
+    {
+      "name": "MakeMyTrip",
+      "slug": "makemytrip"
+    },
+    {
+      "name": "Paytm Money",
+      "slug": "paytmmoney"
+    },
+    {
+      "name": "KreditBee",
+      "slug": "kreditbee"
+    },
+    {
+      "name": "MoneyTap",
+      "slug": "moneytap"
+    },
+    {
+      "name": "Kissht",
+      "slug": "kissht"
+    },
+    {
+      "name": "ZestMoney",
+      "slug": "zestmoney"
+    },
+    {
+      "name": "Fibe (EarlySalary)",
+      "slug": "earlysalary"
+    },
+    {
+      "name": "Mswipe",
+      "slug": "mswipe"
+    },
+    {
+      "name": "Zenoti",
+      "slug": "zenoti"
+    },
+    {
+      "name": "Icertis",
+      "slug": "icertis"
+    },
+    {
+      "name": "Vymo",
+      "slug": "vymo"
+    },
+    {
+      "name": "Mindtickle",
+      "slug": "mindtickle"
+    },
+    {
+      "name": "Haptik",
+      "slug": "haptik"
+    },
+    {
+      "name": "Exotel",
+      "slug": "exotel"
+    },
+    {
+      "name": "Eka Software",
+      "slug": "eka"
+    },
+    {
+      "name": "Urban Company",
+      "slug": "urbanclap"
+    },
+    {
+      "name": "Zetwerk",
+      "slug": "zetwerk"
+    },
+    {
+      "name": "Ninjacart",
+      "slug": "ninjacart"
+    },
+    {
+      "name": "Spinny",
+      "slug": "spinny"
+    },
+    {
+      "name": "Delhivery",
+      "slug": "delhivery"
+    },
+    {
+      "name": "BlackBuck",
+      "slug": "blackbuck"
+    },
+    {
+      "name": "Shiprocket",
+      "slug": "shiprocket"
+    },
+    {
+      "name": "Porter",
+      "slug": "porter"
+    },
+    {
+      "name": "Blowhorn",
+      "slug": "blowhorn"
+    },
+    {
+      "name": "PharmEasy",
+      "slug": "pharmeasy"
+    },
+    {
+      "name": "Pristyn Care",
+      "slug": "pristyncare"
+    },
+    {
+      "name": "Cure.fit",
+      "slug": "curefit"
+    },
+    {
+      "name": "Aster DM Healthcare",
+      "slug": "asterdm"
+    },
+    {
+      "name": "Licious",
+      "slug": "licious"
+    },
+    {
+      "name": "Country Delight",
+      "slug": "countrydelight"
+    },
+    {
+      "name": "Eat Club",
+      "slug": "eatclub"
+    },
+    {
+      "name": "NoBroker",
+      "slug": "nobroker"
+    },
+    {
+      "name": "Square Yards",
+      "slug": "squareyards"
+    },
+    {
+      "name": "Housing.com",
+      "slug": "housing"
+    },
+    {
+      "name": "ixigo",
+      "slug": "ixigo"
+    },
+    {
+      "name": "EaseMyTrip",
+      "slug": "easemytrip"
+    },
+    {
+      "name": "RateGain",
+      "slug": "rategain"
+    },
+    {
+      "name": "Springworks",
+      "slug": "springworks"
+    },
+    {
+      "name": "Keka HR",
+      "slug": "keka"
+    },
+    {
+      "name": "sumHR",
+      "slug": "sumhr"
+    },
+    {
+      "name": "Bizongo",
+      "slug": "bizongo"
+    },
+    {
+      "name": "Moglix",
+      "slug": "moglix"
+    },
+    {
+      "name": "Ofbusiness",
+      "slug": "ofbusiness"
+    },
+    {
+      "name": "Yash Technologies",
+      "slug": "yash-technologies"
+    },
+    {
+      "name": "Niswey",
+      "slug": "niswey"
+    },
+    {
+      "name": "Styli (Landmark Group)",
+      "slug": "styli"
+    },
+    {
+      "name": "Fashinza",
+      "slug": "fashinza"
+    },
+    {
+      "name": "Zilingo India",
+      "slug": "zilingo"
+    },
+    {
+      "name": "Tata 1mg",
+      "slug": "tata1mg"
+    },
+    {
+      "name": "Apollo 24/7",
+      "slug": "apollo247"
+    },
+    {
+      "name": "Medikabazaar",
+      "slug": "medikabazaar"
+    },
+    {
+      "name": "Euler Motors",
+      "slug": "eulermotors"
+    },
+    {
+      "name": "Log9 Materials",
+      "slug": "log9materials"
+    },
+    {
+      "name": "Climes",
+      "slug": "climes"
+    },
+    {
+      "name": "Angel One",
+      "slug": "angelone"
+    },
+    {
+      "name": "IIFL Finance",
+      "slug": "iifl"
+    },
+    {
+      "name": "5Paisa Capital",
+      "slug": "5paisa"
+    },
+    {
+      "name": "Samco Securities",
+      "slug": "samco"
+    },
+    {
+      "name": "Edelweiss Financial Services",
+      "slug": "edelweiss"
+    },
+    {
+      "name": "RenewBuy",
+      "slug": "renewbuy"
+    },
+    {
+      "name": "Coverfox",
+      "slug": "coverfox"
+    },
+    {
+      "name": "PhillipCapital India",
+      "slug": "phillipcapital"
+    }
+  ],
+  "ashby": [
+    {
+      "name": "Sarvam AI",
+      "slug": "sarvam"
+    },
+    {
+      "name": "Krutrim",
+      "slug": "krutrim"
+    },
+    {
+      "name": "Yellow.ai",
+      "slug": "yellowai"
+    },
+    {
+      "name": "Gnani AI",
+      "slug": "gnani"
+    },
+    {
+      "name": "Mihup",
+      "slug": "mihup"
+    },
+    {
+      "name": "Observe.AI",
+      "slug": "observeai"
+    },
+    {
+      "name": "Avaamo",
+      "slug": "avaamo"
+    },
+    {
+      "name": "Ola",
+      "slug": "olacabs"
+    },
+    {
+      "name": "Yulu",
+      "slug": "yulu"
+    },
+    {
+      "name": "Bounce",
+      "slug": "bounce"
+    },
+    {
+      "name": "Slice",
+      "slug": "sliceit"
+    },
+    {
+      "name": "Jar",
+      "slug": "jar-app"
+    },
+    {
+      "name": "Fi Money",
+      "slug": "epifi"
+    },
+    {
+      "name": "Smallcase",
+      "slug": "smallcase"
+    },
+    {
+      "name": "INDmoney",
+      "slug": "indmoney"
+    },
+    {
+      "name": "Fisdom",
+      "slug": "fisdom"
+    },
+    {
+      "name": "Rupeek",
+      "slug": "rupeek"
+    },
+    {
+      "name": "Kredivo",
+      "slug": "kredivo"
+    },
+    {
+      "name": "Stashfin",
+      "slug": "stashfin"
+    },
+    {
+      "name": "Leegality",
+      "slug": "leegality"
+    },
+    {
+      "name": "Paperflite",
+      "slug": "paperflite"
+    },
+    {
+      "name": "Zeta Suite",
+      "slug": "zeta"
+    },
+    {
+      "name": "Sprinto",
+      "slug": "sprinto"
+    },
+    {
+      "name": "Facilio",
+      "slug": "facilio"
+    },
+    {
+      "name": "Toplyne",
+      "slug": "toplyne"
+    },
+    {
+      "name": "Suprsend",
+      "slug": "suprsend"
+    },
+    {
+      "name": "Recykal",
+      "slug": "recykal"
+    },
+    {
+      "name": "Zomato",
+      "slug": "zomato"
+    },
+    {
+      "name": "Blinkit",
+      "slug": "blinkit"
+    },
+    {
+      "name": "Pepper Content",
+      "slug": "peppercontent"
+    },
+    {
+      "name": "Eruditus",
+      "slug": "eruditus"
+    },
+    {
+      "name": "Cuemath",
+      "slug": "cuemath"
+    },
+    {
+      "name": "Credgenics",
+      "slug": "credgenics"
+    },
+    {
+      "name": "Karza Technologies",
+      "slug": "karza"
+    },
+    {
+      "name": "Pixxel",
+      "slug": "pixxel"
+    },
+    {
+      "name": "Agnikul Cosmos",
+      "slug": "agnikul"
+    },
+    {
+      "name": "Skyroot Aerospace",
+      "slug": "skyroot"
+    },
+    {
+      "name": "Unacademy (Graphy)",
+      "slug": "graphy"
+    },
+    {
+      "name": "Classmate (ITC)",
+      "slug": "itc-classmate"
+    },
+    {
+      "name": "Ather Energy",
+      "slug": "atherenergy"
+    },
+    {
+      "name": "Greenpanel",
+      "slug": "greenpanel"
+    },
+    {
+      "name": "DeHaat",
+      "slug": "dehaat"
+    },
+    {
+      "name": "Waycool",
+      "slug": "waycool"
+    },
+    {
+      "name": "Bijak",
+      "slug": "bijak"
+    },
+    {
+      "name": "Acko",
+      "slug": "acko"
+    },
+    {
+      "name": "Digit Insurance",
+      "slug": "digit"
+    },
+    {
+      "name": "Turtlemint",
+      "slug": "turtlemint"
+    },
+    {
+      "name": "Slintel (6sense India)",
+      "slug": "slintel"
+    },
+    {
+      "name": "DealShare",
+      "slug": "dealshare"
+    },
+    {
+      "name": "GlobalBees",
+      "slug": "globalbees"
+    },
+    {
+      "name": "Mensa Brands",
+      "slug": "mensabrands"
+    },
+    {
+      "name": "Khatabook",
+      "slug": "khatabook"
+    },
+    {
+      "name": "OkCredit",
+      "slug": "okcredit"
+    },
+    {
+      "name": "BetterPlace",
+      "slug": "betterplace"
+    },
+    {
+      "name": "Apna",
+      "slug": "apna-com"
+    },
+    {
+      "name": "Vokal",
+      "slug": "vokal"
+    },
+    {
+      "name": "Kutumb",
+      "slug": "kutumb"
+    },
+    {
+      "name": "ShareChat",
+      "slug": "sharechat"
+    },
+    {
+      "name": "Moj (ShareChat)",
+      "slug": "moj"
+    },
+    {
+      "name": "Josh (DailyHunt)",
+      "slug": "josh"
+    },
+    {
+      "name": "Verse Innovation (DailyHunt)",
+      "slug": "verseinnovation"
+    },
+    {
+      "name": "Pocket FM",
+      "slug": "pocketfm"
+    },
+    {
+      "name": "Pratilipi",
+      "slug": "pratilipi"
+    },
+    {
+      "name": "OneCode",
+      "slug": "onecode"
+    },
+    {
+      "name": "Nira Finance",
+      "slug": "nira-finance"
+    },
+    {
+      "name": "Cars24",
+      "slug": "cars24"
+    },
+    {
+      "name": "OYO Rooms",
+      "slug": "oyorooms"
+    },
+    {
+      "name": "Upstox",
+      "slug": "upstox"
+    },
+    {
+      "name": "Mobikwik",
+      "slug": "mobikwik"
+    },
+    {
+      "name": "Capillary Technologies",
+      "slug": "capillary"
+    },
+    {
+      "name": "Kaleyra",
+      "slug": "kaleyra"
+    },
+    {
+      "name": "CloudSEK",
+      "slug": "cloudsek"
+    },
+    {
+      "name": "Airmeet",
+      "slug": "airmeet"
+    },
+    {
+      "name": "Droom",
+      "slug": "droom"
+    },
+    {
+      "name": "Tata Digital",
+      "slug": "tatadigital"
+    },
+    {
+      "name": "Physics Wallah",
+      "slug": "physicswallah"
+    },
+    {
+      "name": "Udaan",
+      "slug": "udaan"
+    },
+    {
+      "name": "FirstCry",
+      "slug": "firstcry"
+    },
+    {
+      "name": "Wakefit",
+      "slug": "wakefit"
+    },
+    {
+      "name": "Pepperfry",
+      "slug": "pepperfry"
+    },
+    {
+      "name": "boAt (Imagine Marketing)",
+      "slug": "imaginemarketingltd"
+    },
+    {
+      "name": "Sugar Cosmetics",
+      "slug": "sugarcosmetics"
+    },
+    {
+      "name": "MediBuddy",
+      "slug": "medibuddy"
+    },
+    {
+      "name": "Innoviti",
+      "slug": "innoviti"
+    },
+    {
+      "name": "Stanza Living",
+      "slug": "stanzaliving"
+    },
+    {
+      "name": "Awfis",
+      "slug": "awfis"
+    },
+    {
+      "name": "Magicpin",
+      "slug": "magicpin"
+    },
+    {
+      "name": "Quantiphi",
+      "slug": "quantiphi"
+    },
+    {
+      "name": "Crayon Data",
+      "slug": "crayondata"
+    },
+    {
+      "name": "Gramener",
+      "slug": "gramener"
+    },
+    {
+      "name": "Analytics Quotient",
+      "slug": "analyticsquotient"
+    },
+    {
+      "name": "Evalueserve",
+      "slug": "evalueserve"
+    },
+    {
+      "name": "ZS Associates India",
+      "slug": "zs-associates"
+    },
+    {
+      "name": "EXL Service",
+      "slug": "exlservice"
+    },
+    {
+      "name": "WNS Global Services",
+      "slug": "wns"
+    },
+    {
+      "name": "BRIDGEi2i Analytics",
+      "slug": "bridgei2i"
+    },
+    {
+      "name": "Manthan",
+      "slug": "manthan"
+    },
+    {
+      "name": "MathCo (The Math Company)",
+      "slug": "themathcompany"
+    },
+    {
+      "name": "Subex",
+      "slug": "subex"
+    },
+    {
+      "name": "Nucleus Software",
+      "slug": "nucleussoftware"
+    },
+    {
+      "name": "Intellect Design Arena",
+      "slug": "intellectdesign"
+    },
+    {
+      "name": "Finarkein Analytics",
+      "slug": "finarkein"
+    },
+    {
+      "name": "Sahamati",
+      "slug": "sahamati"
+    },
+    {
+      "name": "Artivatic Data Labs",
+      "slug": "artivatic"
+    },
+    {
+      "name": "Lendingkart",
+      "slug": "lendingkart"
+    }
+  ]
+}

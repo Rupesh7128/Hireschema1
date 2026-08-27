@@ -18,6 +18,7 @@ import {
 } from "@/lib/api/job-pipeline";
 import { subscribeJobPipeline } from "@/lib/api/job-applications";
 import { downloadTailoredResume } from "@/lib/api/tailored";
+import { jobLocationLabel } from "@/lib/job-location";
 import { Badge, Button, EmptyState } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -92,7 +93,7 @@ function PipelineSteps({ stage }: { stage: JobPipelineStage }) {
 }
 
 function JobPipelineCard({ item }: { item: JobPipelineItem }) {
-  const location = [item.location_city, item.location_state].filter(Boolean).join(", ");
+  const location = jobLocationLabel(item);
   const canChat = item.stage === "intro_accepted" && item.intro_id;
 
   return (
@@ -106,9 +107,7 @@ function JobPipelineCard({ item }: { item: JobPipelineItem }) {
             {item.title}
           </Link>
           <p className="text-micro text-ink-500 truncate">
-            {[item.company_name, location || (item.is_remote ? "Remote" : null)]
-              .filter(Boolean)
-              .join(" · ")}
+            {[item.company_name, location].filter(Boolean).join(" · ")}
           </p>
         </div>
         <Badge tone={STAGE_TONE[item.stage]}>{STAGE_LABEL[item.stage]}</Badge>

@@ -16,11 +16,57 @@ VALID_REMOTE_PREFERENCES = frozenset(
     }
 )
 
+# Chat / memory / older UI often store "remote" or "onsite" instead of *_only.
+# Those must not silently collapse to "any" or the feed shows office jobs.
+_REMOTE_PREF_ALIASES: dict[str, str] = {
+    "any": REMOTE_PREFERENCE_ANY,
+    "both": REMOTE_PREFERENCE_ANY,
+    "all": REMOTE_PREFERENCE_ANY,
+    "hybrid": REMOTE_PREFERENCE_ANY,
+    "remote_and_onsite": REMOTE_PREFERENCE_ANY,
+    "remote_only": REMOTE_PREFERENCE_REMOTE_ONLY,
+    "remote-only": REMOTE_PREFERENCE_REMOTE_ONLY,
+    "remote": REMOTE_PREFERENCE_REMOTE_ONLY,
+    "wfh": REMOTE_PREFERENCE_REMOTE_ONLY,
+    "wfh_only": REMOTE_PREFERENCE_REMOTE_ONLY,
+    "work from home": REMOTE_PREFERENCE_REMOTE_ONLY,
+    "work_from_home": REMOTE_PREFERENCE_REMOTE_ONLY,
+    "fully remote": REMOTE_PREFERENCE_REMOTE_ONLY,
+    "fully_remote": REMOTE_PREFERENCE_REMOTE_ONLY,
+    "onsite_only": REMOTE_PREFERENCE_ONSITE_ONLY,
+    "onsite-only": REMOTE_PREFERENCE_ONSITE_ONLY,
+    "onsite": REMOTE_PREFERENCE_ONSITE_ONLY,
+    "on-site": REMOTE_PREFERENCE_ONSITE_ONLY,
+    "on_site": REMOTE_PREFERENCE_ONSITE_ONLY,
+    "office": REMOTE_PREFERENCE_ONSITE_ONLY,
+    "in-office": REMOTE_PREFERENCE_ONSITE_ONLY,
+    "in_office": REMOTE_PREFERENCE_ONSITE_ONLY,
+    "in office": REMOTE_PREFERENCE_ONSITE_ONLY,
+}
+
+_NON_REMOTE_EMPLOYMENT = frozenset(
+    {"hybrid", "onsite", "on-site", "on_site", "office", "in-office", "in_office"}
+)
+_REMOTE_EMPLOYMENT = frozenset({"remote", "wfh", "work from home", "work_from_home"})
+
 
 def normalize_remote_preference(value: str | None) -> str:
-    if value in VALID_REMOTE_PREFERENCES:
-        return value
-    return REMOTE_PREFERENCE_ANY
+    if value is None:
+        return REMOTE_PREFERENCE_ANY
+    key = str(value).strip().lower().replace("  ", " ")
+    if key in VALID_REMOTE_PREFERENCES:
+        return key
+    return _REMOTE_PREF_ALIASES.get(key, REMOTE_PREFERENCE_ANY)
+
+
+def job_is_fully_remote(job: dict) -> bool:
+    """True only for fully remote / WFH roles — hybrid and office do not count."""
+    emp = str(job.get("employment_type") or "").strip().lower()
+    if emp in _NON_REMOTE_EMPLOYMENT or emp.startswith("hybrid") or emp.startswith("onsite"):
+        return False
+    if emp in _REMOTE_EMPLOYMENT or emp.startswith("remote"):
+        return True
+    return bool(job.get("is_remote"))
 
 
 def resolve_remote_preference(
@@ -37,12 +83,22 @@ def resolve_remote_preference(
 def remote_filter_sql(preference: str) -> str:
     """
     SQL fragment appended to job queries (preference must be normalized first).
+    Remote-only excludes hybrid/office even when is_remote was tagged true.
     """
     pref = normalize_remote_preference(preference)
     if pref == REMOTE_PREFERENCE_REMOTE_ONLY:
-        return " AND j.is_remote = TRUE"
+        return (
+            " AND COALESCE(LOWER(j.employment_type), '') "
+            "NOT IN ('hybrid', 'onsite', 'on-site', 'on_site', 'office') "
+            " AND (j.is_remote = TRUE OR LOWER(COALESCE(j.employment_type, '')) "
+            "IN ('remote', 'wfh'))"
+        )
     if pref == REMOTE_PREFERENCE_ONSITE_ONLY:
-        return " AND j.is_remote = FALSE"
+        return (
+            " AND j.is_remote = FALSE"
+            " AND COALESCE(LOWER(j.employment_type), '') "
+            "NOT IN ('remote', 'wfh')"
+        )
     return ""
 
 

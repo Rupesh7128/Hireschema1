@@ -17,6 +17,12 @@ from hireloop_api.services.career_path_jobs import (
     normalize_path_search_titles,
     should_enforce_path_title_gate,
 )
+from hireloop_api.services.job_preferences import (
+    REMOTE_PREFERENCE_ONSITE_ONLY,
+    REMOTE_PREFERENCE_REMOTE_ONLY,
+    job_is_fully_remote,
+    normalize_remote_preference,
+)
 from hireloop_api.services.skills import canonical_skill
 from hireloop_api.services.titles import (
     best_intent_title_affinity,
@@ -210,8 +216,21 @@ def filter_and_rerank_jobs(
 ) -> list[dict[str, Any]]:
     """Apply hard role gates, lexical gates, then raw-feature rerank."""
     intent = _candidate_intent_titles(candidate)
+    from hireloop_api.services.job_preferences import (
+        REMOTE_PREFERENCE_ONSITE_ONLY,
+        REMOTE_PREFERENCE_REMOTE_ONLY,
+        job_is_fully_remote,
+        normalize_remote_preference,
+    )
+
+    pref = normalize_remote_preference(candidate.get("remote_preference"))
     eligible: list[dict[str, Any]] = []
     for job in jobs:
+        is_remote = job_is_fully_remote(job)
+        if pref == REMOTE_PREFERENCE_REMOTE_ONLY and not is_remote:
+            continue
+        if pref == REMOTE_PREFERENCE_ONSITE_ONLY and is_remote:
+            continue
         if not _role_family_allowed(job, intent):
             continue
         if not _passes_lexical_filter(job, candidate, intent):

@@ -1,5 +1,7 @@
 import type { MatchedJob } from "@/lib/api/matches";
 import type { SalaryCurrency } from "@/lib/salary";
+import { jobIsFullyRemote } from "@/lib/job-location";
+import { jobIsFullyRemote } from "@/lib/job-location";
 
 export type JobCardFilters = {
   remoteOnly?: boolean;
@@ -42,7 +44,7 @@ export function applyJobCardFilters(
 ): MatchedJob[] {
   let out = jobs;
   if (filters.remoteOnly) {
-    out = out.filter((j) => j.is_remote);
+    out = out.filter((j) => jobIsFullyRemote(j));
   }
   if (filters.minSalary && filters.minSalary > 0 && filters.minSalaryCurrency) {
     const floor = minSalaryToStorage(

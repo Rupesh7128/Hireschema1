@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, FileText, Upload } from "@/components/brand/icons";
 import { HireschemaLogo } from "@/components/brand/HireschemaLogo";
+import { ShareScoreCard } from "@/components/review/ShareScoreCard";
 import { getUploadApiBaseUrl } from "@/lib/api/base-url";
 import { BTN_GHOST, BTN_PRIMARY } from "@/lib/button-classes";
 import { cn } from "@/lib/utils";
@@ -714,6 +715,11 @@ export default function ReviewMyCvClient() {
                   </div>
                 </div>
               </div>
+
+              <ShareScoreCard
+                overall={review.scores.overall}
+                role={review.target_role_guess}
+              />
 
               <div className="border border-ink-100 bg-paper-1 p-6 md:p-8">
                 <p className="text-micro font-semibold uppercase tracking-[0.14em] text-accent">

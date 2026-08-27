@@ -23,6 +23,13 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from hireloop_api.services.job_preferences import (
+    REMOTE_PREFERENCE_ONSITE_ONLY,
+    REMOTE_PREFERENCE_REMOTE_ONLY,
+    job_is_fully_remote,
+    normalize_remote_preference,
+)
+
 # ── Confidence tiers ──────────────────────────────────────────────────────────
 
 
@@ -214,11 +221,12 @@ class HardConstraints:
 
 def passes_hard_constraints(job: dict, c: HardConstraints) -> bool:
     """Return False for deal-breakers that should be filtered out entirely."""
-    is_remote = bool(job.get("is_remote"))
+    is_remote = job_is_fully_remote(job)
+    pref = normalize_remote_preference(c.remote_preference)
 
-    if c.remote_preference == "remote_only" and not is_remote:
+    if pref == REMOTE_PREFERENCE_REMOTE_ONLY and not is_remote:
         return False
-    if c.remote_preference == "onsite_only" and is_remote:
+    if pref == REMOTE_PREFERENCE_ONSITE_ONLY and is_remote:
         return False
 
     if c.ctc_floor:

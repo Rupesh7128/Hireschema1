@@ -781,20 +781,34 @@ class JobIngester:
 
         all_records: list[JobRecord] = []
         source_stats: dict[str, dict] = {}
-        # Single source: johnvc/Google-Jobs-Scraper. The legacy source flags are
-        # intentionally ignored so no old actor can run from stale call sites.
-        try:
-            _, records, google_stats = await self._scraper.scrape(
-                queries=queries,
-                locations=scrape_locations,
-                max_results_per_query=max_results_per_query,
-                time_range=effective_time_range,
-            )
-            all_records.extend(records)
-            source_stats["google_jobs"] = google_stats
-        except Exception as exc:
-            logger.error("job_source_failed", source="google_jobs", error=str(exc))
-            source_stats["google_jobs"] = _failed_source_stats(exc)
+
+        # ATS-first (career-ops-india Greenhouse/Lever/Ashby). Skip on
+        # title-specific on-demand scrapes so we don't hit ~250 boards per chat.
+        include_ats = queries is None and bool(self._settings)
+        if include_ats:
+            try:
+                ats_records, ats_stats = await self._fetch_ats_records()
+                all_records.extend(ats_records)
+                source_stats["ats"] = ats_stats
+            except Exception as exc:
+                logger.error("job_source_failed", source="ats", error=str(exc))
+                source_stats["ats"] = _failed_source_stats(exc)
+
+        # Apify Google Jobs is optional backfill for title-specific pulls.
+        # Full inventory runs (queries is None) use ATS only — no Apify spend.
+        if not include_ats:
+            try:
+                _, records, google_stats = await self._scraper.scrape(
+                    queries=queries,
+                    locations=scrape_locations,
+                    max_results_per_query=max_results_per_query,
+                    time_range=effective_time_range,
+                )
+                all_records.extend(records)
+                source_stats["google_jobs"] = google_stats
+            except Exception as exc:
+                logger.error("job_source_failed", source="google_jobs", error=str(exc))
+                source_stats["google_jobs"] = _failed_source_stats(exc)
 
         # Fail loud, not silent: if every source we attempted errored out (e.g.
         # an Apify actor whose rental lapsed → 403), there are no records and the
@@ -815,7 +829,7 @@ class JobIngester:
         await self._ensure_companies(all_records)
 
         # Prefer whichever source actually ran for the top-level run/dataset ids.
-        primary = source_stats.get("google_jobs") or {}
+        primary = source_stats.get("google_jobs") or source_stats.get("ats") or {}
         elapsed = (datetime.now(UTC) - start).total_seconds()
         stats = {
             "run_id": primary.get("run_id"),
@@ -1212,6 +1226,17 @@ class JobIngester:
         }
         logger.info("ats_records_ingested", **stats)
         return stats
+
+    async def _fetch_ats_records(self) -> tuple[list[JobRecord], dict]:
+        from hireloop_api.services.ats.ats_source import ATSSource
+        from hireloop_api.services.ats.india_ats_catalog import resolve_ats_boards
+
+        boards = resolve_ats_boards(self._settings)
+        concurrency = 6
+        if self._settings is not None:
+            concurrency = max(1, int(self._settings.ats_fetch_concurrency or 6))
+        records, stats = await ATSSource().fetch_boards(boards, concurrency=concurrency)
+        return records, stats
 
     async def _upsert_jobs(self, records: list[JobRecord]) -> tuple[int, int, int]:
         """

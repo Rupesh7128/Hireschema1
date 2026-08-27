@@ -1,123 +1,55 @@
-:root {
-  color-scheme: light;
-  --ink: #1a1a1a;
-  --muted: #5c5c5c;
-  --accent: #0f6e56;
-  --bg: #f7f4ef;
-  --card: #ffffff;
-  --border: #e5dfd4;
-}
-
-* {
-  box-sizing: border-box;
-}
-
 body {
+  font: 14px/1.45 ui-sans-serif, system-ui, sans-serif;
+  width: 320px;
   margin: 0;
-  width: 300px;
-  font: 13px/1.4 "Segoe UI", system-ui, sans-serif;
-  color: var(--ink);
-  background: linear-gradient(160deg, #f7f4ef 0%, #ebe4d8 100%);
-  padding: 14px;
+  padding: 16px;
+  color: #141414;
+  background: #f7f6f2;
 }
-
-header h1 {
+.kicker {
   margin: 0;
-  font-size: 16px;
-  letter-spacing: -0.02em;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5c5c5c;
 }
-
-#status-line {
-  margin: 4px 0 12px;
-  color: var(--muted);
-  font-size: 12px;
+h1 {
+  margin: 8px 0 6px;
+  font-size: 20px;
 }
-
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.lede {
+  margin: 0 0 12px;
+  color: #5c5c5c;
+  font-size: 13px;
 }
-
+input,
 button {
+  width: 100%;
+  margin-top: 8px;
+}
+button {
+  background: #141414;
+  color: #f7f6f2;
   border: 0;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-weight: 600;
-  cursor: pointer;
-  background: var(--ink);
-  color: #fff;
-}
-
-button.secondary {
-  background: var(--card);
-  color: var(--ink);
-  border: 1px solid var(--border);
-}
-
-button.ghost {
-  background: transparent;
-  color: var(--muted);
-  border: 1px dashed var(--border);
-}
-
-button.hidden {
-  display: none;
-}
-
-button:disabled {
-  opacity: 0.55;
-  cursor: wait;
-}
-
-.message {
-  margin-top: 10px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  font-size: 12px;
-}
-
-.message.error {
-  border-color: #e8b4b4;
-  color: #8a1f1f;
-}
-
-.message.ok {
-  border-color: #b7d7c9;
-  color: var(--accent);
-}
-
-.toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 12px;
-  color: var(--muted);
+  padding: 10px;
   cursor: pointer;
 }
-
-.toggle input {
-  accent-color: var(--accent);
+.status {
+  min-height: 1.2em;
+  font-size: 12px;
+  color: #5c5c5c;
 }
-
-.advanced {
+pre {
+  white-space: pre-wrap;
+  font-size: 12px;
+  background: #fff;
+  padding: 8px;
+  border: 1px solid #e6e4dc;
+}
+.links {
   margin-top: 12px;
   font-size: 12px;
-  color: var(--muted);
 }
-
-.advanced label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin: 8px 0;
-}
-
-.advanced input {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
+a {
+  color: #141414;
 }

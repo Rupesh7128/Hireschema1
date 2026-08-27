@@ -560,11 +560,12 @@ async def get_admin_user(
     confirmation — keep "Confirm email" enabled so an attacker can't sign up
     under a configured address without controlling the inbox.
     """
+    from hireloop_api.services.invite_access import is_super_admin_email
+
     if current_user.get("role") == "admin":
         return current_user
 
-    emails = [e.lower() for e in (settings.super_admin_emails or []) if e]
-    if emails and str(current_user.get("email") or "").lower() in emails:
+    if is_super_admin_email(settings, str(current_user.get("email") or "")):
         return current_user
 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")

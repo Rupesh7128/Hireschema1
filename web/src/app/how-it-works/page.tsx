@@ -37,7 +37,16 @@ export default function HowItWorksPage() {
           </Badge>
           <h1 className="text-5xl font-bold text-ink-900 mb-4">How Hireschema works</h1>
           <p className="text-ink-500 text-lg">
-            Hireschema AI. One candidate graph. End-to-end — from profile to intro.
+            Quick answer: India-only matcher. Free{" "}
+            <a href={`${APP_URL}/reviewmycv`} className="text-accent hover:underline">
+              CV review
+            </a>{" "}
+            with no account. Invite-only app. Intros from your Gmail after you approve.
+            Not a Naukri clone — see{" "}
+            <Link href="/alternatives/naukri" className="text-accent hover:underline">
+              Naukri alternative
+            </Link>
+            .
           </p>
         </div>
       </section>

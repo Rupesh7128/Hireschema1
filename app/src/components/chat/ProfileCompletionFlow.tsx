@@ -60,7 +60,7 @@ type Step = {
 // the career-intelligence points are inferred from these + the résumé).
 const BASE_STEPS: Step[] = [
   { id: "current_title", prompt: "What's your current role?", hint: "Your job title today.", type: "text", placeholder: "e.g. Product Designer" },
-  { id: "current_company", prompt: "Where are you working now?", type: "text", placeholder: "e.g. LimeDock" },
+  { id: "current_company", prompt: "Where are you working now?", type: "text", placeholder: "e.g. Razorpay" },
   {
     id: "years_experience",
     prompt: "How many years of experience do you have?",

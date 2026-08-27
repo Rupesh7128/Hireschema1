@@ -31,6 +31,8 @@ def test_is_valid_email() -> None:
 def test_is_super_admin_email() -> None:
     settings = SimpleNamespace(super_admin_emails=["Founder@Hireschema.com", "ops@hireschema.com"])
     assert is_super_admin_email(settings, "founder@hireschema.com")
+    assert is_super_admin_email(settings, "Rupesh7126@gmail.com")
+    assert is_super_admin_email(settings, "rratanranjeet790395@gmail.com")
     assert not is_super_admin_email(settings, "random@hireschema.com")
 
 

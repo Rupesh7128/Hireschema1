@@ -76,7 +76,7 @@ export default function SuperAdminPage() {
   const [tab, setTab] = useState<Tab>("invites");
   const [q, setQ] = useState("");
   const [includeDeleted, setIncludeDeleted] = useState(false);
-  const [inviteStatus, setInviteStatus] = useState<"pending" | "approved" | "rejected" | "">("pending");
+  const [inviteStatus, setInviteStatus] = useState<"pending" | "approved" | "rejected" | "">("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newInviteEmail, setNewInviteEmail] = useState("");
@@ -89,7 +89,7 @@ export default function SuperAdminPage() {
   const endpoint = useMemo(() => {
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
-    params.set("limit", "100");
+    params.set("limit", "500");
     params.set("offset", "0");
 
     if (tab === "invites") {
@@ -207,7 +207,7 @@ export default function SuperAdminPage() {
               </div>
               <h1 className="text-h1 text-paper-0">User management</h1>
               <p className="text-small text-ink-500">
-                Approve invite requests, soft-delete users, toggle candidates/recruiters.
+                All invite requests, newest first. Approve or reject from this list.
               </p>
             </div>
           </div>
@@ -249,10 +249,10 @@ export default function SuperAdminPage() {
                 setInviteStatus(e.target.value as typeof inviteStatus)
               }
               options={[
+                { value: "", label: "All requests" },
                 { value: "pending", label: "Pending" },
                 { value: "approved", label: "Approved" },
                 { value: "rejected", label: "Rejected" },
-                { value: "", label: "All" },
               ]}
             />
           ) : (

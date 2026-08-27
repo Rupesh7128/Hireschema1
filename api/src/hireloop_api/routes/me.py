@@ -29,6 +29,7 @@ from hireloop_api.markets import (
 )
 from hireloop_api.services.consent import log_consent
 from hireloop_api.services.display_name import pick_display_name, sanitize_display_name
+from hireloop_api.services.invite_access import is_super_admin_email
 from hireloop_api.services.job_preferences import (
     VALID_REMOTE_PREFERENCES,
     apply_negative_preference,
@@ -573,10 +574,8 @@ async def get_my_profile(
     if candidate_row is None:
         if user_row["role"] == "recruiter":
             user_payload = _serialize_row(user_row) or {}
-            _allow = {e.lower() for e in (getattr(settings, "super_admin_emails", []) or []) if e}
-            user_payload["is_admin"] = (
-                user_payload.get("role") == "admin"
-                or str(user_payload.get("email") or "").lower() in _allow
+            user_payload["is_admin"] = user_payload.get("role") == "admin" or is_super_admin_email(
+                settings, str(user_payload.get("email") or "")
             )
             return {
                 "user": user_payload,
@@ -604,10 +603,8 @@ async def get_my_profile(
     # Admin status mirrors deps.get_admin_user: DB role OR the operator allow-list
     # (so a founder bootstrapped via SUPER_ADMIN_EMAILS — whose DB role is still
     # 'candidate' — still sees the Admin entry point). Never user-editable.
-    _allow = {e.lower() for e in (getattr(settings, "super_admin_emails", []) or []) if e}
-    user_payload["is_admin"] = (
-        user_payload.get("role") == "admin"
-        or str(user_payload.get("email") or "").lower() in _allow
+    user_payload["is_admin"] = user_payload.get("role") == "admin" or is_super_admin_email(
+        settings, str(user_payload.get("email") or "")
     )
 
     linkedin_name = extract_linkedin_display_name(candidate_row.get("linkedin_data"))

@@ -45,6 +45,7 @@ from hireloop_api.services.career_path_jobs import (
 from hireloop_api.services.career_path_selection import career_path_options
 from hireloop_api.services.job_preferences import (
     VALID_REMOTE_PREFERENCES,
+    job_is_fully_remote,
     normalize_remote_preference,
     preference_label,
     remote_filter_sql,
@@ -183,9 +184,14 @@ def _quality_filter_job_rows(
         prioritized_title=prioritized_title,
         looking_for=looking_for,
     )
+    remote_pref = normalize_remote_preference(candidate.get("remote_preference"))
     filtered: list[dict[str, Any]] = []
     for row in rows:
         row_dict = dict(row)
+        if remote_pref == "remote_only" and not job_is_fully_remote(row_dict):
+            continue
+        if remote_pref == "onsite_only" and job_is_fully_remote(row_dict):
+            continue
         job_row = _job_quality_row(row_dict)
         if path_search_titles and not job_matches_path_titles(
             job_row.get("title"), path_search_titles
@@ -221,6 +227,10 @@ def _quality_filter_job_rows(
     fallback: list[dict[str, Any]] = []
     for row in rows:
         row_dict = dict(row)
+        if remote_pref == "remote_only" and not job_is_fully_remote(row_dict):
+            continue
+        if remote_pref == "onsite_only" and job_is_fully_remote(row_dict):
+            continue
         if path_search_titles and not job_matches_path_titles(
             row_dict.get("title"), path_search_titles
         ):
