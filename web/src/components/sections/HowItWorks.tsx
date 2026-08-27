@@ -206,7 +206,7 @@ function StepCard({
     <article
       className={cn(
         "glass-solid relative overflow-hidden rounded-3xl edge-light",
-        large ? "grid grid-cols-[1.05fr_0.95fr] gap-10 p-12" : "p-7",
+        large ? "grid grid-cols-[1.05fr_0.95fr] gap-10 p-12 min-h-[520px]" : "p-7",
       )}
     >
       <div aria-hidden className={cn("absolute inset-x-0 top-0 h-[3px]", tone.rule)} />
@@ -222,7 +222,7 @@ function StepCard({
         {step.n}
       </span>
 
-      <div className="relative">
+      <div className={cn("relative", large && "flex flex-col")}>
         <div className="mb-6 flex items-center gap-3">
           <span
             className={cn(
