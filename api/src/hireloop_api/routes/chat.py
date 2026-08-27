@@ -281,7 +281,7 @@ def _build_profile_gap_reply(open_questions: list[str], *, market: str = "IN") -
         "**What I recommend**\n"
         f"{salary_line}"
         "2. List your top skills so semantic matching works better.\n"
-        "3. Add notice period and preferred work mode (remote/hybrid/onsite).\n\n"
+        "3. Add notice period. We only match fully remote roles you can do from India.\n\n"
         "**What you can do next**\n"
         "Tell me your target salary and notice period — I'll update your profile."
     )

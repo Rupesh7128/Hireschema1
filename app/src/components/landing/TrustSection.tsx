@@ -126,6 +126,9 @@ export function LandingFooter() {
           <a href="#features" className="transition-colors hover:text-ink-700">
             Features
           </a>
+          <Link href="/pricing" className="transition-colors hover:text-ink-700">
+            Pricing
+          </Link>
           <Link href="/reviewmycv" className="transition-colors hover:text-ink-700">
             Review my CV
           </Link>

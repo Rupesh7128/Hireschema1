@@ -29,7 +29,7 @@ def _job(
     seniority: str = "mid",
     city: str = "Bengaluru",
     score: float = 0.8,
-    is_remote: bool = False,
+    is_remote: bool = True,
     ctc_min: int | None = None,
     ctc_max: int | None = None,
     apply_url: str | None = None,
@@ -244,16 +244,12 @@ def test_remote_alias_and_hybrid_are_not_fully_remote() -> None:
     )
 
 
-def test_onsite_only_rejects_remote() -> None:
-    c = HardConstraints(remote_preference="onsite_only")
-    assert passes_hard_constraints(_job("a", is_remote=False), c) is True
-    assert passes_hard_constraints(_job("b", is_remote=True), c) is False
-
-
-def test_any_allows_both() -> None:
+def test_product_lock_drops_onsite_even_if_pref_is_any() -> None:
     c = HardConstraints(remote_preference="any")
     assert passes_hard_constraints(_job("a", is_remote=True), c) is True
-    assert passes_hard_constraints(_job("b", is_remote=False), c) is True
+    assert passes_hard_constraints(_job("b", is_remote=False), c) is False
+    c2 = HardConstraints(remote_preference="onsite_only")
+    assert passes_hard_constraints(_job("b", is_remote=False), c2) is False
 
 
 def test_ctc_floor_rejects_low_band_but_allows_unknown() -> None:

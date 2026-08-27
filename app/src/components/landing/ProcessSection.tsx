@@ -36,9 +36,9 @@ const CANDIDATE_STEPS: Step[] = [
   {
     step: "02",
     Icon: Search,
-    title: "Hireschema AI finds India-eligible roles",
-    body: "Hireschema AI searches active roles in India, including remote roles that accept candidates in India, using your preferences to narrow the results.",
-    detail: "India onsite · India-eligible remote",
+    title: "Hireschema AI finds remote roles you can do from India",
+    body: "Fully remote jobs only: Indian companies and worldwide teams (US, Australia, and elsewhere) that hire people sitting in India. No office or hybrid listings.",
+    detail: "Remote only · India + worldwide teams",
   },
   {
     step: "03",

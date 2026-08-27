@@ -29,11 +29,11 @@ const CANDIDATE_SCRIPT: Line[] = [
   },
   {
     role: "user",
-    text: "Senior backend roles in Bengaluru, ₹40–50 LPA. Remote is fine.",
+    text: "Senior backend roles, fully remote, ₹40–50 LPA. I am in India.",
   },
   {
     role: "assistant",
-    text: "I found 14 India-eligible roles. Your top match is a Senior Backend Engineer role at 89% fit. The strongest reasons are Python, Postgres, and fintech experience. Want to review the role?",
+    text: "I found 14 remote roles you can do from India. Your top match is a Senior Backend Engineer role at 89% fit. The strongest reasons are Python, Postgres, and fintech experience. Want to review the role?",
     actions: "Hireschema AI performed 4 actions",
   },
   { role: "user", text: "Yes. Prepare an intro for me to review." },

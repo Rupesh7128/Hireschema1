@@ -49,4 +49,8 @@ describe("applyRemotePreferenceFilter", () => {
   it("drops onsite and hybrid when the profile is remote only", () => {
     expect(applyRemotePreferenceFilter(jobs, "remote_only").map((j) => j.job_id)).toEqual(["r"]);
   });
+
+  it("locks the product to remote even if preference is any", () => {
+    expect(applyRemotePreferenceFilter(jobs, "any").map((j) => j.job_id)).toEqual(["r"]);
+  });
 });

@@ -1,23 +1,29 @@
 # Pricing — Hireschema
 
-Last updated: 18 August 2026
+Last updated: 27 August 2026
 
-Hireschema is invite-only. There is no public paid plan in MVP. Do not invent a rupee price.
+Hireschema is invite-only. There is no checkout in MVP (no Razorpay / Stripe).
 
 ## Free CV review
 
 - Price: ₹0
-- What: public résumé scorecard against an elite-recruiter rubric and live India-job fit
+- What: public résumé scorecard against an elite-recruiter rubric and live remote-job fit
 - Account: not required
 - Storage: file is scored in memory and not kept
 - URL: https://hireschema.com/reviewmycv
 
-## Invite-only app
+## Invite-only app (now)
 
-- Price: ₹0 in MVP (no Razorpay / Stripe)
+- Price: ₹0
 - Access: request at https://hireschema.com/invite — manual approve
-- Includes (after invite): India job matches, apply / request intro from your Gmail after you approve the draft
-- Not included: recruiter CRM, mass apply, WhatsApp outreach
+- Includes: fully remote jobs you can do from India (Indian companies + worldwide teams that hire people sitting in India), apply / request intro from your Gmail after you approve the draft
+- Not included: office/hybrid jobs, recruiter CRM, mass apply
+
+## At launch (planned)
+
+- Price: ₹500 / month
+- Checkout: not live yet
+- Same remote-only product
 
 ## Enterprise / recruiter
 

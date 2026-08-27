@@ -91,11 +91,10 @@ const BASE_STEPS: Step[] = [
   {
     id: "remote_preference",
     prompt: "How do you want to work?",
+    hint: "Hireschema matches fully remote roles you can do from India.",
     type: "select",
     options: [
-      { label: "Open to anything", value: "any" },
-      { label: "Remote only", value: "remote_only" },
-      { label: "On-site only", value: "onsite_only" },
+      { label: "Remote only — from India", value: "remote_only" },
     ],
   },
   {

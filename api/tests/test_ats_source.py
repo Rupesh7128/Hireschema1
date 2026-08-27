@@ -10,9 +10,14 @@ from hireloop_api.services.ats.ats_source import (
 )
 
 
-def test_assess_location_india() -> None:
-    keep, _ = assess_location("Bengaluru, India", None)
-    assert keep is True
+def test_assess_location_india_onsite_dropped() -> None:
+    keep, remote = assess_location("Bengaluru, India", None)
+    assert keep is False and remote is False
+
+
+def test_assess_location_india_remote_kept() -> None:
+    keep, remote = assess_location("Remote, Bengaluru, India", None)
+    assert keep is True and remote is True
 
 
 def test_assess_location_global_remote_kept() -> None:
@@ -39,7 +44,7 @@ def test_parse_greenhouse_filters_and_normalises() -> None:
             {
                 "id": 1,
                 "title": "Senior Backend Engineer",
-                "location": {"name": "Bengaluru, India"},
+                "location": {"name": "Remote, Bengaluru, India"},
                 "content": "&lt;p&gt;Build &amp; scale APIs&lt;/p&gt;",
                 "absolute_url": "https://boards.greenhouse.io/acme/jobs/1",
             },
@@ -60,6 +65,8 @@ def test_parse_greenhouse_filters_and_normalises() -> None:
     assert r.source == "greenhouse"
     assert r.company_name == "Acme"
     assert r.apply_url == "https://boards.greenhouse.io/acme/jobs/1"
+    assert r.is_remote is True
+    assert r.allowed_regions == ["IN"]
     assert "Build & scale APIs" in (r.description or "")  # html unescaped + stripped
 
 
@@ -77,20 +84,21 @@ def test_parse_lever_remote_workplace() -> None:
     recs = parse_lever(payload, company="startup")
     assert len(recs) == 1
     assert recs[0].is_remote is True
-    assert recs[0].allowed_regions == ["IN"]
+    assert recs[0].allowed_regions == ["IN", "WORLD"]
     assert recs[0].apify_job_id == "lever:startup:abc"
     assert recs[0].source == "lever"
     assert recs[0].company_name == "Startup"
 
 
-def test_parse_ashby_keeps_bengaluru_listed_job() -> None:
+def test_parse_ashby_keeps_bengaluru_remote_job() -> None:
     payload = {
         "jobs": [
             {
                 "id": "ash-1",
                 "title": "Backend Engineer",
-                "location": "Bengaluru, India",
+                "location": "Remote, Bengaluru, India",
                 "isListed": True,
+                "isRemote": True,
                 "descriptionHtml": "<p>Build APIs</p>",
                 "jobUrl": "https://jobs.ashbyhq.com/acme/ash-1",
             }
@@ -104,7 +112,8 @@ def test_parse_ashby_keeps_bengaluru_listed_job() -> None:
     assert r.source == "ashby"
     assert r.company_name == "Acme"
     assert r.apply_url == "https://jobs.ashbyhq.com/acme/ash-1"
-    assert r.is_remote is False
+    assert r.is_remote is True
+    assert r.allowed_regions == ["IN"]
 
 
 def test_parse_ashby_drops_us_only_remote() -> None:
@@ -158,6 +167,5 @@ def test_parse_ashby_keeps_is_remote_with_india_regions() -> None:
     recs = parse_ashby(payload, slug="acme", company_name="Acme")
     assert len(recs) == 1
     assert recs[0].is_remote is True
-    assert recs[0].allowed_regions == ["IN"]
-    assert recs[0].apify_job_id == "ashby:acme:ash-remote"
+    assert recs[0].allowed_regions == ["IN", "WORLD"]
     assert recs[0].source == "ashby"

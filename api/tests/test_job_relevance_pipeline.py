@@ -25,6 +25,7 @@ def _job(job_id: str, **kwargs: object) -> dict:
         "skills_required": ["Python"],
         "overall_score": 0.5,
         "skills_score": 0.5,
+        "is_remote": True,
     }
     base.update(kwargs)
     return base

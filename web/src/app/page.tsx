@@ -19,7 +19,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://hireschema.com";
 export const metadata = {
   title: "Hireschema — Get introduced to the hiring manager",
   description:
-    "Hireschema AI finds India-eligible roles, scores your fit, and sends a warm intro from your Gmail to the hiring manager. Free for candidates. Private beta.",
+      "Hireschema AI finds fully remote roles you can do from India — Indian companies and worldwide teams — and sends a warm intro from your Gmail after you approve every word.",
 };
 
 // ── Hero ─────────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ function Hero() {
 
             <Reveal delay={120}>
               <p className="text-h3 text-ink-500 font-normal leading-relaxed mb-10 max-w-prose">
-                Hireschema AI scores live India roles against your profile, drafts the
+                Hireschema AI scores live remote roles you can do from India against your profile, drafts the
                 intro in your voice, and sends it through{" "}
                 <em className="not-italic text-ink-700">your</em> Gmail — after
                 you approve every word.

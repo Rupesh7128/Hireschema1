@@ -36,6 +36,7 @@ export function LandingNav() {
   const links = [
     { href: "#process", label: "Process" },
     { href: "#features", label: "Features" },
+    { href: "#pricing", label: "Pricing" },
     { href: "/reviewmycv", label: "Review my CV" },
     { href: "#trust", label: "Trust" },
   ] as const;

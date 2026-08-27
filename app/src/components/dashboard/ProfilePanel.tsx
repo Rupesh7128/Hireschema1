@@ -10,7 +10,6 @@ import {
   GraduationCap,
   Linkedin,
   LinkIcon,
-  Loader2,
   MapPin,
   PencilLine,
   Shield,
@@ -21,13 +20,9 @@ import {
   applyProfileToForm,
   fetchMyProfile,
   getCachedProfile,
-  invalidateProfileCache,
   publishPublicProfile,
-  REMOTE_PREFERENCE_OPTIONS,
-  updateRemotePreference,
   type Education,
   type MyProfileData,
-  type RemotePreference,
   type WorkExperience,
 } from "@/lib/api/profile";
 import {
@@ -41,7 +36,7 @@ import { GoogleConnectCard } from "@/components/profile/GoogleConnectCard";
 import { ResumeUpload } from "@/components/resume/ResumeUpload";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { BTN_CHIP, BTN_CHIP_ACTIVE, BTN_GHOST, BTN_ROW } from "@/lib/button-classes";
+import { BTN_GHOST, BTN_ROW } from "@/lib/button-classes";
 import type { PanelId, ProfileTabId } from "@/lib/dashboard/panel-types";
 import {
   Badge,
@@ -118,8 +113,6 @@ export function ProfilePanel({
   const [loadingProfile, setLoadingProfile] = useState(() => getCachedProfile() === null);
   const [profileError, setProfileError] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
-  const [remotePref, setRemotePref] = useState<RemotePreference>("any");
-  const [savingRemote, setSavingRemote] = useState<RemotePreference | null>(null);
   const [linkedinDraft, setLinkedinDraft] = useState("");
   const [savingLinkedin, setSavingLinkedin] = useState(false);
   const [linkedinError, setLinkedinError] = useState("");
@@ -136,32 +129,8 @@ export function ProfilePanel({
       setCurrentCompany,
       setLookingFor,
     });
-    const pref = d.candidate?.remote_preference;
-    if (pref === "any" || pref === "remote_only" || pref === "onsite_only") {
-      setRemotePref(pref);
-    } else {
-      setRemotePref("any");
-    }
     setExperience(d.experience ?? []);
     setEducation(d.education ?? []);
-  }
-
-  async function selectRemotePreference(next: RemotePreference) {
-    if (next === remotePref || savingRemote) return;
-    const prev = remotePref;
-    setRemotePref(next);
-    setSavingRemote(next);
-    try {
-      await updateRemotePreference(next);
-      invalidateProfileCache();
-      invalidateMatchFeedCache();
-      toast.success("Job search filter updated");
-    } catch {
-      setRemotePref(prev);
-      toast.error("Couldn't update job filter");
-    } finally {
-      setSavingRemote(null);
-    }
   }
 
   useEffect(() => {
@@ -230,6 +199,7 @@ export function ProfilePanel({
         }),
       });
       hydrate(await fetchMyProfile({ force: true }));
+      invalidateMatchFeedCache();
       setProfileError("");
       toast.success("Profile updated");
     } catch {
@@ -754,47 +724,15 @@ export function ProfilePanel({
             <Card>
               <CardHeader
                 title="Job search"
-                description="Filter matches in Jobs and when Hireschema AI searches for you. You can also change this in chat."
+                description="Hireschema only matches fully remote roles you can do from India — Indian companies and worldwide teams."
               />
               <CardBody className="!pt-0 space-y-2">
-                {REMOTE_PREFERENCE_OPTIONS.map((opt) => {
-                  const isActive = remotePref === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => void selectRemotePreference(opt.id)}
-                      disabled={savingRemote !== null}
-                      className={cn(
-                        "w-full flex items-start gap-3 px-3 py-2.5 text-left",
-                        isActive ? BTN_CHIP_ACTIVE : BTN_CHIP,
-                        savingRemote !== null && "opacity-70",
-                      )}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={cn(
-                            "text-small font-medium",
-                            isActive ? "text-ink-900" : "text-ink-700",
-                          )}
-                        >
-                          {opt.label}
-                        </p>
-                        <p className="text-micro text-ink-500 mt-0.5">{opt.hint}</p>
-                      </div>
-                      {savingRemote === opt.id ? (
-                        <Loader2
-                          className="h-4 w-4 text-ink-400 animate-spin shrink-0 mt-0.5"
-                          strokeWidth={1.5}
-                        />
-                      ) : (
-                        isActive && (
-                          <span className="w-2 h-2 rounded-full bg-accent shrink-0 mt-1.5" />
-                        )
-                      )}
-                    </button>
-                  );
-                })}
+                <p className="text-small text-ink-700">
+                  Remote only. Office and hybrid jobs are hidden.
+                </p>
+                <p className="text-micro text-ink-500">
+                  Includes Indian employers and US / Australia / global companies that hire people sitting in India.
+                </p>
               </CardBody>
             </Card>
 

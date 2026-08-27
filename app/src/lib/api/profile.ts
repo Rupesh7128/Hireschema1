@@ -85,7 +85,7 @@ export type CandidateVisibility =
   | "exceptional_only"
   | "private";
 
-/** How job feeds and Hireschema AI filter remote vs on-site roles. */
+/** How job feeds filter roles. Product is remote-only for candidates in India. */
 export type RemotePreference = "any" | "remote_only" | "onsite_only";
 export type LocationScope = "city" | "state" | "country" | "global";
 
@@ -95,19 +95,9 @@ export const REMOTE_PREFERENCE_OPTIONS: {
   hint: string;
 }[] = [
   {
-    id: "any",
-    label: "Remote & on-site",
-    hint: "Show all matching roles, including fully remote.",
-  },
-  {
     id: "remote_only",
     label: "Remote only",
-    hint: "Only WFH / fully remote listings.",
-  },
-  {
-    id: "onsite_only",
-    label: "On-site only",
-    hint: "Exclude fully remote roles — office or hybrid in a city.",
+    hint: "Indian companies and worldwide teams you can join from India. No office or hybrid roles.",
   },
 ];
 

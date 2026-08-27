@@ -35,7 +35,7 @@ CI/CD:                   GitHub Actions
 2. Every user/candidate/job uses `market = 'IN'` (ISO 3166-1 alpha-2); non-IN values are rejected or normalised to IN
 3. Phone OTP: +91 via MSG91 only
 4. Prices and salaries shown in INR (LPA)
-5. Job visibility: onsite = `country_code = 'IN'`; remote = `allowed_regions` includes IN or WORLD
+5. Job visibility: **fully remote only**. Show a remote job when `allowed_regions` includes `IN` or `WORLD` (Indian companies and worldwide teams an India-based candidate can join). Drop onsite and hybrid.
 6. `ENABLED_MARKETS` must be `IN` only — do not enable other regions without explicit approval
 
 ## R5 — Intro handshake via DB state only (NO agent-to-agent RPC)

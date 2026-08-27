@@ -7,6 +7,7 @@ const FOOTER_LINKS = {
     { href: "/live-feed", label: "Live Feed" },
     { href: `${APP_URL}/reviewmycv`, label: "Review my CV" },
     { href: "/how-it-works", label: "How it works" },
+    { href: "/pricing", label: "Pricing" },
     { href: "/alternatives", label: "Naukri alternatives" },
     { href: "/candidates", label: "For Candidates" },
     { href: "/contact", label: "Request invite" },
@@ -45,11 +46,12 @@ export function Footer() {
               </span>
             </div>
             <p className="text-sm text-ink-500 leading-relaxed max-w-xs">
-              AI recruiting for candidates in India. Hireschema AI finds the
-              right role and sends a warm intro from your Gmail.
+              Remote jobs for people in India. Indian companies and worldwide
+              teams you can join from India. Hireschema AI sends a warm intro
+              from your Gmail.
             </p>
             <div className="mt-6 space-y-1">
-              <p className="text-xs text-ink-700">India-only marketplace · salaries in INR</p>
+              <p className="text-xs text-ink-700">Remote only · from India · salaries in INR</p>
               <p className="text-xs text-ink-700">DPDP Act 2023 compliant</p>
               <p className="text-xs text-ink-700">AWS ap-south-1 (Mumbai)</p>
             </div>

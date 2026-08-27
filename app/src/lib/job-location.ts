@@ -35,13 +35,7 @@ export function jobLocationLabel(job: JobLocationFields): string | null {
 
 export function applyRemotePreferenceFilter<T extends RemoteFlagFields>(
   jobs: T[],
-  preference: RemotePreference | string | null | undefined,
+  _preference?: RemotePreference | string | null,
 ): T[] {
-  if (preference === "remote_only") {
-    return jobs.filter((j) => jobIsFullyRemote(j));
-  }
-  if (preference === "onsite_only") {
-    return jobs.filter((j) => !jobIsFullyRemote(j));
-  }
-  return jobs;
+  return jobs.filter((j) => jobIsFullyRemote(j));
 }

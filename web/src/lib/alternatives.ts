@@ -30,7 +30,7 @@ export const ALTERNATIVES: Alternative[] = [
     site: "naukri.com",
     query: "Naukri alternative for software engineers",
     definition:
-      "Naukri is India’s largest job board: you search, click Apply, and wait. Hireschema is not a second Naukri. It is an India-only matcher — free CV review against live India roles, then invite-only matches and a warm intro from your own Gmail after you approve the email.",
+      "Naukri is India’s largest job board: you search, click Apply, and wait. Hireschema is not a second Naukri. It is a remote-job matcher for people in India — free CV review, then invite-only matches (Indian companies and worldwide teams you can join from India) and a warm intro from your Gmail.",
     whyPeopleLeave:
       "Engineers with 2–8 years in Bangalore, Hyderabad, NCR, or Pune often get recruiter spam, keyword filters, and silence. Naukri is built for volume. Volume is the product. Matching is not.",
     whoShouldStay:

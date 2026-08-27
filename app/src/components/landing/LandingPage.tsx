@@ -12,6 +12,7 @@ import {
   LandingFooter,
   TrustSection,
 } from "@/components/landing/TrustSection";
+import { PricingSection } from "@/components/landing/PricingSection";
 
 /**
  * Landing — candidate-only product story.
@@ -25,6 +26,7 @@ export function LandingPage() {
       <ProcessSection />
       <FeaturesSection />
       <TrustSection />
+      <PricingSection />
       <FinalCtaSection />
       <LandingFooter />
     </main>

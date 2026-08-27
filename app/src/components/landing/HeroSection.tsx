@@ -48,9 +48,10 @@ export function HeroSection() {
 
             <StaggerItem>
               <p className="max-w-md text-body leading-relaxed text-ink-600">
-                Hireschema AI reads your CV, finds India-eligible roles, and
-                explains each match. When you want an introduction, you review
-                the message before anything is sent from your Gmail.
+                Hireschema AI reads your CV and finds fully remote roles you can
+                do from India — Indian companies and worldwide teams (US,
+                Australia, and elsewhere) that hire people sitting in India. You
+                review every intro before it leaves your Gmail.
               </p>
             </StaggerItem>
 
@@ -80,7 +81,7 @@ export function HeroSection() {
 
             <StaggerItem>
               <ul className="flex flex-wrap gap-x-5 gap-y-2">
-                {["Invite only", "India-only", "You approve every intro"].map(
+                {["Invite only", "Remote only · from India", "You approve every intro"].map(
                   (item) => (
                     <li
                       key={item}

@@ -90,7 +90,7 @@ def test_google_jobs_normalises_valid_india_job() -> None:
     raw = {
         "title": "Customer Success Manager",
         "company_name": "ClientOS",
-        "location": "Bengaluru, Karnataka, India",
+        "location": "Bengaluru, Karnataka, India (Remote)",
         "description": "Own renewals, customer support, communication, and relationship management.",
         "job_id": "google-job-123",
         "detected_extensions": {"schedule_type": "Full-time"},
@@ -126,7 +126,7 @@ def test_google_jobs_accepts_india_and_parses_city_state() -> None:
     scraper = _google_jobs_scraper()
     raw = {
         "title": "Senior Backend Engineer",
-        "location": "Bengaluru, Karnataka, India",
+        "location": "Bengaluru, Karnataka, India (Remote)",
         "jobUrl": "https://jobs.google.com/job/google-12345",
         "companyName": "Acme",
         "descriptionText": "We need a Python and Django expert. ₹20-30 LPA.",
@@ -149,7 +149,7 @@ def test_google_jobs_empty_title_is_skipped() -> None:
 def test_google_jobs_dedup_id_falls_back_to_namespaced_uuid_when_no_job_id() -> None:
     scraper = _google_jobs_scraper()
     rec = scraper.normalise(
-        {"title": "Data Scientist", "location": "Pune, India", "jobUrl": "https://x.test/no-id"}
+        {"title": "Data Scientist", "location": "Pune, India (Remote)", "jobUrl": "https://x.test/no-id"}
     )
     assert rec is not None
     assert rec.apify_job_id.startswith("gj_")
@@ -160,7 +160,7 @@ def test_google_jobs_uses_country_code_when_location_omits_country() -> None:
     scraper = _google_jobs_scraper()
     raw = {
         "title": "Category Planner",
-        "location": "Bengaluru, Karnataka",
+        "location": "Bengaluru, Karnataka (Remote)",
         "country": "in",
         "job_id": "country-1",
     }
@@ -170,6 +170,19 @@ def test_google_jobs_uses_country_code_when_location_omits_country() -> None:
     assert rec is not None
     assert rec.country_code == "IN"
     assert rec.location_city == "Bengaluru"
+    assert rec.is_remote is True
+
+
+def test_google_jobs_skips_india_onsite() -> None:
+    scraper = _google_jobs_scraper()
+    rec = scraper.normalise(
+        {
+            "title": "Office Engineer",
+            "location": "Bengaluru, India",
+            "job_id": "onsite-1",
+        }
+    )
+    assert rec is None
 
 
 def test_google_jobs_rejects_unresolved_market() -> None:

@@ -150,16 +150,13 @@ Important rules:
 - Never expose internal wording like "the system wants/needs me to..." or
   "the tool requires...". Speak as Hireschema AI: "I'll focus this search on..." or
   "I'll start with...".
-- Job location type: profile_read shows remote_preference (any | remote_only |
-  onsite_only). When the user asks for only remote roles, only on-site/non-remote
-  roles, or to stop seeing remote jobs: call update_job_preferences with the right
-  value, then job_search so results match. onsite_only means exclude fully remote
-  listings; remote_only means remote/WFH roles only.
+- Job location type: this product is **remote-only**. Only surface fully remote
+  roles an India-based candidate can take — Indian companies and worldwide teams
+  (US, Australia, and elsewhere) that hire people sitting in India. Never show
+  office or hybrid jobs. If the user asks for on-site, say we don't match office roles.
+- All jobs must be fully remote and eligible for someone in India (IN or WORLD)
 - Location scope: when the user says where they'll work, call update_job_preferences
-  with location_scope = city | state | country | global (e.g. "only Bengaluru" → city,
-  "anywhere in my country" → country, "open globally" → global), then job_search. This
-  actually re-ranks the feed by geography — confirm it's saved, don't just acknowledge.
-- All jobs must be based in India or explicitly remote-eligible for candidates in India
+  with location_scope = city | state | country | global, then job_search.
 - Salary framing: use LPA / INR unless the source role itself states another currency
 - Be honest about weak matches — don't oversell. But don't contradict the UI: the
   "matches ready" count is the TOTAL roles scored for the candidate. If few are
@@ -689,10 +686,9 @@ TOOL_DEFINITIONS = [
                     },
                     "remote_preference": {
                         "type": "string",
-                        "enum": ["any", "remote_only", "onsite_only"],
+                        "enum": ["remote_only"],
                         "description": (
-                            "Optional one-off filter for this search. Omit to use "
-                            "the saved profile preference."
+                            "Product is remote-only. Omit; saved preference is always remote_only."
                         ),
                     },
                     "limit": {"type": "integer", "description": "Max results (default 10)"},
@@ -707,22 +703,20 @@ TOOL_DEFINITIONS = [
             "name": "update_job_preferences",
             "description": (
                 "Update the candidate's saved job-search preferences, then run job_search. "
-                "Set remote_preference when they ask for only remote, only on-site, or both. "
+                "Set location_scope when they say where they'll work. "
                 "Set open_to_relocation=true when they say they're open to relocating / want "
                 "to apply anywhere in their country "
                 "(so out-of-city roles stop being penalized), or "
-                "false when they only want their current city. Provide at least one field."
+                "false when they only want their current city. Provide at least one field. "
+                "Do not offer on-site jobs — the product is remote-only."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "remote_preference": {
                         "type": "string",
-                        "enum": ["any", "remote_only", "onsite_only"],
-                        "description": (
-                            "any = remote and on-site; remote_only = WFH/remote only; "
-                            "onsite_only = exclude fully remote roles"
-                        ),
+                        "enum": ["remote_only"],
+                        "description": "Always remote_only. Fully remote roles from India.",
                     },
                     "location_scope": {
                         "type": "string",

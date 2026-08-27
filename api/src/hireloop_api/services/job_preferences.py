@@ -50,13 +50,24 @@ _NON_REMOTE_EMPLOYMENT = frozenset(
 _REMOTE_EMPLOYMENT = frozenset({"remote", "wfh", "work from home", "work_from_home"})
 
 
-def normalize_remote_preference(value: str | None) -> str:
+# Product lock: Indian candidates only see fully remote roles they can do
+# from India (Indian companies + worldwide teams). On-site is not a mode.
+PRODUCT_REMOTE_ONLY = True
+
+
+def _parse_remote_preference(value: str | None) -> str:
     if value is None:
         return REMOTE_PREFERENCE_ANY
     key = str(value).strip().lower().replace("  ", " ")
     if key in VALID_REMOTE_PREFERENCES:
         return key
     return _REMOTE_PREF_ALIASES.get(key, REMOTE_PREFERENCE_ANY)
+
+
+def normalize_remote_preference(value: str | None) -> str:
+    if PRODUCT_REMOTE_ONLY:
+        return REMOTE_PREFERENCE_REMOTE_ONLY
+    return _parse_remote_preference(value)
 
 
 def job_is_fully_remote(job: dict) -> bool:
@@ -75,6 +86,8 @@ def resolve_remote_preference(
     override: str | None = None,
 ) -> str:
     """Persisted preference unless the caller passes a one-off override."""
+    if PRODUCT_REMOTE_ONLY:
+        return REMOTE_PREFERENCE_REMOTE_ONLY
     if override in VALID_REMOTE_PREFERENCES:
         return override
     return normalize_remote_preference(stored)

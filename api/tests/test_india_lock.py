@@ -49,11 +49,12 @@ def test_display_currency_is_inr_only() -> None:
     assert resolve_display_currency("GBP", location_city="London") == "INR"
 
 
-def test_remote_jobs_are_tagged_in_not_world() -> None:
+def test_remote_jobs_include_india_and_world() -> None:
     assert remote_allowed_regions() == ["IN"]
+    assert remote_allowed_regions(worldwide=True) == ["IN", "WORLD"]
     sql = job_visible_for_market_sql(market_param="$1")
-    assert "WORLD" not in sql
-    assert "allowed_regions IS NOT NULL" in sql
+    assert "WORLD" in sql
+    assert "is_remote = TRUE" in sql
     assert "$1 = ANY" in sql
 
 

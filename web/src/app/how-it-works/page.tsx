@@ -5,15 +5,15 @@ import { Badge } from "@/components/ui/Badge";
 export const metadata: Metadata = {
   title: "How It Works",
   description:
-    "Step-by-step: how Hireschema AI matches candidates to India-eligible jobs and makes warm introductions to hiring managers.",
+    "Step-by-step: how Hireschema AI matches people in India to fully remote jobs and makes warm introductions.",
 };
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://hireschema.com";
 
 const CANDIDATE_STEPS = [
   { n: 1, title: "Sign in with LinkedIn", detail: "One click. Hireschema AI reads your profile, work history, skills and education. No manual form filling." },
-  { n: 2, title: "Confirm you're in India", detail: "Hireschema is India-only. Optional +91 phone on file; SMS OTP verification when enabled (MSG91). Resume upload sets your profile — no manual forms." },
-  { n: 3, title: "Chat with Hireschema AI", detail: "Tell her what you're looking for — role, company type, city, CTC. She builds your preference graph in real time." },
+  { n: 2, title: "Confirm you're in India", detail: "Hireschema is for people in India. We match fully remote jobs you can do from India — Indian companies and worldwide teams. Optional +91 phone; SMS OTP when enabled." },
+  { n: 3, title: "Chat with Hireschema AI", detail: "Tell her the remote role you want — title, company type, CTC. Office and hybrid jobs are not in the product." },
   { n: 4, title: "Review your match feed", detail: "Hireschema AI surfaces the top 10 roles daily, ranked by semantic match score. Each card shows role, company, CTC, and your fit score." },
   { n: 5, title: "Pick an action on each role", detail: "Three options: Direct Apply (via the job's native link), Request Intro (warm intro via your Gmail), or Save for Later." },
   { n: 6, title: "Approve the intro email", detail: "For Request Intro, Hireschema drafts a personalised email from your Gmail. You approve or edit — then it's sent." },

@@ -208,7 +208,7 @@ def boost_by_saved(
 
 @dataclass(frozen=True)
 class HardConstraints:
-    remote_preference: str = "any"  # any | remote_only | onsite_only
+    remote_preference: str = "remote_only"  # product is remote-only
     ctc_floor: int | None = None  # candidate's minimum acceptable CTC (INR p.a.)
     # Fraction of the floor a job's ceiling may still satisfy (negotiation slack).
     ctc_slack: float = 0.8

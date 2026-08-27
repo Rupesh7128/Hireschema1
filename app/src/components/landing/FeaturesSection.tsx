@@ -29,7 +29,7 @@ const CANDIDATE_FEATURES: Feature[] = [
   {
     Icon: Briefcase,
     title: "Real roles, scored",
-    body: "Hireschema AI finds live openings in your region — ranked by fit, not keyword spam.",
+    body: "Hireschema AI finds live remote openings you can do from India — ranked by fit, not keyword spam.",
   },
   {
     Icon: Send,

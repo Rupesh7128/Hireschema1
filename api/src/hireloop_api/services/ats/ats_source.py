@@ -5,8 +5,10 @@ Why: FREE first-party JSON from company career pages with real apply URLs.
 Higher trust than scraped listings; no Apify spend. Default board list is the
 bundled career-ops-india catalog (MIT).
 
-India-first: keep India-located roles or remotes not restricted to another
-country. Remotes are tagged allowed_regions=["IN"].
+India-first: keep fully remote roles an India-based candidate can take
+(Indian companies and worldwide teams). Drop onsite/hybrid and remotes
+restricted to the US/EU/UK/etc. India remotes are tagged IN; worldwide
+remotes are tagged IN + WORLD.
 """
 
 from __future__ import annotations
@@ -70,7 +72,48 @@ _NON_INDIA_REMOTE = (
     "authorized to work in the united states",
 )
 
-_REMOTE_TOKENS = ("remote", "anywhere", "work from home", "wfh", "distributed")
+_REMOTE_TOKENS = (
+    "remote",
+    "anywhere",
+    "work from home",
+    "wfh",
+    "distributed",
+    "work from anywhere",
+    "worldwide",
+)
+
+
+def _location_is_india(location: str | None) -> bool:
+    loc = (location or "").lower()
+    return any(t in loc for t in _INDIA_TOKENS)
+
+
+def remote_regions_for_location(location: str | None) -> list[str]:
+    return remote_allowed_regions(worldwide=not _location_is_india(location))
+
+
+def assess_location(location: str | None, text: str | None) -> tuple[bool, bool]:
+    """
+    Decide whether a posting is eligible for an India-based candidate.
+
+    Returns (keep, is_remote). Product is remote-only: onsite India jobs are
+    dropped. Keep when the role is fully remote and not restricted to a
+    non-India region (US-only / EU-only / work-auth). Global remotes with no
+    geo lock-out are kept — an Indian candidate can take them from India.
+    """
+    loc = (location or "").lower()
+    body = (text or "").lower()
+    haystack = f"{loc} {body}"
+
+    is_remote = any(t in loc for t in _REMOTE_TOKENS)
+
+    if any(p in haystack for p in _NON_INDIA_REMOTE):
+        return False, is_remote
+    if not is_remote:
+        return False, False
+    return True, True
+
+
 _TAG_RE = re.compile(r"<[^>]+>")
 
 
@@ -80,29 +123,6 @@ def _clean_html(text: str | None) -> str | None:
     out = html.unescape(_TAG_RE.sub(" ", text))
     out = re.sub(r"\s+", " ", out).strip()
     return out or None
-
-
-def assess_location(location: str | None, text: str | None) -> tuple[bool, bool]:
-    """
-    Decide whether a posting is eligible for an India-based candidate.
-
-    Returns (keep, is_remote). Keep when the role is in India, or remote and not
-    restricted to a non-India region. The remote-region check is the borrowed
-    eligibility filter — it reads BOTH the location and the description, since
-    "US-only" often hides in the body.
-    """
-    loc = (location or "").lower()
-    body = (text or "").lower()
-    haystack = f"{loc} {body}"
-
-    is_remote = any(t in loc for t in _REMOTE_TOKENS)
-
-    if any(t in loc for t in _INDIA_TOKENS):
-        return True, is_remote
-    if is_remote and not any(p in haystack for p in _NON_INDIA_REMOTE):
-        # Global-remote with no geo restriction → an India candidate can take it.
-        return True, True
-    return False, is_remote
 
 
 def _india_city(location: str | None) -> str | None:
@@ -133,7 +153,7 @@ def parse_greenhouse(payload: dict, *, token: str, company_name: str) -> list[Jo
                 company_name=company_name,
                 location_city=_india_city(location),
                 is_remote=is_remote,
-                allowed_regions=remote_allowed_regions() if is_remote else None,
+                allowed_regions=remote_regions_for_location(location) if is_remote else None,
                 apply_url=job.get("absolute_url"),
                 source="greenhouse",
                 expires_at=datetime.now(UTC) + timedelta(days=30),
@@ -158,7 +178,11 @@ def parse_lever(payload: list, *, company: str) -> list[JobRecord]:
         keep, is_remote = assess_location(location, description)
         if workplace == "remote":
             is_remote = True
-        if not keep:
+            if not keep and not any(
+                p in f"{location} {description or ''}".lower() for p in _NON_INDIA_REMOTE
+            ):
+                keep = True
+        if not keep or not is_remote:
             continue
         records.append(
             JobRecord(
@@ -168,7 +192,7 @@ def parse_lever(payload: list, *, company: str) -> list[JobRecord]:
                 company_name=company_name,
                 location_city=_india_city(location),
                 is_remote=is_remote,
-                allowed_regions=remote_allowed_regions() if is_remote else None,
+                allowed_regions=remote_regions_for_location(location) if is_remote else None,
                 apply_url=job.get("hostedUrl") or job.get("applyUrl"),
                 source="lever",
                 expires_at=datetime.now(UTC) + timedelta(days=30),
@@ -225,7 +249,7 @@ def parse_ashby(payload: dict, *, slug: str, company_name: str) -> list[JobRecor
                 company_name=company_name,
                 location_city=_india_city(location),
                 is_remote=is_remote,
-                allowed_regions=remote_allowed_regions() if is_remote else None,
+                allowed_regions=remote_regions_for_location(location) if is_remote else None,
                 apply_url=apply_url,
                 source="ashby",
                 expires_at=datetime.now(UTC) + timedelta(days=30),

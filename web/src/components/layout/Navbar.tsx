@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { href: "/live-feed", label: "Live Feed" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/alternatives", label: "Alternatives" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/candidates", label: "For Candidates" },
   { href: "/about", label: "About" },
   { href: "/blog", label: "Blog" },
