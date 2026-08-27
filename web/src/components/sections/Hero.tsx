@@ -17,10 +17,8 @@ import { useRef } from "react";
 import { ArrowRight, FileText } from "@/components/brand/icons";
 import {
   motion,
-  useMotionValue,
   useReducedMotion,
   useScroll,
-  useSpring,
   useTransform,
 } from "framer-motion";
 import { MagneticButton } from "@/components/premium/MagneticButton";

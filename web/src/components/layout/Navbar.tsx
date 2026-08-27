@@ -6,24 +6,15 @@
  */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import { Menu, X, ArrowRight } from "@/components/brand/icons";
 import { cn } from "@/lib/utils";
 import { APP_URL, INVITE_URL } from "@/lib/site";
 
-const NAV_LINKS = [
-  { href: "/live-feed", label: "Live Feed" },
-  { href: "/how-it-works", label: "How it works" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/candidates", label: "Candidates" },
-  { href: "/blog", label: "Blog" },
-];
-
 export function Navbar() {
-  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+
   const [condensed, setCondensed] = useState(false);
   const { scrollY } = useScroll();
 

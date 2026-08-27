@@ -20,7 +20,7 @@ import {
   useTransform,
   type MotionValue,
 } from "framer-motion";
-import { Upload, Search, Bookmark, FileText, Send, Radar, Gauge, Sparkles } from "@/components/brand/icons";
+import { Upload, Search, Bookmark, FileText, Send, Sparkles } from "@/components/brand/icons";
 import { MemeGif } from "@/components/premium/MemeGif";
 import { cn } from "@/lib/utils";
 
@@ -320,9 +320,10 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
   if (kind === "mazaa")
     return (
       <div className="relative w-[320px] overflow-hidden rounded-2xl border border-ink-200/70 bg-paper-0/80 shadow-block">
-        <img 
-          src="https://media1.tenor.com/m/NyPzonwL-ycAAAAC/asraj-tsp.gif" 
-          alt="Maza aayega meme" 
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://media1.tenor.com/m/NyPzonwL-ycAAAAC/asraj-tsp.gif"
+          alt="Maza aayega meme"
           className="w-full object-cover"
         />
       </div>

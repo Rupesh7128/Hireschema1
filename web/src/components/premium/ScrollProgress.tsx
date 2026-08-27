@@ -6,15 +6,10 @@
  */
 
 import { useEffect } from "react";
-import { motion, useScroll, useSpring } from "framer-motion";
+import { useScroll } from "framer-motion";
 
 export function ScrollProgress() {
   const { scrollYProgress } = useScroll();
-  const width = useSpring(scrollYProgress, {
-    stiffness: 260,
-    damping: 40,
-    restDelta: 0.0008,
-  });
 
   useEffect(
     () =>
