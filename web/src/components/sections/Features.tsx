@@ -87,11 +87,16 @@ const FEATURES: Feature[] = [
   },
 ];
 
+/*
+ * Deliberately one colour for every card. Colour-coding each feature meant
+ * four different rules stacked up as you scrolled, which read as a pile of
+ * stripes instead of a deck of cards.
+ */
 const TONE = {
   accent: { text: "text-accent", border: "border-accent", rule: "bg-accent" },
-  masala: { text: "text-masala", border: "border-masala", rule: "bg-masala" },
-  volt:   { text: "text-volt",   border: "border-volt",   rule: "bg-volt" },
-  chai:   { text: "text-chai",   border: "border-chai",   rule: "bg-chai" },
+  masala: { text: "text-accent", border: "border-accent", rule: "bg-accent" },
+  volt:   { text: "text-accent", border: "border-accent", rule: "bg-accent" },
+  chai:   { text: "text-accent", border: "border-accent", rule: "bg-accent" },
 } as const;
 
 export function Features() {
@@ -152,8 +157,8 @@ function DeckCard({
   return (
     <div
       ref={ref}
-      className="sticky mb-6"
-      style={{ top: `${96 + index * 16}px` }}
+      className="sticky mb-5"
+      style={{ top: `${100 + index * 10}px` }}
     >
       <motion.article
         style={
@@ -168,16 +173,16 @@ function DeckCard({
         {/* Tone rule — colour coding without a blob. */}
         <div aria-hidden className={cn("absolute inset-x-0 top-0 h-[3px]", tone.rule)} />
 
-        <div className="relative grid gap-8 p-8 sm:p-10 md:grid-cols-[auto_1fr_auto] md:items-center md:gap-10">
+        <div className="relative grid gap-6 p-6 sm:p-7 md:grid-cols-[auto_1fr_auto] md:items-center md:gap-8">
           {/* Icon + index */}
           <div className="flex items-center gap-4 md:flex-col md:items-start md:gap-6">
             <span
               className={cn(
-                "flex h-14 w-14 items-center justify-center rounded-2xl border bg-paper-0/60",
+                "flex h-11 w-11 items-center justify-center border bg-paper-0/60",
                 tone.border,
               )}
             >
-              <Icon className={cn("h-6 w-6", tone.text)} strokeWidth={1.8} />
+              <Icon className={cn("h-5 w-5", tone.text)} strokeWidth={1.8} />
             </span>
             <span className="font-mono text-micro uppercase text-ink-400">
               {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
@@ -186,15 +191,15 @@ function DeckCard({
 
           {/* Copy */}
           <div>
-            <h3 className="mb-3 font-display text-h2 text-ink-900">
+            <h3 className="mb-2.5 font-display text-h3 text-ink-900">
               {feature.title}
             </h3>
-            <p className="mb-5 max-w-prose text-body text-ink-500">
+            <p className="mb-4 max-w-prose text-small text-ink-500">
               {feature.body}
             </p>
             <p
               className="
-                font-display text-[clamp(1.05rem,2.2vw,1.5rem)] font-extrabold
+                font-display text-[clamp(0.95rem,1.8vw,1.2rem)] font-extrabold
                 leading-snug text-[#FFE45E]
                 [text-shadow:0_2px_0_#000,0_-2px_0_#000,2px_0_0_#000,-2px_0_0_#000]
               "
@@ -206,14 +211,14 @@ function DeckCard({
           {/* Stat */}
           <div
             className={cn(
-              "rounded-2xl border bg-paper-0/60 px-6 py-5 text-center md:min-w-[190px]",
+              "border bg-paper-0/60 px-5 py-4 text-center md:min-w-[150px]",
               tone.border,
             )}
           >
-            <p className={cn("font-display text-h1 font-extrabold leading-none", tone.text)}>
+            <p className={cn("font-display text-h2 font-extrabold leading-none", tone.text)}>
               {feature.stat.value}
             </p>
-            <p className="mt-2 text-small text-ink-500">{feature.stat.label}</p>
+            <p className="mt-1.5 text-[12px] text-ink-500">{feature.stat.label}</p>
           </div>
         </div>
       </motion.article>

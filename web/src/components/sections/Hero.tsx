@@ -106,7 +106,7 @@ export function Hero() {
         }
         className="relative z-10 mx-auto flex min-h-[100svh] max-w-wide flex-col px-6 pb-8 pt-24 lg:h-[100svh] lg:min-h-0 lg:pb-8 lg:pt-[104px]"
       >
-        <div className="grid flex-1 items-start gap-10 pt-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,410px)] lg:content-center lg:gap-12 lg:pt-0">
+        <div className="grid flex-1 items-start gap-10 pt-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,410px)] lg:items-center lg:content-center lg:gap-12 lg:pt-0">
           {/* Copy column */}
           <motion.div style={reduced ? undefined : { x: headX }}>
             <motion.div
@@ -144,7 +144,7 @@ export function Hero() {
               </span>
               <span className="mt-3.5 block text-[clamp(1rem,1.9vw,1.45rem)] font-bold leading-tight text-ink-700">
                 <SplitText
-                  text="Remote roles that actually fit — bina doglapan ke."
+                  text="Roles that fit. Aur kyun fit hain, wo bhi."
                   by="word"
                   stagger={0.026}
                   delay={0.4}
@@ -158,10 +158,11 @@ export function Hero() {
               transition={{ duration: 0.8, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
               className="mb-7 max-w-prose text-body text-ink-500"
             >
-              <span className="font-semibold text-ink-700">Dekh raha hai Binod?</span>{" "}
-              Hireschema AI tera CV padh ke US, Australia aur global teams ki{" "}
-              <span className="text-accent">fully remote</span> jobs nikaal raha
-              hai. Har intro tu khud approve karega — tere apne Gmail se jaayega.
+              Hireschema AI tera CV padhta hai aur{" "}
+              <span className="text-accent">fully remote</span> roles nikaalta
+              hai jo tu India se kar sakta hai — Indian companies aur worldwide
+              teams, dono. Har intro tere Gmail se jaane se pehle tu khud
+              review karta hai.
             </motion.p>
 
             <motion.div
@@ -170,7 +171,7 @@ export function Hero() {
               transition={{ duration: 0.8, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
               className="flex flex-col gap-3 sm:flex-row sm:items-center"
             >
-              <MemePopover gif="paisa" align="left">
+              <MemePopover gif="mumkinHai" align="left">
                 <MagneticButton href={INVITE_URL}>
                   Request an invite
                   <ArrowRight

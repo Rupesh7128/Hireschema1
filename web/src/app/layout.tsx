@@ -30,7 +30,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://hireschema.com"),
   title: {
-    default: "Hireschema — Remote jobs from India, bina doglapan ke",
+    default: "Hireschema — Remote jobs you can do from India",
     template: "%s | Hireschema",
   },
   description:
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: "https://hireschema.com",
     siteName: "Hireschema",
-    title: "Hireschema — Money follows my brotha. Remote roles, bina doglapan ke.",
+    title: "Hireschema — Money follows my brotha. Remote roles that fit.",
     description:
       "Fully remote roles you can do from India. Hireschema AI scores every match and sends a warm intro from your Gmail — after you approve every word.",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],

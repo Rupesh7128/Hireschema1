@@ -92,7 +92,7 @@ export function Footer() {
 
         {/* Poster-scale wordmark */}
         <div aria-hidden className="mt-16 select-none overflow-hidden">
-          <p className="whitespace-nowrap text-center font-display text-[clamp(2.25rem,12.5vw,10rem)] font-extrabold leading-[0.8] tracking-[-0.05em] text-outline">
+          <p className="whitespace-nowrap text-center font-display text-[clamp(2rem,11vw,9rem)] font-extrabold leading-[0.9] tracking-[0.015em] text-outline">
             HIRESCHEMA
           </p>
         </div>

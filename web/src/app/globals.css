@@ -177,7 +177,8 @@
 
   .text-outline {
     color: transparent;
-    -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.22);
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.20);
+    paint-order: stroke fill;
   }
 
   .text-outline-accent {

@@ -2,7 +2,7 @@
  * Hireschema landing — one continuous 3D scroll, written in Hinglish.
  *
  * Scene order matters more than section order. The page opens on a lit stage
- * with the product running, drops through the word DOGLAPAN into the problem,
+ * with the product running, drops through HOME FROM WORK into the problem,
  * runs the product as a horizontal rail, falls through AUKAT into scoring,
  * stacks the features as a deck, then pulls back out to the grid it started
  * on. Every Hinglish line is attached to a claim — none of it is decoration.
@@ -18,9 +18,9 @@ import { VoidScene, ScoreScene } from "@/components/sections/Interludes";
 import { ZoomThrough } from "@/components/premium/ZoomThrough";
 
 export const metadata = {
-  title: "Hireschema — Money follows my brotha. Remote roles, bina doglapan ke.",
+  title: "Hireschema — Money follows my brotha. Remote roles that fit.",
   description:
-    "Hireschema AI tumhara CV padh ke US, Australia aur global teams ki fully remote jobs nikaalta hai — jo India se ho sakti hain. Har warm intro tum approve karte ho, tumhare Gmail se jaata hai.",
+    "Hireschema AI tera CV padhta hai aur fully remote roles nikaalta hai jo tu India se kar sakta hai — Indian companies aur worldwide teams. Har intro tere Gmail se jaane se pehle tu khud review karta hai.",
 };
 
 export default function HomePage() {
@@ -30,9 +30,9 @@ export default function HomePage() {
 
       {/* Camera falls through the word into the problem statement. */}
       <ZoomThrough
-        word="DOGLAPAN"
-        kicker="Stop throwing CVs into the void"
-        sub="Naukri portals ka sabse bada product: umeed. Aur uska refund nahi milta."
+        word="HOME FROM WORK"
+        kicker="Ye chahiye tha"
+        sub="Aur abhi tak? 250 applications, ek bhi jawab nahi."
         behind={<VoidScene />}
       />
 

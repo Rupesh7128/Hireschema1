@@ -1,9 +1,11 @@
 "use client";
 
 /**
- * Pricing — two tilt cards, one live, one queued.
- * The free tier is the hero; the launch price is shown so nobody feels
- * bait-and-switched later.
+ * Pricing — one card.
+ *
+ * There used to be a "Free" tier card beside this one, which was misleading:
+ * the platform is not free, the *invite request* is. That distinction now sits
+ * in the copy rather than being sold as a plan.
  */
 
 import { ArrowRight, Check, Clock } from "lucide-react";
@@ -11,24 +13,15 @@ import { motion } from "framer-motion";
 import { MagneticButton } from "@/components/premium/MagneticButton";
 import { MemePopover } from "@/components/premium/MemePopover";
 import { MemeGif } from "@/components/premium/MemeGif";
-import { TiltCard } from "@/components/premium/TiltCard";
 import { StandUp } from "@/components/premium/Parallax";
 import { INVITE_URL } from "@/lib/site";
 
-const NOW_POINTS = [
-  "Invite maango, approval ke baad andar",
-  "Remote matches jo India se ho sakti hain",
-  "Indian companies + worldwide teams",
-  "Free CV scorecard",
-  "Zero cost. No card, no Razorpay.",
-];
-
-const LAUNCH_POINTS = [
-  "Wahi product: sirf fully remote roles",
-  "Salaries INR aur USD dono",
-  "Intros seedha tumhare Gmail se",
-  "Skill roadmaps + career intelligence",
-  "Checkout abhi live nahi hai",
+const INCLUDED = [
+  "Sirf fully remote roles — Indian companies aur worldwide teams",
+  "Har role ka match score, wajah ke saath",
+  "Tailored CV aur intro draft, har role ke liye",
+  "Intros seedha tere Gmail se — tu approve karega tab",
+  "Skill roadmaps aur comp benchmarks (INR + USD)",
 ];
 
 export function Pricing() {
@@ -41,98 +34,62 @@ export function Pricing() {
       <div className="relative mx-auto max-w-page px-6 text-center">
         <span className="eyebrow mb-6">Pricing</span>
         <h2 className="text-h1 font-display">
-          <span className="text-gradient">&ldquo;Dedh sau rupiya dega?&rdquo;</span>
-          <br />
-          <span className="text-gradient-accent">Nahi — ₹500 a month, jab launch honge.</span>
+          <span className="text-gradient">Ek kaam kar —</span>{" "}
+          <span className="text-gradient-accent">₹500 mahina, launch pe.</span>
         </h2>
         <p className="mx-auto mt-5 max-w-prose text-lead text-ink-500">
-          Abhi? Beta chal raha hai. Invite-only access aaj bilkul{" "}
-          <span className="font-semibold text-accent">free</span> hai. No credit
-          card, no Razorpay. Bete, mauj kardi.
+          Product paid hai. Beta ke dauraan invite maangna free hai — approve
+          hone ke baad tu poora product bina kisi charge ke chala sakta hai, jab
+          tak hum launch nahi karte.
         </p>
       </div>
 
-      <div className="relative mx-auto mt-10 flex max-w-page justify-center px-6">
-        <MemeGif name="raviCelebrate" className="w-[240px] shadow-block" />
-      </div>
-
-      <div className="relative mx-auto mt-12 grid max-w-page gap-6 px-6 md:grid-cols-2">
-        {/* NOW — free */}
+      <div className="relative mx-auto mt-12 grid max-w-page gap-8 px-6 md:grid-cols-[minmax(0,1fr)_minmax(0,380px)] md:items-center">
         <StandUp>
-          <TiltCard intensity={6} lift={22}>
-            <article className="glass-strong relative h-full overflow-hidden rounded-3xl p-9 edge-light shadow-block-accent">
-              <div aria-hidden className="pool-accent pointer-events-none absolute -right-20 -top-20 h-64 w-64" />
-              <div className="relative">
-                <span className="inline-flex items-center gap-2 rounded-none border border-accent/50 bg-accent/10 px-3 py-1.5 text-micro uppercase text-accent">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-                  Abhi · Invite only
+          <article className="glass-strong relative overflow-hidden p-9 edge-light shadow-block-accent">
+            <div
+              aria-hidden
+              className="pool-accent pointer-events-none absolute -right-20 -top-20 h-64 w-64"
+            />
+            <div className="relative">
+              <span className="inline-flex items-center gap-2 border border-ink-200 bg-ink-50 px-3 py-1.5 text-micro uppercase text-ink-500">
+                <Clock className="h-3 w-3" strokeWidth={2.4} />
+                Launch pe
+              </span>
+
+              <p className="mt-7 font-display text-mega leading-none text-gradient-accent">
+                ₹500
+                <span className="ml-3 align-middle font-sans text-lead font-normal text-ink-400">
+                  / month
                 </span>
+              </p>
 
-                <p className="mt-7 font-display text-mega leading-none text-gradient-accent">
-                  Free
+              <ul className="mt-8 grid gap-3.5 sm:grid-cols-2">
+                {INCLUDED.map((p) => (
+                  <li key={p} className="flex items-start gap-3 text-body text-ink-600">
+                    <Check className="mt-1 h-4 w-4 shrink-0 text-accent" strokeWidth={2.6} />
+                    {p}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <MemePopover gif="thankYouFrands">
+                  <MagneticButton href={INVITE_URL}>
+                    Request an invite — free
+                    <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
+                  </MagneticButton>
+                </MemePopover>
+                <p className="text-small text-ink-400">
+                  Checkout abhi live nahi hai. Card ki zaroorat nahi.
                 </p>
-                <p className="mt-3 text-body text-ink-500">
-                  Main gareeb hoon? No worries. Invite maango, approve hone ke
-                  baad poora product khul jaata hai.
-                </p>
-
-                <ul className="mt-8 space-y-3.5">
-                  {NOW_POINTS.map((p) => (
-                    <li key={p} className="flex items-start gap-3 text-body text-ink-600">
-                      <Check className="mt-1 h-4 w-4 shrink-0 text-accent" strokeWidth={2.6} />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-9">
-                  <MemePopover gif="moneyFollows" className="w-full">
-                    <MagneticButton href={INVITE_URL} className="w-full">
-                      Request invite — free hai
-                      <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
-                    </MagneticButton>
-                  </MemePopover>
-                </div>
               </div>
-            </article>
-          </TiltCard>
+            </div>
+          </article>
         </StandUp>
 
-        {/* AT LAUNCH — ₹500 */}
         <StandUp>
-          <TiltCard intensity={6} lift={16}>
-            <article className="glass relative h-full overflow-hidden rounded-3xl p-9 edge-light">
-              <div className="relative">
-                <span className="inline-flex items-center gap-2 rounded-none border border-ink-200 bg-ink-50/70 px-3 py-1.5 text-micro uppercase text-ink-500">
-                  <Clock className="h-3 w-3" strokeWidth={2.4} />
-                  Launch pe
-                </span>
-
-                <p className="mt-7 font-display text-mega leading-none text-ink-700">
-                  ₹500
-                  <span className="ml-2 align-middle font-sans text-lead font-normal text-ink-400">
-                    / month
-                  </span>
-                </p>
-                <p className="mt-3 text-body text-ink-500">
-                  Ek kaam kar — ₹500 de, aur baaki portals ki overacting kaat.
-                </p>
-
-                <ul className="mt-8 space-y-3.5">
-                  {LAUNCH_POINTS.map((p) => (
-                    <li key={p} className="flex items-start gap-3 text-body text-ink-500">
-                      <Check className="mt-1 h-4 w-4 shrink-0 text-ink-400" strokeWidth={2.6} />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-9 flex h-[52px] items-center justify-center rounded-none border border-dashed border-ink-300 text-small text-ink-400">
-                  Checkout abhi live nahi hai
-                </div>
-              </div>
-            </article>
-          </TiltCard>
+          <MemeGif name="raviCelebrate" className="w-full shadow-block" />
         </StandUp>
       </div>
 
@@ -142,8 +99,7 @@ export function Pricing() {
         viewport={{ once: true }}
         className="relative mx-auto mt-10 max-w-prose px-6 text-center text-small text-ink-400"
       >
-        Beta users ko launch ke baad bhi grandfathered pricing milegi. Promise
-        hai, doglapan nahi.
+        Beta users ko launch ke baad grandfathered pricing milegi.
       </motion.p>
     </section>
   );

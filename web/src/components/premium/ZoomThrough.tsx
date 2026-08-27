@@ -67,6 +67,16 @@ export function ZoomThrough({
   const labelOpacity = useTransform(scrollYProgress, [0, 0.24], [1, 0]);
   const labelY = useTransform(scrollYProgress, [0, 0.3], [0, -60]);
 
+  // Longer phrases need a smaller type size or they blow past the viewport at
+  // rest. "DOGLAPAN" and "HOME FROM WORK" cannot share one clamp.
+  const len = word.length;
+  const sizeClass =
+    len > 11
+      ? "text-[clamp(2rem,13vw,9rem)]"
+      : len > 8
+        ? "text-[clamp(2.75rem,20vw,14rem)]"
+        : "text-[clamp(4rem,30vw,22rem)]";
+
   if (reduced) {
     return (
       <div className={className}>
@@ -105,11 +115,12 @@ export function ZoomThrough({
               the artefact we are avoiding. */}
           <motion.span
             style={{ scale: wordScale }}
-            className="
-              relative select-none whitespace-nowrap px-6 text-center font-display
-              text-[clamp(4rem,30vw,22rem)] font-extrabold leading-none
-              tracking-[-0.05em] text-gradient-accent-static
-            "
+            className={cn(
+              `relative select-none whitespace-nowrap px-6 text-center font-display
+               font-extrabold leading-none tracking-[-0.045em]
+               text-gradient-accent-static`,
+              sizeClass,
+            )}
           >
             {word}
           </motion.span>

@@ -355,7 +355,7 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
           </p>
         </div>
         <MemeGif
-          name="moneyFollows"
+          name="homeFromWork"
           className="absolute -bottom-8 -right-6 w-[150px] rotate-[5deg] shadow-block"
         />
       </div>

@@ -34,14 +34,14 @@ export function VoidScene() {
         <div>
           <span className="eyebrow mb-6">The problem</span>
           <h2 className="font-display text-h1">
-            <span className="text-gradient">Zindagi jhand ba,</span>
+            <span className="text-gradient">250 applications.</span>
             <br />
-            <span className="text-gradient-accent">tab bhi portals pe ghamand ba.</span>
+            <span className="text-gradient-accent">Ek bhi jawab nahi.</span>
           </h2>
           <p className="mt-6 max-w-prose text-lead text-ink-500">
-            Tum CV void mein phenkte raho, unka dashboard &lsquo;12,000 applicants&rsquo;
-            dikhata rahe. Ekdum se waqt badal denge, jazbaat badal denge — par
-            pehle ye doglapan band karna padega.
+            Tu CV bhejta ja, unka dashboard &lsquo;12,000 applicants&rsquo; dikhata
+            rahe. Koi padhta hi nahi. Problem tera CV nahi hai — problem ye hai
+            ki wo kisi insaan tak pahunchta hi nahi.
           </p>
 
           <dl className="mt-9 grid grid-cols-3 gap-4">
@@ -132,12 +132,9 @@ export function ScoreScene() {
           ))}
         </div>
 
-        <div className="mx-auto mt-10 flex max-w-xl flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-center">
-          <MemeGif name="tumseNaHoPayega" className="w-[220px] shrink-0 shadow-block" />
-          <p className="font-display text-[clamp(1.05rem,2.2vw,1.5rem)] font-extrabold leading-snug text-[#FFE45E] [text-shadow:0_2px_0_#000,0_-2px_0_#000,2px_0_0_#000,-2px_0_0_#000] sm:text-left">
-            Comp band thoda kam? Ho jayega — roadmap ready hai.
-          </p>
-        </div>
+        <p className="mx-auto mt-9 max-w-prose font-display text-[clamp(1.05rem,2.2vw,1.5rem)] font-extrabold leading-snug text-[#FFE45E] [text-shadow:0_2px_0_#000,0_-2px_0_#000,2px_0_0_#000,-2px_0_0_#000]">
+          Comp band thoda kam? Roadmap ready hai.
+        </p>
       </div>
     </div>
   );

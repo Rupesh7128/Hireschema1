@@ -71,13 +71,13 @@ export function FinalCta() {
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <MemePopover gif="reacted">
+          <MemePopover gif="jaldiTheLate">
             <MagneticButton href={INVITE_URL}>
               Request an invite
               <ArrowRight className="h-4 w-4 transition-transform duration-base group-hover:translate-x-1" strokeWidth={2.2} />
             </MagneticButton>
           </MemePopover>
-          <MemePopover gif="doglapan">
+          <MemePopover gif="raviReacted">
             <MagneticButton href={REVIEW_CV_URL} variant="ghost">
               <FileText className="h-4 w-4" strokeWidth={2} />
               Pehle CV review karao
