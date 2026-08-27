@@ -132,7 +132,7 @@ export function ChatPreview({ className }: { className?: string }) {
       {/* Transcript */}
       <div
         ref={scrollRef}
-        className="h-[330px] space-y-3 overflow-y-auto bg-paper-0/60 px-4 py-4"
+        className="h-[clamp(230px,44vh,430px)] space-y-3 overflow-y-auto bg-paper-0/60 px-4 py-4"
       >
         <AnimatePresence initial={false}>
           {visible.map((line, i) =>

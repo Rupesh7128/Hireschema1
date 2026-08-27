@@ -21,6 +21,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { Mic, Radar, Gauge, Send } from "lucide-react";
+import { MemeGif } from "@/components/premium/MemeGif";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
@@ -352,6 +353,10 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
             <span className="h-1.5 w-1.5 rounded-full bg-destructive" /> &ldquo;Hybrid, 3 days office&rdquo;
           </p>
         </div>
+        <MemeGif
+          name="bakwas"
+          className="absolute -bottom-8 -right-6 w-[150px] rotate-[5deg] shadow-3"
+        />
       </div>
     );
 

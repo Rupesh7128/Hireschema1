@@ -10,6 +10,7 @@ import { useRef } from "react";
 import { ArrowRight, FileText } from "lucide-react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { MagneticButton } from "@/components/premium/MagneticButton";
+import { MemePopover } from "@/components/premium/MemePopover";
 import { SplitText } from "@/components/premium/SplitText";
 import { INVITE_URL, REVIEW_CV_URL } from "@/lib/site";
 
@@ -75,14 +76,18 @@ export function FinalCta() {
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <MagneticButton href={INVITE_URL}>
-            Request an invite
-            <ArrowRight className="h-4 w-4 transition-transform duration-base group-hover:translate-x-1" strokeWidth={2.2} />
-          </MagneticButton>
-          <MagneticButton href={REVIEW_CV_URL} variant="ghost">
-            <FileText className="h-4 w-4" strokeWidth={2} />
-            Pehle CV review karao
-          </MagneticButton>
+          <MemePopover gif="paisa">
+            <MagneticButton href={INVITE_URL}>
+              Request an invite
+              <ArrowRight className="h-4 w-4 transition-transform duration-base group-hover:translate-x-1" strokeWidth={2.2} />
+            </MagneticButton>
+          </MemePopover>
+          <MemePopover gif="doglapan">
+            <MagneticButton href={REVIEW_CV_URL} variant="ghost">
+              <FileText className="h-4 w-4" strokeWidth={2} />
+              Pehle CV review karao
+            </MagneticButton>
+          </MemePopover>
         </div>
 
         <p className="mt-6 text-small text-ink-400">

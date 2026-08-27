@@ -9,6 +9,8 @@
 import { ArrowRight, Check, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { MagneticButton } from "@/components/premium/MagneticButton";
+import { MemePopover } from "@/components/premium/MemePopover";
+import { MemeGif } from "@/components/premium/MemeGif";
 import { TiltCard } from "@/components/premium/TiltCard";
 import { StandUp } from "@/components/premium/Parallax";
 import { INVITE_URL } from "@/lib/site";
@@ -50,7 +52,11 @@ export function Pricing() {
         </p>
       </div>
 
-      <div className="relative mx-auto mt-16 grid max-w-page gap-6 px-6 md:grid-cols-2">
+      <div className="relative mx-auto mt-10 flex max-w-page justify-center px-6">
+        <MemeGif name="mastPlan" className="w-[240px] -rotate-2 shadow-3" />
+      </div>
+
+      <div className="relative mx-auto mt-12 grid max-w-page gap-6 px-6 md:grid-cols-2">
         {/* NOW — free */}
         <StandUp>
           <TiltCard intensity={6} lift={22}>
@@ -83,10 +89,12 @@ export function Pricing() {
                 </ul>
 
                 <div className="mt-9">
-                  <MagneticButton href={INVITE_URL} className="w-full">
-                    Request invite — jaldi wahan se hato
-                    <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
-                  </MagneticButton>
+                  <MemePopover gif="hoHoHo" className="w-full">
+                    <MagneticButton href={INVITE_URL} className="w-full">
+                      Request invite — free hai
+                      <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
+                    </MagneticButton>
+                  </MemePopover>
                 </div>
               </div>
             </article>

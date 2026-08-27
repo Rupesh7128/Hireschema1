@@ -178,6 +178,18 @@
     animation: gradientShift 9s ease infinite;
   }
 
+  /*
+   * Same look as .text-gradient-accent but with no keyframe animation.
+   * Use this on anything that also moves — animating background-position
+   * under `background-clip: text` forces a repaint of the clip every frame.
+   */
+  .text-gradient-accent-static {
+    background: linear-gradient(110deg, #9FE870 0%, #E6FF9B 38%, #FFB020 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
   .text-outline {
     color: transparent;
     -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.22);

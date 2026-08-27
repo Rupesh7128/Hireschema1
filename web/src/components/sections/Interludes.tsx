@@ -8,6 +8,7 @@
  */
 
 import { motion } from "framer-motion";
+import { MemeGif } from "@/components/premium/MemeGif";
 
 /* ── Scene revealed through "DOGLAPAN" ───────────────────────────────────── */
 
@@ -58,8 +59,12 @@ export function VoidScene() {
           </dl>
         </div>
 
-        {/* The void itself */}
+        {/* The void itself, with the mood attached */}
         <div className="relative hidden h-[52vh] lg:block">
+          <MemeGif
+            name="dukh"
+            className="absolute -top-6 right-0 z-10 w-[210px] rotate-[3deg] shadow-3"
+          />
           <div className="absolute inset-0 mask-fade-y">
             <motion.ul
               animate={{ y: ["0%", "-50%"] }}
@@ -129,9 +134,12 @@ export function ScoreScene() {
           ))}
         </div>
 
-        <p className="mt-8 font-display text-[clamp(1.05rem,2.2vw,1.5rem)] font-extrabold text-[#FFE45E] [text-shadow:0_2px_0_#000,0_-2px_0_#000,2px_0_0_#000,-2px_0_0_#000]">
-          Comp band thoda kam? Toh roadmap ready hai.
-        </p>
+        <div className="mx-auto mt-10 flex max-w-xl flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-center">
+          <MemeGif name="tumseNaHoPayega" className="w-[220px] shrink-0 -rotate-2 shadow-3" />
+          <p className="font-display text-[clamp(1.05rem,2.2vw,1.5rem)] font-extrabold leading-snug text-[#FFE45E] [text-shadow:0_2px_0_#000,0_-2px_0_#000,2px_0_0_#000,-2px_0_0_#000] sm:text-left">
+            Comp band thoda kam? Ho jayega — roadmap ready hai.
+          </p>
+        </div>
       </div>
     </div>
   );

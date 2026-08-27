@@ -45,7 +45,9 @@ const nextConfig = {
               "default-src 'self'",
               `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"} https://www.googletagmanager.com`,
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https://*.supabase.co https://media.licdn.com https://*.google-analytics.com https://*.googletagmanager.com",
+              // media*.tenor.com serves the meme GIFs in src/lib/gifs.ts.
+              // Without it the CSP silently blocks every one of them.
+              "img-src 'self' data: https://*.supabase.co https://media.licdn.com https://*.tenor.com https://*.google-analytics.com https://*.googletagmanager.com",
               "font-src 'self' data:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com",
               "object-src 'none'",
