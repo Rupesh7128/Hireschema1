@@ -15,6 +15,7 @@ import {
   PencilLine,
   Shield,
 } from "@/components/brand/icons";
+import { apiFetch } from "@/lib/api/client";
 import { invalidateMatchFeedCache } from "@/lib/api/matches";
 import {
   applyProfileToForm,

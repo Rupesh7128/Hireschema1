@@ -31,7 +31,6 @@ import { BTN_CHIP_ACTIVE } from "@/lib/button-classes";
 import { cn } from "@/lib/utils";
 import { formatSalaryRange } from "@/lib/salary";
 import { jobIsFullyRemote, jobLocationLabel } from "@/lib/job-location";
-import { jobLocationLabel } from "@/lib/job-location";
 import { AppShell } from "@/components/layout/AppShell";
 import { Avatar, Badge, Button, ScoreDot, useToast } from "@/components/ui";
 

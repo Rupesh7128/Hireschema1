@@ -1,7 +1,6 @@
 import type { MatchedJob } from "@/lib/api/matches";
 import type { SalaryCurrency } from "@/lib/salary";
 import { jobIsFullyRemote } from "@/lib/job-location";
-import { jobIsFullyRemote } from "@/lib/job-location";
 
 export type JobCardFilters = {
   remoteOnly?: boolean;
