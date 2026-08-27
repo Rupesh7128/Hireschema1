@@ -51,7 +51,7 @@ Every data collection event is logged in our consent_log table with purpose, tim
     content: `We do not sell your personal data. We share data only in the following cases:
 
 • With hiring managers (name, headline, skills summary — when you request an intro)
-• With our technical vendors (Supabase, OpenRouter, Deepgram, Apify, SendGrid, MSG91) solely to provide the service — all are contractually bound by data processing agreements
+• With our technical vendors (Supabase, OpenRouter, Deepgram, Apify, SendGrid, MSG91, Google Analytics) solely to provide the service — all are contractually bound by data processing agreements
 • When required by Indian law or a court order
 • In aggregate, anonymised form for research or product improvement
 
@@ -91,7 +91,7 @@ To exercise these rights: Email privacy@hireschema.com or use the in-app "Data &
   {
     id: "cookies",
     title: "8. Cookies",
-    content: `We use essential cookies only: session tokens for authentication (via Supabase Auth) and CSRF protection tokens. We do not use advertising, tracking, or analytics cookies from third parties.`,
+    content: `We use essential cookies for authentication (via Supabase Auth) and CSRF protection. We also use Google Analytics 4 (property G-BX7MT5EE6E) to measure visits and in-product usage. Google may set cookies and process that data on servers outside India. We do not use Google Ads or other advertising pixels.`,
   },
   {
     id: "children",
@@ -111,7 +111,7 @@ Response time: 72 hours for privacy-related requests, 30 days for formal DPDP Ac
     title: "11. Updates to this policy",
     content: `We may update this policy. Material changes will be notified by email and in-app at least 7 days before they take effect. Continued use after the effective date constitutes acceptance.
 
-Last updated: July 2026`,
+Last updated: August 2026`,
   },
 ];
 

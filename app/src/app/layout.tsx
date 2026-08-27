@@ -8,6 +8,7 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AiOperationsProvider } from "@/components/providers/AiOperationsProvider";
 import { AiOperationIndicator } from "@/components/operations/AiOperationIndicator";
 import { AppWarmup } from "@/components/providers/AppWarmup";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import "./globals.css";
 
 const APP_ORIGIN =
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en-IN" suppressHydrationWarning>
       <body className="font-sans antialiased min-h-screen bg-paper-0 text-ink-900">
+        <GoogleAnalytics />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-ink-900 focus:px-4 focus:py-2 focus:text-paper-0"
