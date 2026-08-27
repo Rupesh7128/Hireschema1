@@ -121,6 +121,10 @@ const config: Config = {
         "pulse-glow":  "pulseGlow 3.2s ease-in-out infinite",
         "spin-slow":   "spin 26s linear infinite",
         "shimmer":     "shimmer 2.6s linear infinite",
+        /* Three bands of the <ShineText/> sweep — same travel, different widths. */
+        "shine-wide":  "shineWide 4.5s linear infinite",
+        "shine-mid":   "shineMid 4.5s linear infinite",
+        "shine-core":  "shineCore 4.5s linear infinite",
         "blink":       "blink 1.1s steps(2, start) infinite",
         "gradient":    "gradientShift 9s ease infinite",
       },
@@ -143,6 +147,18 @@ const config: Config = {
           "100%": { backgroundPosition: "200% 0" },
         },
         blink: { "0%,100%": { opacity: "1" }, "50%": { opacity: "0" } },
+        shineWide: {
+          "0%":   { clipPath: "polygon(-60% 0, -20% 0, -31% 100%, -71% 100%)" },
+          "100%": { clipPath: "polygon(120% 0, 160% 0, 149% 100%, 109% 100%)" },
+        },
+        shineMid: {
+          "0%":   { clipPath: "polygon(-51% 0, -29% 0, -40% 100%, -62% 100%)" },
+          "100%": { clipPath: "polygon(129% 0, 151% 0, 140% 100%, 118% 100%)" },
+        },
+        shineCore: {
+          "0%":   { clipPath: "polygon(-44.5% 0, -35.5% 0, -46.5% 100%, -55.5% 100%)" },
+          "100%": { clipPath: "polygon(135.5% 0, 144.5% 0, 133.5% 100%, 124.5% 100%)" },
+        },
         gradientShift: {
           "0%,100%": { backgroundPosition: "0% 50%" },
           "50%":     { backgroundPosition: "100% 50%" },
