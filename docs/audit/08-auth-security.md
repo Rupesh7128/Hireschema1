@@ -75,6 +75,7 @@ No wholesale committed production secrets found in application source. **PHASE_T
 | `/api/v1/health/deep` | `X-Service-Secret` |
 | `/api/v1/markets` | Public |
 | `/api/v1/jobs/ingest`, `/ingest/cron` | Service secret only |
+| `/api/v1/live-feed/sync` | Service secret only |
 | `/api/v1/matches/embed`, `/recompute` | Service secret |
 | `/api/v1/gmail/callback` | Signed OAuth state (no Bearer) |
 | `/api/v1/webhooks/msg91-whatsapp` | Service secret |

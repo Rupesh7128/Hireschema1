@@ -128,6 +128,7 @@ Production DB: real data only.
     - GET /api/v1/health/deep (X-Service-Secret)
     - GET /api/v1/markets (public)
     - POST /api/v1/jobs/ingest, /ingest/cron (X-Service-Secret)
+    - POST /api/v1/live-feed/sync (X-Service-Secret)
     - POST /api/v1/matches/embed, /recompute (X-Service-Secret)
     - GET/POST /api/v1/gmail/callback (HMAC-signed OAuth state)
     - POST /api/v1/webhooks/msg91-whatsapp (X-Service-Secret)
