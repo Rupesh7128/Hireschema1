@@ -26,6 +26,7 @@ import {
 import { MagneticButton } from "@/components/premium/MagneticButton";
 import { MemePopover } from "@/components/premium/MemePopover";
 import { SplitText } from "@/components/premium/SplitText";
+import { ShineText } from "@/components/premium/ShineText";
 import { ChatPreview } from "@/components/premium/ChatPreview";
 import { MemeGif } from "@/components/premium/MemeGif";
 import { INVITE_URL, REVIEW_CV_URL } from "@/lib/site";
@@ -132,7 +133,7 @@ export function Hero() {
                 />
               </span>
               <span className="flex flex-wrap items-center gap-x-5 gap-y-3 text-[clamp(2.25rem,min(9vw,11vh),7rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">
-                <SplitText text="my brotha." by="word" delay={0.18} unitClassName="text-outline" />
+                <ShineText text="my brotha." delay={0.18} />
                 <motion.span
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}

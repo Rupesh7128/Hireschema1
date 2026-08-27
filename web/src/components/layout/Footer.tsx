@@ -60,7 +60,7 @@ export function Footer() {
 
             <Link
               href={INVITE_URL}
-              className="mt-6 inline-flex h-11 items-center gap-2 rounded-none bg-accent px-5 text-small font-semibold text-accent-fg transition-colors duration-base hover:bg-accent-hover"
+              className="btn-brutal mt-6 inline-flex h-11 items-center gap-2 bg-accent px-5 text-small font-bold text-accent-fg transition-colors duration-base hover:bg-accent-hover"
             >
               Request an invite
             </Link>

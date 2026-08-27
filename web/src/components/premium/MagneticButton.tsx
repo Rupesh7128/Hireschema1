@@ -29,7 +29,7 @@ const MotionLink = motion.create(Link);
 const VARIANTS = {
   accent: "btn-brutal bg-accent text-accent-fg hover:bg-accent-hover",
   masala: "btn-brutal bg-masala text-accent-fg hover:bg-masala-hover",
-  ghost: "btn-brutal-ink bg-ink-800 text-black hover:bg-white",
+  ghost: "btn-brutal-white bg-ink-800 text-black hover:bg-white",
 } as const;
 
 export function MagneticButton({

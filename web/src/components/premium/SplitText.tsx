@@ -74,7 +74,7 @@ export function SplitText({
         >
           <motion.span
             variants={unit}
-            className={cn("inline-block will-transform", unitClassName)}
+            className={cn("inline-block", unitClassName)}
           >
             {part === " " ? " " : part}
             {by === "word" && i < parts.length - 1 ? " " : ""}

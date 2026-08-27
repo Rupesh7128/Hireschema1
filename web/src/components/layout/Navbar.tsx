@@ -109,9 +109,9 @@ export function Navbar() {
             <Link
               href={INVITE_URL}
               className="
-                group inline-flex h-10 items-center gap-1.5 rounded-none bg-accent
-                px-4 text-small font-semibold text-accent-fg
-                transition-all duration-base hover:bg-accent-hover
+                btn-brutal group inline-flex h-10 items-center gap-1.5 bg-accent
+                px-4 text-small font-bold text-accent-fg
+                transition-colors duration-base hover:bg-accent-hover
               "
             >
               Request invite
@@ -169,14 +169,14 @@ export function Navbar() {
                 <Link
                   href={INVITE_URL}
                   onClick={() => setMobileOpen(false)}
-                  className="flex h-13 items-center justify-center gap-2 rounded-none bg-accent py-3.5 font-semibold text-accent-fg"
+                  className="btn-brutal flex items-center justify-center gap-2 bg-accent py-3.5 font-bold text-accent-fg"
                 >
                   Request invite <ArrowRight className="h-4 w-4" strokeWidth={2.4} />
                 </Link>
                 <Link
                   href={`${APP_URL}/signup?mode=signin`}
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center rounded-none border border-ink-200 py-3.5 font-medium text-ink-700"
+                  className="btn-brutal-white flex items-center justify-center bg-ink-800 py-3.5 font-bold text-black"
                 >
                   Sign in
                 </Link>

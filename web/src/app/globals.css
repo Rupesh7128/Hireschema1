@@ -129,6 +129,11 @@
     box-shadow: 0 0 0 2px #3A3A42, 0 0 0 4px #000000;
   }
 
+  .btn-brutal-white {
+    border: 2px solid #000000;
+    box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #000000;
+  }
+
   /* Hairline top highlight — sells the "lit from above" 3D read. */
   .edge-light {
     position: relative;
@@ -177,8 +182,29 @@
 
   .text-outline {
     color: transparent;
-    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.20);
+    -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.45);
     paint-order: stroke fill;
+  }
+
+  /*
+   * Two-layer shine, used by <ShineText/>. See that file for why this is not
+   * done with an animated background-position.
+   */
+  .shine-base {
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.5);
+    paint-order: stroke fill;
+  }
+
+  .shine-over {
+    position: absolute;
+    inset: 0;
+    color: transparent;
+    -webkit-text-stroke: 1.6px #E6FF9B;
+    paint-order: stroke fill;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px rgba(159, 232, 112, 0.55));
+    animation: shineSweep 4.5s linear infinite;
   }
 
   .text-outline-accent {
@@ -284,6 +310,11 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   animation: grainShift 1s steps(4) infinite;
+}
+
+@keyframes shineSweep {
+  0%   { clip-path: polygon(-35% 0, -12% 0, -23% 100%, -46% 100%); }
+  100% { clip-path: polygon(112% 0, 135% 0, 124% 100%, 101% 100%); }
 }
 
 @keyframes grainShift {
