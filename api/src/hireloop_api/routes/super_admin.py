@@ -531,17 +531,21 @@ async def list_invites(
     offset: int = Query(default=0, ge=0),
     admin: dict = Depends(get_admin_user),
     db: asyncpg.Connection = Depends(get_db),
-) -> list[dict]:
-    from hireloop_api.services.invite_access import list_invite_requests
+) -> dict:
+    from hireloop_api.services.invite_access import invite_request_stats, list_invite_requests
 
     _ = admin
-    return await list_invite_requests(
+    items = await list_invite_requests(
         db,
         status=status_filter,
         q=q,
         limit=limit,
         offset=offset,
     )
+    return {
+        "items": items,
+        "stats": await invite_request_stats(db),
+    }
 
 
 @router.patch("/invites/{invite_id}")

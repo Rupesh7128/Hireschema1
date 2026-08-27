@@ -66,6 +66,20 @@ type InviteRequest = {
   created_at: string | null;
 };
 
+type InviteStats = {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+};
+
+const EMPTY_INVITE_STATS: InviteStats = {
+  total: 0,
+  pending: 0,
+  approved: 0,
+  rejected: 0,
+};
+
 const ROLE_OPTIONS = [
   { value: "candidate", label: "candidate" },
   { value: "recruiter", label: "recruiter" },
@@ -85,6 +99,7 @@ export default function SuperAdminPage() {
   const [candidates, setCandidates] = useState<CandidateSummary[]>([]);
   const [recruiters, setRecruiters] = useState<RecruiterSummary[]>([]);
   const [invites, setInvites] = useState<InviteRequest[]>([]);
+  const [inviteStats, setInviteStats] = useState<InviteStats>(EMPTY_INVITE_STATS);
 
   const endpoint = useMemo(() => {
     const params = new URLSearchParams();
@@ -107,8 +122,9 @@ export default function SuperAdminPage() {
     setError(null);
     try {
       if (tab === "invites") {
-        const data = await apiFetch<InviteRequest[]>(endpoint);
-        setInvites(data);
+        const data = await apiFetch<{ items: InviteRequest[]; stats: InviteStats }>(endpoint);
+        setInvites(data.items);
+        setInviteStats(data.stats);
       } else if (tab === "users") {
         const data = await apiFetch<UserSummary[]>(endpoint);
         setUsers(data);
@@ -207,7 +223,9 @@ export default function SuperAdminPage() {
               </div>
               <h1 className="text-h1 text-paper-0">User management</h1>
               <p className="text-small text-ink-500">
-                All invite requests, newest first. Approve or reject from this list.
+                {loading && tab === "invites"
+                  ? "All invite requests, newest first."
+                  : `${inviteStats.total.toLocaleString("en-IN")} invite${inviteStats.total === 1 ? "" : "s"} received. Approve or reject from this list.`}
               </p>
             </div>
           </div>
@@ -222,6 +240,7 @@ export default function SuperAdminPage() {
           <div className="flex flex-wrap items-center gap-2">
             <TabButton active={tab === "invites"} onClick={() => setTab("invites")}>
               Invites
+              {inviteStats.total > 0 ? ` (${inviteStats.total})` : ""}
             </TabButton>
             <TabButton active={tab === "users"} onClick={() => setTab("users")}>
               Users
@@ -266,6 +285,29 @@ export default function SuperAdminPage() {
             </label>
           )}
         </div>
+
+        {tab === "invites" && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {(
+              [
+                { key: "total", label: "Received", accent: true },
+                { key: "pending", label: "Pending", accent: false },
+                { key: "approved", label: "Approved", accent: false },
+                { key: "rejected", label: "Rejected", accent: false },
+              ] as const
+            ).map(({ key, label, accent }) => (
+              <div
+                key={key}
+                className="rounded-lg bg-ink-900 border border-ink-700 p-4 space-y-2"
+              >
+                <p className="text-micro text-ink-500 uppercase tracking-wider">{label}</p>
+                <p className={`text-h2 font-semibold ${accent ? "text-accent" : "text-paper-0"}`}>
+                  {loading ? "—" : inviteStats[key].toLocaleString("en-IN")}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {tab === "invites" && (
           <form onSubmit={(e) => void addApprovedInvite(e)} className="flex flex-col gap-2 sm:flex-row sm:items-center">

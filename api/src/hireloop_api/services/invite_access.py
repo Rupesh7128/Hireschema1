@@ -76,9 +76,7 @@ async def can_bootstrap_new_user(
     return await is_email_invite_approved(db, email=email)
 
 
-INVITE_PENDING_MESSAGE = (
-    "Thank you for requesting an invite. We'll get back to you."
-)
+INVITE_PENDING_MESSAGE = "Thank you for requesting an invite. We'll get back to you."
 INVITE_REJECTED_MESSAGE = (
     "This invite request was declined. Contact hello@hireschema.com if that seems wrong."
 )
@@ -187,6 +185,28 @@ async def request_invite(
         "status": row["status"],
         "already_exists": False,
         "message": "Thanks — you're on the invite list. We'll email you when approved.",
+    }
+
+
+async def invite_request_stats(db: asyncpg.Connection) -> dict[str, int]:
+    """Lifetime waitlist volume — not limited by the list page size or filters."""
+    row = await db.fetchrow(
+        """
+        SELECT
+          count(*)::int AS total,
+          count(*) FILTER (WHERE status = 'pending')::int AS pending,
+          count(*) FILTER (WHERE status = 'approved')::int AS approved,
+          count(*) FILTER (WHERE status = 'rejected')::int AS rejected
+        FROM public.invite_requests
+        """
+    )
+    if not row:
+        return {"total": 0, "pending": 0, "approved": 0, "rejected": 0}
+    return {
+        "total": int(row["total"]),
+        "pending": int(row["pending"]),
+        "approved": int(row["approved"]),
+        "rejected": int(row["rejected"]),
     }
 
 

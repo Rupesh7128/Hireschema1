@@ -78,7 +78,11 @@ async def admin_dashboard(
           (SELECT count(*) FROM public.intro_requests
              WHERE status = 'sent' AND created_at > $1) AS intros_sent_7d,
           (SELECT count(*) FROM public.voice_sessions WHERE created_at > $1) AS voice_sessions_7d,
-          (SELECT count(*) FROM public.placements) AS placements_total
+          (SELECT count(*) FROM public.placements) AS placements_total,
+          (SELECT count(*) FROM public.invite_requests) AS invites_total,
+          (SELECT count(*) FROM public.invite_requests WHERE status = 'pending') AS invites_pending,
+          (SELECT count(*) FROM public.invite_requests WHERE status = 'approved') AS invites_approved,
+          (SELECT count(*) FROM public.invite_requests WHERE status = 'rejected') AS invites_rejected
         """,
         since,
     )

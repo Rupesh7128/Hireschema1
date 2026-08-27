@@ -18,6 +18,7 @@ import {
   ShieldAlert,
   ExternalLink,
   RefreshCw,
+  Inbox,
 } from "@/components/brand/icons";
 import { apiFetch } from "@/lib/api/client";
 import { Badge, Button, Card, CardBody, CardHeader } from "@/components/ui";
@@ -31,6 +32,10 @@ type DashStats = {
   intros_sent_7d: number;
   voice_sessions_7d: number;
   placements_total: number;
+  invites_total: number;
+  invites_pending: number;
+  invites_approved: number;
+  invites_rejected: number;
 };
 
 type BiasRow = Record<string, unknown>;
@@ -41,14 +46,16 @@ const STAT_META: {
   Icon: typeof Users;
   accent?: boolean;
 }[] = [
-  { key: "total_users",         label: "Users",        Icon: Users       },
-  { key: "candidates",          label: "Candidates",   Icon: Users       },
-  { key: "recruiters",          label: "Recruiters",   Icon: Briefcase   },
-  { key: "active_jobs",         label: "Active jobs",  Icon: Briefcase   },
-  { key: "intros_7d",           label: "Intros (7d)",  Icon: BarChart3   },
-  { key: "intros_sent_7d",      label: "Sent (7d)",    Icon: Activity    },
-  { key: "voice_sessions_7d",   label: "Voice (7d)",   Icon: Activity    },
-  { key: "placements_total",    label: "Hires",        Icon: BarChart3, accent: true },
+  { key: "total_users",         label: "Users",            Icon: Users       },
+  { key: "candidates",          label: "Candidates",       Icon: Users       },
+  { key: "recruiters",          label: "Recruiters",       Icon: Briefcase   },
+  { key: "invites_total",       label: "Invites received", Icon: Inbox, accent: true },
+  { key: "invites_pending",     label: "Invites pending",  Icon: Inbox       },
+  { key: "active_jobs",         label: "Active jobs",      Icon: Briefcase   },
+  { key: "intros_7d",           label: "Intros (7d)",      Icon: BarChart3   },
+  { key: "intros_sent_7d",      label: "Sent (7d)",        Icon: Activity    },
+  { key: "voice_sessions_7d",   label: "Voice (7d)",       Icon: Activity    },
+  { key: "placements_total",    label: "Hires",            Icon: BarChart3   },
 ];
 
 export default function AdminHomePage() {
@@ -135,7 +142,7 @@ export default function AdminHomePage() {
         <div className="flex flex-wrap gap-3">
           {[
             { href: "/admin/placements", label: "Hires", note: "placement records" },
-            { href: "/admin/super",     label: "Super admin", note: "users + recruiters" },
+            { href: "/admin/super",     label: "Super admin", note: "invites + users" },
           ].map(({ href, label, note }) => (
             <Link
               key={href}

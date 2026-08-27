@@ -11,6 +11,7 @@ from hireloop_api.config import Settings
 from hireloop_api.deps import _load_app_user
 from hireloop_api.services.invite_access import (
     INVITE_PENDING_MESSAGE,
+    invite_request_stats,
     is_super_admin_email,
     is_valid_email,
     normalize_email,
@@ -39,6 +40,18 @@ def test_is_super_admin_email() -> None:
 def test_invite_pending_message() -> None:
     assert "Thank you for requesting an invite" in INVITE_PENDING_MESSAGE
     assert "get back to you" in INVITE_PENDING_MESSAGE.lower()
+
+
+class _StatsConn:
+    async def fetchrow(self, query: str, *_args: object) -> dict[str, int]:
+        assert "invite_requests" in query
+        return {"total": 12, "pending": 7, "approved": 4, "rejected": 1}
+
+
+@pytest.mark.asyncio
+async def test_invite_request_stats_counts_all_statuses() -> None:
+    stats = await invite_request_stats(_StatsConn())  # type: ignore[arg-type]
+    assert stats == {"total": 12, "pending": 7, "approved": 4, "rejected": 1}
 
 
 class _NoUserConn:
