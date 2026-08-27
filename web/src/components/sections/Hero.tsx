@@ -14,7 +14,7 @@
  */
 
 import { useRef } from "react";
-import { ArrowRight, FileText, Check } from "@/components/brand/icons";
+import { ArrowRight, FileText } from "@/components/brand/icons";
 import {
   motion,
   useMotionValue,
@@ -27,7 +27,7 @@ import { MagneticButton } from "@/components/premium/MagneticButton";
 import { MemePopover } from "@/components/premium/MemePopover";
 import { SplitText } from "@/components/premium/SplitText";
 import { ShineText } from "@/components/premium/ShineText";
-import { TraceLine } from "@/components/premium/TraceLine";
+import { TrustTrace } from "@/components/premium/TrustTrace";
 import { ChatPreview } from "@/components/premium/ChatPreview";
 import { MemeGif } from "@/components/premium/MemeGif";
 import { INVITE_URL, REVIEW_CV_URL } from "@/lib/site";
@@ -190,35 +190,13 @@ export function Hero() {
                 </MagneticButton>
               </MemePopover>
             </motion.div>
-            <motion.ul
+            <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.95 }}
-              className="mt-9 grid gap-x-6 gap-y-3 sm:grid-cols-3"
+              className="mt-9"
             >
-              {TRUST.map((t) => (
-                <li key={t.label} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border border-accent bg-accent/10">
-                    <Check className="h-3 w-3 text-accent" strokeWidth={3} />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-small font-semibold leading-tight text-ink-800">
-                      {t.label}
-                    </span>
-                    <span className="block text-[12px] leading-tight text-ink-400">
-                      {t.hindi}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </motion.ul>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1.2, delay: 1.15 }}
-            >
-              <TraceLine className="mt-6 h-[110px] w-full" />
+              <TrustTrace items={TRUST} />
             </motion.div>
           </motion.div>
 
