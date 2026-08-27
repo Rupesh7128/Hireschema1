@@ -3,7 +3,7 @@
 /**
  * MatchFeed — DESIGN.md compliant feed of matched jobs.
  *
- *   - Filter bar (min score slider, remote toggle, seniority select)
+ *   - Filter bar (min score slider, seniority select; product is remote-only)
  *   - List of <JobCard>
  *   - Skeleton on first load
  *   - <EmptyState> when no matches
@@ -31,7 +31,7 @@ import {
   type MatchFeedFilters,
 } from "@/lib/api/matches";
 import { dedupeJobs } from "@/lib/chat/dedupeJobs";
-import { applyRemotePreferenceFilter, jobIsFullyRemote } from "@/lib/job-location";
+import { applyRemotePreferenceFilter } from "@/lib/job-location";
 import { fetchMyProfile, getCachedProfile, type RemotePreference } from "@/lib/api/profile";
 import { useJobCardAssets } from "@/hooks/useJobCardAssets";
 import { ResumePreviewModal } from "@/components/resumes/ResumePreviewModal";
@@ -151,10 +151,9 @@ function groupWithNewSection(jobs: MatchedJob[], options: { enabled: boolean }):
 
 function applyLocalFilters(
   jobs: MatchedJob[],
-  filters: { remoteOnly: boolean; seniority: string; remotePreference?: RemotePreference | null },
+  filters: { seniority: string; remotePreference?: RemotePreference | null },
 ): MatchedJob[] {
-  let visible = applyRemotePreferenceFilter(jobs, filters.remotePreference);
-  if (filters.remoteOnly) visible = visible.filter((j) => jobIsFullyRemote(j));
+  let visible = applyRemotePreferenceFilter(jobs, "remote_only");
   if (filters.seniority) {
     visible = visible.filter((j) => j.seniority === filters.seniority);
   }
@@ -205,7 +204,6 @@ export function MatchFeed({
 
   // Filters
   const [minScore, setMinScore] = useState(MATCH_FEED_RELEVANCE_FLOOR);
-  const [remoteOnly, setRemoteOnly] = useState(false);
   const [remotePreference, setRemotePreference] = useState<RemotePreference | null>(
     cachedRemotePreference,
   );
@@ -242,14 +240,14 @@ export function MatchFeed({
 
         const cached = isFirst ? getCachedMatchFeed(filters) : null;
         if (cached) {
-          setJobs(applyLocalFilters(cached, { remoteOnly, seniority, remotePreference }));
+          setJobs(applyLocalFilters(cached, { seniority, remotePreference }));
           setHasMore(compact ? false : cached.length === pageSize);
           setOffset(currentOffset + cached.length);
           setLoading(false);
           // Refresh in the background without blocking the sidebar.
           void fetchMatchFeed(filters, { force: true })
             .then((rawData) => {
-              const data = applyLocalFilters(rawData, { remoteOnly, seniority, remotePreference });
+              const data = applyLocalFilters(rawData, { seniority, remotePreference });
               setJobs(data);
               setHasMore(compact ? false : rawData.length === pageSize);
               setOffset(rawData.length);
@@ -266,7 +264,7 @@ export function MatchFeed({
         }
 
         const rawData = await fetchMatchFeed(filters);
-        const data = applyLocalFilters(rawData, { remoteOnly, seniority, remotePreference });
+        const data = applyLocalFilters(rawData, { seniority, remotePreference });
 
         if (isFirst && data.length === 0 && scoreFloor > 0.25) {
           return load(true, 0.25);
@@ -293,7 +291,7 @@ export function MatchFeed({
         setLoadingMore(false);
       }
     },
-    [minScore, remoteOnly, seniority, remotePreference, offset, compact, pageSize]
+    [minScore, seniority, remotePreference, offset, compact, pageSize]
   );
 
   useEffect(() => {
@@ -417,7 +415,7 @@ export function MatchFeed({
     setEmptyRefreshCount(0);
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [minScore, remoteOnly, seniority, remotePreference]);
+  }, [minScore, seniority, remotePreference]);
 
   useEffect(() => {
     const onInvalidate = () => {
@@ -478,10 +476,9 @@ export function MatchFeed({
   // Hireschema AI showed in chat appears here immediately, while the feed still loads.
   const displayJobs = applyLocalFilters(
     seedJobs?.length ? dedupeJobs([...seedJobs, ...jobs]) : jobs,
-    { remoteOnly, seniority, remotePreference },
+    { seniority, remotePreference },
   );
   const visibleHistoryJobs = applyLocalFilters(historyJobs, {
-    remoteOnly,
     seniority: "",
     remotePreference,
   });
@@ -492,7 +489,7 @@ export function MatchFeed({
   const showHeaders =
     !compact &&
     (sections.length > 1 || (sections.length === 1 && sections[0].key !== MORE_SECTION.key));
-  const hasLocalFilters = remoteOnly || Boolean(seniority);
+  const hasLocalFilters = Boolean(seniority);
   const countLabel = (() => {
     if (loading && visibleCount === 0) return "";
     if (hasLocalFilters || seedJobs?.length) {
@@ -548,7 +545,6 @@ export function MatchFeed({
       {!compact &&
       (() => {
         const activeFilterCount =
-          (remoteOnly ? 1 : 0) +
           (seniority ? 1 : 0) +
           (minScore !== MATCH_FEED_RELEVANCE_FLOOR ? 1 : 0);
         return (
@@ -598,26 +594,10 @@ export function MatchFeed({
                   </span>
                 </div>
 
-                {/* Remote toggle */}
-                <button
-                  type="button"
-                  onClick={() => setRemoteOnly((v) => !v)}
-                  className={cn(
-                    "flex items-center gap-1.5 text-small px-3 py-1.5 rounded-full border transition-colors duration-fast",
-                    remoteOnly
-                      ? "bg-ink-900 text-paper-0 border-ink-900 font-medium"
-                      : "border-ink-100 text-ink-500 hover:text-ink-900 hover:border-ink-300"
-                  )}
-                  aria-pressed={remoteOnly}
-                >
-                  <span
-                    className={cn(
-                      "w-1.5 h-1.5 rounded-full",
-                      remoteOnly ? "bg-paper-0" : "bg-ink-300"
-                    )}
-                  />
-                  Remote only
-                </button>
+                <span className="flex items-center gap-1.5 text-small px-3 py-1.5 rounded-full border border-ink-900 bg-ink-900 font-medium text-paper-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-paper-0" />
+                  Remote from India
+                </span>
 
                 {/* Seniority */}
                 <Select

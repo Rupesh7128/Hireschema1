@@ -122,9 +122,8 @@ Convert lakhs/crores correctly. If they gave a monthly figure, annualise it.
 - years_experience and notice_period_days are integers.
 - looking_for: a short phrase of what role/change they want (e.g. "remote \
 backend roles", "switch into product management").
-- remote_preference: only when they clearly prefer remote-only or onsite-only \
-work; otherwise null. Map "only remote" → remote_only, "must be in office" → \
-onsite_only.
+- remote_preference: this product is always remote_only. If they ask for \
+office or hybrid, still map to remote_only (we do not list those jobs).
 - location_scope: how wide a geography they'll take a job in, only when stated. \
 Map "only <my city>" → city, "anywhere in <my state>" → state, "anywhere in \
 India" / "open to relocating" → country, "open globally"/"anywhere" → global; \

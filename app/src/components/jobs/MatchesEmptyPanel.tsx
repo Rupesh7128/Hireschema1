@@ -15,7 +15,7 @@ export function MatchesEmptyPanel({
       <p className="text-small text-ink-600 max-w-sm">
         {isSearching
           ? "Finding roles that fit your profile…"
-          : "No strong matches yet. Ask Hireschema AI to search for you."}
+          : "No remote matches yet that you can do from India. Ask Hireschema AI to search."}
       </p>
       {onAskAarya && (
         <Button

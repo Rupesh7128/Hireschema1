@@ -2178,9 +2178,9 @@ type ActionCardDef = {
 };
 
 const REMOTE_PREF_PHRASE: Record<RemotePreference, string> = {
-  any: "",
-  remote_only: " Only show remote roles.",
-  onsite_only: " Only show on-site roles.",
+  any: " Only show fully remote roles I can do from India.",
+  remote_only: " Only show fully remote roles I can do from India.",
+  onsite_only: " Only show fully remote roles I can do from India.",
 };
 
 /**

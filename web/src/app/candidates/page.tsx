@@ -16,7 +16,7 @@ import { ProductPreview } from "@/components/marketing/ProductPreview";
 export const metadata: Metadata = {
   title: "For Candidates — AI Career Partner",
   description:
-    "Hireschema AI is your personal AI career partner. She matches you to the right Indian jobs, prepares you for interviews, and makes the warm intro to the hiring manager.",
+    "Hireschema AI is your personal AI career partner. She matches you to fully remote jobs you can do from India, prepares you for interviews, and makes the warm intro to the hiring manager.",
 };
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://hireschema.com";
@@ -38,7 +38,7 @@ const FEATURES = [
     Icon: Target,
     title: "Semantic job matching",
     description:
-      "Not keyword matching — semantic understanding of your experience against India-only roles.",
+      "Not keyword matching — semantic understanding of your experience against fully remote roles you can do from India.",
   },
   {
     Icon: Mail,
@@ -85,8 +85,9 @@ export default function CandidatesPage() {
               Meet <span className="text-ink-500">Hireschema AI</span> — your personal career AI
             </h1>
             <p className="text-h3 text-ink-500 font-normal mb-10 max-w-2xl mx-auto">
-              She builds your career graph, finds the right jobs in India, and makes the
-              warm intro to the hiring manager — all from a single chat.
+              She builds your career graph, finds fully remote jobs you can do from
+              India, and makes the warm intro to the hiring manager — all from a
+              single chat.
             </p>
             <Link
               href={`${APP_URL}/reviewmycv`}

@@ -74,7 +74,7 @@ export function jobFaqs(roleLabel: string, cityLabel: string): { q: string; a: s
     },
     {
       q: `Are ${roleLabel} roles in ${cityLabel} remote or on-site?`,
-      a: `Both. Set your work mode (remote, on-site, or any) and location scope (city, state, country, or global) and Hireschema ranks ${cityLabel} and matching roles accordingly.`,
+      a: `Hireschema only lists fully remote ${roleLabel} jobs you can do from India — Indian companies and worldwide teams that hire people sitting in India. Office and hybrid roles, including ${cityLabel} office jobs, are not listed.`,
     },
     {
       q: `What salary can a ${roleLabel} expect in ${cityLabel}?`,

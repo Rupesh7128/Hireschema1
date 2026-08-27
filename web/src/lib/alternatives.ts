@@ -196,7 +196,7 @@ export const ALTERNATIVES: Alternative[] = [
     definition:
       "LinkedIn Jobs is a global Easy Apply graph. Hireschema is India-only. We do not compete as a professional network. We compete on one job: score an Indian CV against India roles, then intro from the candidate’s Gmail — not from a LinkedIn InMail quota.",
     whyPeopleLeave:
-      "Easy Apply is fast and noisy. India SWEs still get ghosted. LinkedIn is not locked to INR, +91, or Indian onsite/remote rules.",
+      "Easy Apply is fast and noisy. India SWEs still get ghosted. LinkedIn is not locked to INR, +91, or remote-from-India eligibility.",
     whoShouldStay:
       "Keep LinkedIn for network, posts, and companies that only hire there. Do not abandon a network for a matcher.",
     whoShouldTryUs:

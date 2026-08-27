@@ -16,7 +16,7 @@ Tool catalogue:
   - prepare_application_kit : save job + tailored resume, cover letter, interview prep
   - analyze_resume     : CV analysis card (gaps, strengths, version compare)
   - analyze_pasted_jd  : freeform JD ↔ CV fit analysis
-  - update_job_preferences : remote vs on-site job filter
+  - update_job_preferences : remote-only lock + location_scope (HQ / timezone)
   - book_voice_call    : get available voice-call slots (in-house Google Calendar)
   - voice_response     : signal that Deepgram TTS should be used for response
 """
@@ -411,7 +411,7 @@ async def update_job_preferences(
     """Persist the candidate's job-search preferences.
 
     Levers (set any combination):
-      - ``remote_preference``: remote vs on-site filter (any | remote_only | onsite_only).
+      - ``remote_preference``: ignored — product is always remote_only.
       - ``location_scope``: how wide a geography to surface — city | state | country | global.
         Drives the location sub-score; kept in sync with open_to_relocation.
       - ``open_to_relocation``: legacy boolean (True ≈ country). Prefer location_scope.
