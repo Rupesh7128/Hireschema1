@@ -27,6 +27,7 @@ import { MagneticButton } from "@/components/premium/MagneticButton";
 import { MemePopover } from "@/components/premium/MemePopover";
 import { SplitText } from "@/components/premium/SplitText";
 import { ChatPreview } from "@/components/premium/ChatPreview";
+import { MemeGif } from "@/components/premium/MemeGif";
 import { INVITE_URL, REVIEW_CV_URL } from "@/lib/site";
 
 const TRUST = [
@@ -130,8 +131,16 @@ export function Hero() {
                   unitClassName="text-gradient-accent"
                 />
               </span>
-              <span className="block text-[clamp(2.25rem,min(8.5vw,9.5vh),6.5rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">
+              <span className="flex flex-wrap items-center gap-x-5 gap-y-3 text-[clamp(2.25rem,min(8.5vw,9.5vh),6.5rem)] font-extrabold leading-[0.95] tracking-[-0.05em]">
                 <SplitText text="my brotha." by="word" delay={0.18} unitClassName="text-outline" />
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.7, delay: 0.85, ease: [0.16, 1, 0.3, 1] }}
+                  className="inline-block w-[clamp(120px,14vw,180px)] shrink-0"
+                >
+                  <MemeGif name="moneyFollows" inline caption={false} priority />
+                </motion.span>
               </span>
               <span className="mt-3.5 block text-[clamp(1rem,1.9vw,1.45rem)] font-bold leading-tight text-ink-700">
                 <SplitText
