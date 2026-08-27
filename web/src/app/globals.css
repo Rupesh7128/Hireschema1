@@ -20,9 +20,6 @@
 
     /* Driven by <ScrollProgress/>; used by ambient gradients. */
     --scroll: 0;
-    /* Driven by <Spotlight/>; pointer position in px. */
-    --mx: 50vw;
-    --my: 50vh;
   }
 
   * { border-color: theme("colors.ink.100"); }
@@ -66,7 +63,7 @@
   :focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px var(--paper-0), 0 0 0 4px var(--accent);
-    border-radius: 8px;
+    border-radius: 0;
   }
 
   ::selection {
@@ -78,7 +75,7 @@
   ::-webkit-scrollbar-track { background: var(--paper-0); }
   ::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #2E2E34, #18181B);
-    border-radius: 99px;
+    border-radius: 0;
     border: 2px solid var(--paper-0);
   }
   ::-webkit-scrollbar-thumb:hover { background: theme("colors.ink.300"); }
@@ -88,60 +85,48 @@
 
 @layer components {
   /*
-   * Frosted card.
-   *
-   * Deliberately NO backdrop-filter: the page paints ~35 of these, and each
-   * backdrop-filter forces the compositor to re-sample everything underneath
-   * it every frame. Over a scroll-driven page that is the difference between
-   * 60fps and single digits. A layered gradient over the charcoal reads the
-   * same at these opacities and costs nothing.
+   * Flat panel. The live product is brutalist — a visible keyline and a solid
+   * fill, no frosting, no radius. Still no backdrop-filter: the page paints
+   * dozens of these and each one would force a full re-sample per frame.
    */
   .glass {
-    background:
-      linear-gradient(
-        160deg,
-        rgba(255, 255, 255, 0.06) 0%,
-        rgba(255, 255, 255, 0.022) 45%,
-        rgba(255, 255, 255, 0.008) 100%
-      ),
-      rgba(17, 17, 19, 0.78);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #111113;
+    border: 1px solid #2E2E34;
   }
 
   .glass-strong {
-    background:
-      linear-gradient(
-        160deg,
-        rgba(255, 255, 255, 0.10) 0%,
-        rgba(255, 255, 255, 0.035) 55%,
-        rgba(255, 255, 255, 0.012) 100%
-      ),
-      rgba(20, 20, 23, 0.88);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #131316;
+    border: 1px solid #3A3A42;
   }
 
-  /* Fully opaque variant, for cards that stack on top of each other. */
+  /* Opaque variant for cards that stack on top of each other. */
   .glass-solid {
-    background:
-      linear-gradient(
-        160deg,
-        rgba(255, 255, 255, 0.10) 0%,
-        rgba(255, 255, 255, 0.035) 55%,
-        rgba(255, 255, 255, 0.012) 100%
-      ),
-      #131316;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #131316;
+    border: 1px solid #3A3A42;
   }
 
   /*
-   * The real thing, for the one element that sits over moving content and
-   * genuinely needs it: the navbar.
+   * The one element that sits over moving content and earns a real blur.
    */
   .glass-blur {
-    background: rgba(12, 12, 14, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(10, 10, 11, 0.88);
+    border-bottom: 1px solid #2E2E34;
     backdrop-filter: blur(20px) saturate(150%);
     -webkit-backdrop-filter: blur(20px) saturate(150%);
+  }
+
+  /*
+   * Control treatments, lifted from the live product: a hard black keyline
+   * with a lime ring sitting outside it.
+   */
+  .btn-brutal {
+    border: 2px solid #000000;
+    box-shadow: 0 0 0 2px #9FE870, 0 0 0 4px #000000;
+  }
+
+  .btn-brutal-ink {
+    border: 2px solid #000000;
+    box-shadow: 0 0 0 2px #3A3A42, 0 0 0 4px #000000;
   }
 
   /* Hairline top highlight — sells the "lit from above" 3D read. */
@@ -202,8 +187,8 @@
 
   /* Section eyebrow chip. */
   .eyebrow {
-    @apply inline-flex items-center gap-2 rounded-full border border-ink-200/80
-           bg-ink-50/70 px-3.5 py-1.5 text-micro uppercase text-ink-500;
+    @apply inline-flex items-center gap-2 border border-ink-200
+           bg-ink-50 px-3 py-1.5 text-micro uppercase text-ink-500;
   }
 
   .hairline {
@@ -258,20 +243,17 @@
   .glow-masala  { box-shadow: 0 0 60px -12px rgba(255, 176, 32, 0.5); }
 
   /*
-   * Ambient light pools. These replace `blur-[140px]` divs — a radial gradient
-   * is painted once, a large blur filter is re-run on every composite.
+   * Ambient light pool, brand green only. A radial gradient, not a
+   * `filter: blur()` — the gradient is painted once, a large blur re-runs on
+   * every composite.
    */
   .pool-accent {
-    background: radial-gradient(closest-side, rgba(159, 232, 112, 0.22), rgba(159, 232, 112, 0.07) 55%, transparent 100%);
-  }
-  .pool-masala {
-    background: radial-gradient(closest-side, rgba(255, 176, 32, 0.20), rgba(255, 176, 32, 0.06) 55%, transparent 100%);
-  }
-  .pool-volt {
-    background: radial-gradient(closest-side, rgba(139, 92, 246, 0.22), rgba(139, 92, 246, 0.07) 55%, transparent 100%);
-  }
-  .pool-chai {
-    background: radial-gradient(closest-side, rgba(255, 107, 74, 0.20), rgba(255, 107, 74, 0.06) 55%, transparent 100%);
+    background: radial-gradient(
+      closest-side,
+      rgba(159, 232, 112, 0.20),
+      rgba(159, 232, 112, 0.06) 55%,
+      transparent 100%
+    );
   }
 
   .shimmer {

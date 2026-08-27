@@ -76,6 +76,44 @@ export const GIFS = {
     caption: "Bete, mauj kardi",
     ratio: "498 / 280",
   },
+  // ── Ravi Kishan ────────────────────────────────────────────────────────
+  // "Money follows my brotha" is the line from the original brief, and it is
+  // the one that maps cleanest onto the remote-salary claim.
+  moneyFollows: {
+    id: "moneyFollows",
+    src: "https://media.tenor.com/ioMcMm49UAAAAAAS/money-follows-my-brotha-ravi-kishan.gif",
+    alt: "Ravi Kishan declaring that money follows him",
+    caption: "Money follows my brotha",
+    ratio: "498 / 280",
+  },
+  reacted: {
+    id: "reacted",
+    src: "https://media.tenor.com/P0EUl2iZUHgAAAAM/ravi-kishan-reacted-to-your-message.gif",
+    alt: "Ravi Kishan reacting to a message",
+    caption: "HM reacted to your message",
+    ratio: "498 / 280",
+  },
+  raviCelebrate: {
+    id: "raviCelebrate",
+    src: "https://media.tenor.com/2hivY5pP9YoAAAAS/ravi-kishan-laughing-laughing.gif",
+    alt: "Ravi Kishan dancing in celebration",
+    caption: "Bete, mauj kardi",
+    ratio: "498 / 280",
+  },
+  raviConfused: {
+    id: "raviConfused",
+    src: "https://media.tenor.com/n1yDCLksxlEAAAAM/ravi-kishan-funny.gif",
+    alt: "Ravi Kishan looking puzzled with a question mark",
+    caption: "CV mein likha kya hai?",
+    ratio: "498 / 280",
+  },
+  raviSad: {
+    id: "raviSad",
+    src: "https://media.tenor.com/qhtxd6sEUQ4AAAAS/sad-ravi-kishan-ravi-kishan.gif",
+    alt: "Ravi Kishan looking dejected",
+    caption: "Ek bhi reply nahi aaya",
+    ratio: "498 / 280",
+  },
 } as const satisfies Record<string, MemeGif>;
 
 export type GifKey = keyof typeof GIFS;

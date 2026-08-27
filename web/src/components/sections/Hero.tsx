@@ -77,8 +77,6 @@ export function Hero() {
       {/* ── Backdrop ────────────────────────────────────────────────── */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="pool-accent absolute left-1/2 top-[-20%] h-[64vh] w-[120vw] -translate-x-1/2" />
-        <div className="pool-masala absolute right-[-14%] top-[18%] h-[44vh] w-[44vw]" />
-        <div className="pool-volt absolute left-[-12%] top-[52%] h-[40vh] w-[38vw]" />
 
         <motion.div
           style={reduced ? undefined : { y: floorY }}
@@ -173,7 +171,7 @@ export function Hero() {
                 </MagneticButton>
               </MemePopover>
 
-              <MemePopover gif="bhaiKyaKar">
+              <MemePopover gif="raviConfused">
                 <MagneticButton href={REVIEW_CV_URL} variant="ghost">
                   <FileText className="h-4 w-4" strokeWidth={2} />
                   Free CV review

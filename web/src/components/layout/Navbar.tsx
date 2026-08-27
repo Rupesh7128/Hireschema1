@@ -47,25 +47,25 @@ export function Navbar() {
       >
         <nav
           className={cn(
-            "flex w-full max-w-wide items-center justify-between rounded-full px-4 transition-all duration-slow ease-out-soft",
+            "flex w-full max-w-wide items-center justify-between rounded-none px-4 transition-all duration-slow ease-out-soft",
             condensed
-              ? "glass-blur h-14 shadow-3 sm:px-5"
+              ? "glass-blur h-14 shadow-block sm:px-5"
               : "h-16 border border-transparent bg-transparent",
           )}
         >
           <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Hireschema home">
             <span className="relative block h-8 w-8 shrink-0">
-              <svg viewBox="0 0 48 48" className="h-8 w-8 rounded-[9px]" aria-hidden>
-                <rect width="48" height="48" rx="10" fill="#9FE870" />
+              <svg viewBox="0 0 48 48" className="h-8 w-8" aria-hidden>
+                <rect width="48" height="48" fill="#9FE870" />
                 <g transform="translate(24 24) skewX(-10) translate(-24 -24)">
-                  <rect x="10.5" y="9" width="7.5" height="12.5" rx="1.5" fill="#0A0A0B" />
-                  <rect x="10.5" y="26.5" width="7.5" height="12.5" rx="1.5" fill="#0A0A0B" />
-                  <rect x="30" y="9" width="7.5" height="12.5" rx="1.5" fill="#0A0A0B" />
-                  <rect x="30" y="26.5" width="7.5" height="12.5" rx="1.5" fill="#0A0A0B" />
-                  <rect x="10.5" y="20.5" width="27" height="7" rx="1.5" fill="#0A0A0B" />
+                  <rect x="10.5" y="9" width="7.5" height="12.5" fill="#0A0A0B" />
+                  <rect x="10.5" y="26.5" width="7.5" height="12.5" fill="#0A0A0B" />
+                  <rect x="30" y="9" width="7.5" height="12.5" fill="#0A0A0B" />
+                  <rect x="30" y="26.5" width="7.5" height="12.5" fill="#0A0A0B" />
+                  <rect x="10.5" y="20.5" width="27" height="7" fill="#0A0A0B" />
                 </g>
               </svg>
-              <span className="absolute inset-0 -z-10 rounded-[9px] bg-accent/50 blur-md" />
+              <span className="absolute inset-0 -z-10 bg-accent/40 blur-md" />
             </span>
             <span className="font-display text-h3 font-bold tracking-tight text-ink-900">
               Hire<span className="text-accent">schema</span>
@@ -82,14 +82,14 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "relative rounded-full px-3.5 py-2 text-small font-medium transition-colors duration-fast",
+                    "relative rounded-none px-3.5 py-2 text-small font-medium transition-colors duration-fast",
                     active ? "text-accent" : "text-ink-500 hover:text-ink-900",
                   )}
                 >
                   {active && (
                     <motion.span
                       layoutId="nav-pill"
-                      className="absolute inset-0 -z-10 rounded-full bg-accent/12"
+                      className="absolute inset-0 -z-10 rounded-none bg-accent/12"
                       transition={{ type: "spring", stiffness: 380, damping: 32 }}
                     />
                   )}
@@ -102,16 +102,15 @@ export function Navbar() {
           <div className="hidden items-center gap-2 md:flex">
             <Link
               href={`${APP_URL}/signup?mode=signin`}
-              className="rounded-full px-3.5 py-2 text-small font-medium text-ink-500 transition-colors duration-fast hover:text-ink-900"
+              className="rounded-none px-3.5 py-2 text-small font-medium text-ink-500 transition-colors duration-fast hover:text-ink-900"
             >
               Sign in
             </Link>
             <Link
               href={INVITE_URL}
               className="
-                group inline-flex h-10 items-center gap-1.5 rounded-full bg-accent
+                group inline-flex h-10 items-center gap-1.5 rounded-none bg-accent
                 px-4 text-small font-semibold text-accent-fg
-                shadow-[0_6px_24px_-8px_rgba(159,232,112,0.9)]
                 transition-all duration-base hover:bg-accent-hover
               "
             >
@@ -125,7 +124,7 @@ export function Navbar() {
             onClick={() => setMobileOpen((v) => !v)}
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-ink-700 transition-colors hover:bg-ink-100 md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-none text-ink-700 transition-colors hover:bg-ink-100 md:hidden"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -170,14 +169,14 @@ export function Navbar() {
                 <Link
                   href={INVITE_URL}
                   onClick={() => setMobileOpen(false)}
-                  className="flex h-13 items-center justify-center gap-2 rounded-full bg-accent py-3.5 font-semibold text-accent-fg"
+                  className="flex h-13 items-center justify-center gap-2 rounded-none bg-accent py-3.5 font-semibold text-accent-fg"
                 >
                   Request invite <ArrowRight className="h-4 w-4" strokeWidth={2.4} />
                 </Link>
                 <Link
                   href={`${APP_URL}/signup?mode=signin`}
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-center rounded-full border border-ink-200 py-3.5 font-medium text-ink-700"
+                  className="flex items-center justify-center rounded-none border border-ink-200 py-3.5 font-medium text-ink-700"
                 >
                   Sign in
                 </Link>

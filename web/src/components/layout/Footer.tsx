@@ -38,14 +38,14 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
           <div>
             <div className="mb-5 flex items-center gap-2.5">
-              <svg viewBox="0 0 48 48" className="h-9 w-9 shrink-0 rounded-[10px]" aria-hidden>
-                <rect width="48" height="48" rx="10" fill="#9FE870" />
+              <svg viewBox="0 0 48 48" className="h-9 w-9 shrink-0" aria-hidden>
+                <rect width="48" height="48" fill="#9FE870" />
                 <g transform="translate(24 24) skewX(-10) translate(-24 -24)">
-                  <rect x="10.5" y="9" width="7.5" height="12.5" rx="1.5" fill="#0A0A0B" />
-                  <rect x="10.5" y="26.5" width="7.5" height="12.5" rx="1.5" fill="#0A0A0B" />
-                  <rect x="30" y="9" width="7.5" height="12.5" rx="1.5" fill="#0A0A0B" />
-                  <rect x="30" y="26.5" width="7.5" height="12.5" rx="1.5" fill="#0A0A0B" />
-                  <rect x="10.5" y="20.5" width="27" height="7" rx="1.5" fill="#0A0A0B" />
+                  <rect x="10.5" y="9" width="7.5" height="12.5" fill="#0A0A0B" />
+                  <rect x="10.5" y="26.5" width="7.5" height="12.5" fill="#0A0A0B" />
+                  <rect x="30" y="9" width="7.5" height="12.5" fill="#0A0A0B" />
+                  <rect x="30" y="26.5" width="7.5" height="12.5" fill="#0A0A0B" />
+                  <rect x="10.5" y="20.5" width="27" height="7" fill="#0A0A0B" />
                 </g>
               </svg>
               <span className="font-display text-h3 font-bold text-ink-900">
@@ -60,7 +60,7 @@ export function Footer() {
 
             <Link
               href={INVITE_URL}
-              className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-small font-semibold text-accent-fg transition-colors duration-base hover:bg-accent-hover"
+              className="mt-6 inline-flex h-11 items-center gap-2 rounded-none bg-accent px-5 text-small font-semibold text-accent-fg transition-colors duration-base hover:bg-accent-hover"
             >
               Request an invite
             </Link>

@@ -91,7 +91,7 @@ function ActionLog() {
   return (
     <div
       ref={ref}
-      className="glass-strong overflow-hidden rounded-3xl edge-light shadow-[0_40px_120px_-40px_rgba(159,232,112,0.4)]"
+      className="glass-strong overflow-hidden rounded-3xl edge-light shadow-block"
     >
       <div className="flex items-center justify-between border-b border-ink-100 px-6 py-4">
         <div className="flex items-center gap-2.5">
@@ -163,7 +163,7 @@ function ConsentCard() {
           aria-label="Toggle recruiter discovery"
           onClick={() => setOn((v) => !v)}
           className={cn(
-            "relative mt-1 h-8 w-14 shrink-0 rounded-full border transition-colors duration-base",
+            "relative mt-1 h-8 w-14 shrink-0 rounded-none border transition-colors duration-base",
             on
               ? "border-accent/60 bg-accent/25"
               : "border-ink-200 bg-ink-100",
@@ -173,7 +173,7 @@ function ConsentCard() {
             animate={{ x: on ? 26 : 3 }}
             transition={{ type: "spring", stiffness: 500, damping: 32 }}
             className={cn(
-              "absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full shadow-2",
+              "absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full shadow-block",
               on ? "bg-accent" : "bg-ink-400",
             )}
           />

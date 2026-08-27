@@ -88,10 +88,10 @@ const FEATURES: Feature[] = [
 ];
 
 const TONE = {
-  accent: { text: "text-accent", border: "border-accent/40", pool: "pool-accent", glow: "shadow-[0_40px_120px_-40px_rgba(159,232,112,0.55)]" },
-  masala: { text: "text-masala", border: "border-masala/40", pool: "pool-masala", glow: "shadow-[0_40px_120px_-40px_rgba(255,176,32,0.55)]" },
-  volt:   { text: "text-volt",   border: "border-volt/40",   pool: "pool-volt",   glow: "shadow-[0_40px_120px_-40px_rgba(139,92,246,0.55)]" },
-  chai:   { text: "text-chai",   border: "border-chai/40",   pool: "pool-chai",   glow: "shadow-[0_40px_120px_-40px_rgba(255,107,74,0.55)]" },
+  accent: { text: "text-accent", border: "border-accent", rule: "bg-accent" },
+  masala: { text: "text-masala", border: "border-masala", rule: "bg-masala" },
+  volt:   { text: "text-volt",   border: "border-volt",   rule: "bg-volt" },
+  chai:   { text: "text-chai",   border: "border-chai",   rule: "bg-chai" },
 } as const;
 
 export function Features() {
@@ -163,14 +163,10 @@ function DeckCard({
         }
         className={cn(
           "glass-solid relative overflow-hidden rounded-3xl edge-light will-transform",
-          tone.glow,
         )}
       >
-        {/* Tone wash */}
-        <div
-          aria-hidden
-          className={cn("pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-70", tone.pool)}
-        />
+        {/* Tone rule — colour coding without a blob. */}
+        <div aria-hidden className={cn("absolute inset-x-0 top-0 h-[3px]", tone.rule)} />
 
         <div className="relative grid gap-8 p-8 sm:p-10 md:grid-cols-[auto_1fr_auto] md:items-center md:gap-10">
           {/* Icon + index */}

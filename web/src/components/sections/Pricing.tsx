@@ -53,20 +53,17 @@ export function Pricing() {
       </div>
 
       <div className="relative mx-auto mt-10 flex max-w-page justify-center px-6">
-        <MemeGif name="mastPlan" className="w-[240px] -rotate-2 shadow-3" />
+        <MemeGif name="raviCelebrate" className="w-[240px] shadow-block" />
       </div>
 
       <div className="relative mx-auto mt-12 grid max-w-page gap-6 px-6 md:grid-cols-2">
         {/* NOW — free */}
         <StandUp>
           <TiltCard intensity={6} lift={22}>
-            <article className="glass-strong relative h-full overflow-hidden rounded-3xl p-9 edge-light shadow-[0_50px_140px_-50px_rgba(159,232,112,0.8)]">
-              <div
-                aria-hidden
-                className="pool-accent pointer-events-none absolute -right-20 -top-20 h-64 w-64"
-              />
+            <article className="glass-strong relative h-full overflow-hidden rounded-3xl p-9 edge-light shadow-block-accent">
+              <div aria-hidden className="pool-accent pointer-events-none absolute -right-20 -top-20 h-64 w-64" />
               <div className="relative">
-                <span className="inline-flex items-center gap-2 rounded-full border border-accent/50 bg-accent/10 px-3 py-1.5 text-micro uppercase text-accent">
+                <span className="inline-flex items-center gap-2 rounded-none border border-accent/50 bg-accent/10 px-3 py-1.5 text-micro uppercase text-accent">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
                   Abhi · Invite only
                 </span>
@@ -89,7 +86,7 @@ export function Pricing() {
                 </ul>
 
                 <div className="mt-9">
-                  <MemePopover gif="hoHoHo" className="w-full">
+                  <MemePopover gif="moneyFollows" className="w-full">
                     <MagneticButton href={INVITE_URL} className="w-full">
                       Request invite — free hai
                       <ArrowRight className="h-4 w-4" strokeWidth={2.2} />
@@ -106,7 +103,7 @@ export function Pricing() {
           <TiltCard intensity={6} lift={16}>
             <article className="glass relative h-full overflow-hidden rounded-3xl p-9 edge-light">
               <div className="relative">
-                <span className="inline-flex items-center gap-2 rounded-full border border-ink-200 bg-ink-50/70 px-3 py-1.5 text-micro uppercase text-ink-500">
+                <span className="inline-flex items-center gap-2 rounded-none border border-ink-200 bg-ink-50/70 px-3 py-1.5 text-micro uppercase text-ink-500">
                   <Clock className="h-3 w-3" strokeWidth={2.4} />
                   Launch pe
                 </span>
@@ -130,7 +127,7 @@ export function Pricing() {
                   ))}
                 </ul>
 
-                <div className="mt-9 flex h-[52px] items-center justify-center rounded-full border border-dashed border-ink-300 text-small text-ink-400">
+                <div className="mt-9 flex h-[52px] items-center justify-center rounded-none border border-dashed border-ink-300 text-small text-ink-400">
                   Checkout abhi live nahi hai
                 </div>
               </div>

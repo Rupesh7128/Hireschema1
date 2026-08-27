@@ -27,7 +27,6 @@ export function VoidScene() {
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-paper-0">
       <div aria-hidden className="absolute inset-0">
-        <div className="pool-chai absolute left-1/2 top-1/2 h-[60vh] w-[60vw] -translate-x-1/2 -translate-y-1/2" />
         <div className="absolute inset-0 bg-grid-sm opacity-40 mask-fade-y" />
       </div>
 
@@ -62,8 +61,8 @@ export function VoidScene() {
         {/* The void itself, with the mood attached */}
         <div className="relative hidden h-[52vh] lg:block">
           <MemeGif
-            name="dukh"
-            className="absolute -top-6 right-0 z-10 w-[210px] rotate-[3deg] shadow-3"
+            name="raviSad"
+            className="absolute -top-6 right-0 z-10 w-[210px] rotate-[3deg] shadow-block"
           />
           <div className="absolute inset-0 mask-fade-y">
             <motion.ul
@@ -96,7 +95,6 @@ export function ScoreScene() {
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-paper-0">
       <div aria-hidden className="absolute inset-0">
-        <div className="pool-volt absolute left-1/2 top-1/2 h-[55vh] w-[65vw] -translate-x-1/2 -translate-y-1/2" />
         <div className="absolute inset-0 bg-dots opacity-30 mask-fade-y" />
       </div>
 
@@ -135,7 +133,7 @@ export function ScoreScene() {
         </div>
 
         <div className="mx-auto mt-10 flex max-w-xl flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-center">
-          <MemeGif name="tumseNaHoPayega" className="w-[220px] shrink-0 -rotate-2 shadow-3" />
+          <MemeGif name="tumseNaHoPayega" className="w-[220px] shrink-0 shadow-block" />
           <p className="font-display text-[clamp(1.05rem,2.2vw,1.5rem)] font-extrabold leading-snug text-[#FFE45E] [text-shadow:0_2px_0_#000,0_-2px_0_#000,2px_0_0_#000,-2px_0_0_#000] sm:text-left">
             Comp band thoda kam? Ho jayega — roadmap ready hai.
           </p>

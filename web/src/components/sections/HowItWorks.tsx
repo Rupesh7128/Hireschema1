@@ -64,10 +64,10 @@ const STEPS = [
 ];
 
 const TONE = {
-  accent: { text: "text-accent", bg: "bg-accent", border: "border-accent/35", glow: "shadow-[0_0_90px_-30px_rgba(159,232,112,0.8)]" },
-  masala: { text: "text-masala", bg: "bg-masala", border: "border-masala/35", glow: "shadow-[0_0_90px_-30px_rgba(255,176,32,0.8)]" },
-  volt:   { text: "text-volt",   bg: "bg-volt",   border: "border-volt/35",   glow: "shadow-[0_0_90px_-30px_rgba(139,92,246,0.8)]" },
-  chai:   { text: "text-chai",   bg: "bg-chai",   border: "border-chai/35",   glow: "shadow-[0_0_90px_-30px_rgba(255,107,74,0.8)]" },
+  accent: { text: "text-accent", bg: "bg-accent", border: "border-accent", rule: "bg-accent" },
+  masala: { text: "text-masala", bg: "bg-masala", border: "border-masala", rule: "bg-masala" },
+  volt:   { text: "text-volt",   bg: "bg-volt",   border: "border-volt",   rule: "bg-volt" },
+  chai:   { text: "text-chai",   bg: "bg-chai",   border: "border-chai",   rule: "bg-chai" },
 } as const;
 
 export function HowItWorks() {
@@ -130,10 +130,10 @@ export function HowItWorks() {
 function ProgressRail({ progress }: { progress: MotionValue<number> }) {
   const width = useTransform(progress, [0, 1], ["4%", "100%"]);
   return (
-    <div className="absolute inset-x-[8vw] bottom-[10vh] z-20 h-[3px] rounded-full bg-ink-100">
+    <div className="absolute inset-x-[8vw] bottom-[10vh] z-20 h-[3px] rounded-none bg-ink-100">
       <motion.div
         style={{ width }}
-        className="h-full rounded-full bg-gradient-to-r from-accent via-masala to-chai shadow-[0_0_16px_rgba(159,232,112,0.6)]"
+        className="h-full rounded-none bg-gradient-to-r from-accent via-masala to-chai shadow-[0_0_16px_rgba(159,232,112,0.6)]"
       />
       <div className="mt-4 flex justify-between text-[10px] font-semibold uppercase tracking-[0.24em] text-ink-400">
         {STEPS.map((s) => (
@@ -197,9 +197,10 @@ function StepCard({
       className={cn(
         "glass-solid relative overflow-hidden rounded-3xl edge-light",
         large ? "grid grid-cols-[1.05fr_0.95fr] gap-10 p-12" : "p-7",
-        tone.glow,
       )}
     >
+      <div aria-hidden className={cn("absolute inset-x-0 top-0 h-[3px]", tone.rule)} />
+
       {/* Oversized ghost numeral */}
       <span
         aria-hidden
@@ -283,7 +284,7 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
                   ease: "easeInOut",
                   delay: i * 0.05,
                 }}
-                className={cn("h-full w-full rounded-full", t.bg)}
+                className={cn("h-full w-full rounded-none", t.bg)}
                 style={{ opacity: 0.35 + (i % 4) * 0.16, transformOrigin: "center" }}
               />
             );
@@ -297,7 +298,7 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
           {["Go", "Kafka", "Remote", "40+ LPA"].map((chip) => (
             <span
               key={chip}
-              className={cn("rounded-full border px-2.5 py-1 text-[11px] font-semibold", t.border, t.text)}
+              className={cn("rounded-none border px-2.5 py-1 text-[11px] font-semibold", t.border, t.text)}
             >
               {chip}
             </span>
@@ -314,7 +315,7 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
           {[1, 0.7, 0.42].map((s, i) => (
             <div
               key={i}
-              className={cn("absolute inset-0 rounded-full border", t.border)}
+              className={cn("absolute inset-0 rounded-none border", t.border)}
               style={{ transform: `scale(${s})`, opacity: 0.5 - i * 0.1 }}
             />
           ))}
@@ -354,8 +355,8 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
           </p>
         </div>
         <MemeGif
-          name="bakwas"
-          className="absolute -bottom-8 -right-6 w-[150px] rotate-[5deg] shadow-3"
+          name="moneyFollows"
+          className="absolute -bottom-8 -right-6 w-[150px] rotate-[5deg] shadow-block"
         />
       </div>
     );
@@ -387,7 +388,7 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
                 whileInView={{ width: `${r.score}%` }}
                 viewport={{ once: true }}
                 transition={{ duration: 1.1, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
-                className={cn("h-full rounded-full", i === 0 ? t.bg : "bg-ink-300")}
+                className={cn("h-full rounded-none", i === 0 ? t.bg : "bg-ink-300")}
               />
             </div>
           </div>
@@ -424,7 +425,7 @@ function StepMock({ kind, tone }: { kind: string; tone: keyof typeof TONE }) {
       </div>
       <div className="flex items-center justify-between border-t border-ink-100 px-4 py-2.5">
         <span className="text-[11px] text-ink-400">Draft · not sent</span>
-        <span className={cn("rounded-full px-3 py-1 text-[11px] font-semibold text-accent-fg", t.bg)}>
+        <span className={cn("rounded-none px-3 py-1 text-[11px] font-semibold text-accent-fg", t.bg)}>
           Approve &amp; send
         </span>
       </div>

@@ -108,7 +108,7 @@ export function ChatPreview({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "glass-strong w-full overflow-hidden rounded-2xl shadow-3 edge-light",
+        "glass-strong w-full overflow-hidden rounded-2xl shadow-block edge-light",
         className,
       )}
     >
@@ -123,7 +123,7 @@ export function ChatPreview({ className }: { className?: string }) {
           </p>
           <p className="mt-1 text-[11px] text-ink-400">{AGENT.tagline}</p>
         </div>
-        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-ink-200/80 bg-paper-0/70 px-2.5 py-1 text-[11px] text-ink-500">
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-none border border-ink-200/80 bg-paper-0/70 px-2.5 py-1 text-[11px] text-ink-500">
           <Sparkles className="h-3 w-3 text-accent" strokeWidth={1.8} />
           Example conversation
         </span>
@@ -144,7 +144,7 @@ export function ChatPreview({ className }: { className?: string }) {
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 className="flex justify-end"
               >
-                <div className="max-w-[84%] rounded-2xl rounded-br-md bg-accent px-3.5 py-2.5 text-small font-medium leading-relaxed text-accent-fg shadow-[0_6px_24px_-10px_rgba(159,232,112,0.9)]">
+                <div className="max-w-[84%] rounded-2xl rounded-br-md bg-accent px-3.5 py-2.5 text-small font-medium leading-relaxed text-accent-fg border-2 border-black shadow-ring">
                   {line.text}
                 </div>
               </motion.div>

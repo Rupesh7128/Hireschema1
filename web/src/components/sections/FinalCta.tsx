@@ -24,7 +24,6 @@ export function FinalCta() {
 
   const scale = useTransform(scrollYProgress, [0, 1], [0.86, 1]);
   const rotateX = useTransform(scrollYProgress, [0, 1], [16, 0]);
-  const glow = useTransform(scrollYProgress, [0, 1], [0.15, 0.55]);
 
   return (
     <section
@@ -34,10 +33,6 @@ export function FinalCta() {
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute inset-x-0 bottom-0 h-[70vh] origin-bottom bg-grid opacity-70 [transform:rotateX(74deg)_scale(2.4)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-paper-0 via-paper-0/60 to-transparent" />
-        <motion.div
-          style={reduced ? undefined : { opacity: glow }}
-          className="pool-accent absolute left-1/2 top-1/2 h-[46vh] w-[70vw] -translate-x-1/2 -translate-y-1/2"
-        />
       </div>
 
       <motion.div
@@ -76,7 +71,7 @@ export function FinalCta() {
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <MemePopover gif="paisa">
+          <MemePopover gif="reacted">
             <MagneticButton href={INVITE_URL}>
               Request an invite
               <ArrowRight className="h-4 w-4 transition-transform duration-base group-hover:translate-x-1" strokeWidth={2.2} />

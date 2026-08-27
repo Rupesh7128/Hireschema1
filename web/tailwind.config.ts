@@ -82,13 +82,14 @@ const config: Config = {
       },
       borderRadius: {
         none: "0",
-        sm: "6px",
-        DEFAULT: "10px",
-        md: "12px",
-        lg: "16px",
-        xl: "22px",
-        "2xl": "28px",
-        "3xl": "36px",
+        sm: "0",
+        DEFAULT: "0",
+        md: "0",
+        lg: "0",
+        xl: "0",
+        "2xl": "0",
+        "3xl": "0",
+        /* Dots, avatars and pips only. Everything rectangular stays square. */
         full: "9999px",
       },
       boxShadow: {
@@ -96,9 +97,12 @@ const config: Config = {
         "2": "0 8px 30px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.4)",
         "3": "0 30px 80px -20px rgba(0,0,0,0.8), 0 8px 24px rgba(0,0,0,0.5)",
         lift: "0 40px 120px -30px rgba(0,0,0,0.9)",
-        glow: "0 0 0 1px rgba(159,232,112,0.25), 0 0 40px -8px rgba(159,232,112,0.45)",
-        "glow-lg": "0 0 0 1px rgba(159,232,112,0.3), 0 0 90px -10px rgba(159,232,112,0.55)",
-        "glow-masala": "0 0 0 1px rgba(255,176,32,0.25), 0 0 50px -10px rgba(255,176,32,0.45)",
+        /* The signature control treatment: black keyline, lime ring outside. */
+        ring: "0 0 0 2px #9FE870, 0 0 0 4px #000000",
+        "ring-ink": "0 0 0 2px #2E2E34, 0 0 0 4px #000000",
+        /* Hard offset block — the brutalist stand-in for a drop shadow. */
+        block: "6px 6px 0 0 #000000",
+        "block-accent": "6px 6px 0 0 #9FE870",
         focus: "0 0 0 2px #0A0A0B, 0 0 0 4px #9FE870",
       },
       transitionTimingFunction: {

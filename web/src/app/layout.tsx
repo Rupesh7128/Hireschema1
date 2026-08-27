@@ -5,7 +5,6 @@ import { Footer } from "@/components/layout/Footer";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { SmoothScroll } from "@/components/premium/SmoothScroll";
 import { ScrollProgress } from "@/components/premium/ScrollProgress";
-import { Spotlight } from "@/components/premium/Spotlight";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -75,7 +74,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <GoogleAnalytics />
         <SmoothScroll />
         <ScrollProgress />
-        <Spotlight />
         <Navbar />
         {children}
         <Footer />

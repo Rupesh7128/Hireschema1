@@ -63,7 +63,7 @@ export function MemePopover({
             transition={{ type: "spring", stiffness: 420, damping: 26, mass: 0.6 }}
             style={{ width }}
             className={cn(
-              "pointer-events-none absolute bottom-[calc(100%+14px)] z-50 block drop-shadow-[0_20px_40px_rgba(0,0,0,0.7)]",
+              "pointer-events-none absolute bottom-[calc(100%+14px)] z-50 block shadow-block",
               align === "center" && "left-1/2 -translate-x-1/2",
               align === "left" && "left-0",
               align === "right" && "right-0",

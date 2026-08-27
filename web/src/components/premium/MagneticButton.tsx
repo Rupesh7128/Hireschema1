@@ -22,13 +22,14 @@ type MagneticButtonProps = {
 /** Hoisted: creating this inside the component remounts the link every render. */
 const MotionLink = motion.create(Link);
 
+/*
+ * Matches the live product: a hard black keyline with a coloured ring sitting
+ * outside it. No radius, no soft glow.
+ */
 const VARIANTS = {
-  accent:
-    "bg-accent text-accent-fg shadow-[0_10px_40px_-12px_rgba(159,232,112,0.8)] hover:shadow-[0_16px_60px_-12px_rgba(159,232,112,0.95)]",
-  masala:
-    "bg-masala text-accent-fg shadow-[0_10px_40px_-12px_rgba(255,176,32,0.8)] hover:shadow-[0_16px_60px_-12px_rgba(255,176,32,0.95)]",
-  ghost:
-    "glass text-ink-900 hover:border-accent/40 hover:text-accent",
+  accent: "btn-brutal bg-accent text-accent-fg hover:bg-accent-hover",
+  masala: "btn-brutal bg-masala text-accent-fg hover:bg-masala-hover",
+  ghost: "btn-brutal-ink bg-ink-800 text-black hover:bg-white",
 } as const;
 
 export function MagneticButton({
@@ -69,8 +70,8 @@ export function MagneticButton({
       whileTap={{ scale: 0.96 }}
       className={cn(
         `group relative inline-flex h-[52px] items-center justify-center gap-2
-         overflow-hidden rounded-full px-7 text-[15px] font-semibold
-         transition-shadow duration-base will-transform`,
+         overflow-hidden px-7 text-[15px] font-bold
+         transition-colors duration-base will-transform`,
         VARIANTS[variant],
         className,
       )}
